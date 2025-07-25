@@ -213,6 +213,176 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
     });
   };
 
+  const generatePDF = async () => {
+    try {
+      // Dynamic imports to avoid SSR issues
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
+
+      // Create a temporary div with the advisory content
+      const element = document.createElement('div');
+      element.style.width = '210mm'; // A4 width
+      element.style.padding = '20px';
+      element.style.backgroundColor = '#0a0f1c'; // cyber-dark background
+      element.style.color = '#00ff41'; // cyber-green text
+      element.style.fontFamily = 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace';
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+      element.style.top = '0';
+
+      // Create the HTML content that matches the page design
+      element.innerHTML = `
+        <div style="background: linear-gradient(135deg, #0a0f1c 0%, #1a1f2e 100%); color: #00ff41; min-height: 100vh; padding: 20px;">
+          <!-- Header -->
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #00ff41; padding-bottom: 20px;">
+            <h1 style="font-size: 28px; font-weight: bold; color: #ff0080; margin: 0; text-shadow: 0 0 10px #ff0080;">
+              🔒 THREATWATCH INTELLIGENCE
+            </h1>
+            <p style="font-size: 12px; color: #00ff41; margin: 5px 0;">
+              [CLASSIFICATION: RESTRICTED] - THREAT ADVISORY REPORT
+            </p>
+          </div>
+
+          <!-- Title Section -->
+          <div style="margin-bottom: 30px; padding: 20px; border: 1px solid #00bfff; border-radius: 8px; background: rgba(0, 191, 255, 0.1);">
+            <h2 style="font-size: 20px; color: #00bfff; margin: 0 0 15px 0;">${advisory.title}</h2>
+            
+            <!-- Metadata Grid -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px;">
+              <div>
+                <span style="color: #00bfff; font-weight: bold;">📅 PUBLISHED:</span>
+                <span style="color: #00ff41; margin-left: 10px;">${formatDate(advisory.publishedDate)}</span>
+              </div>
+              <div>
+                <span style="color: #00bfff; font-weight: bold;">👤 AUTHOR:</span>
+                <span style="color: #00ff41; margin-left: 10px;">${advisory.author}</span>
+              </div>
+              <div>
+                <span style="color: #00bfff; font-weight: bold;">⚠️ SEVERITY:</span>
+                <span style="color: ${advisory.severity === 'Critical' ? '#ff0040' : advisory.severity === 'High' ? '#ff8000' : advisory.severity === 'Medium' ? '#ffff00' : '#00ff41'}; margin-left: 10px; font-weight: bold;">${advisory.severity.toUpperCase()}</span>
+              </div>
+              <div>
+                <span style="color: #00bfff; font-weight: bold;">📂 CATEGORY:</span>
+                <span style="color: #00ff41; margin-left: 10px;">${advisory.category}</span>
+              </div>
+            </div>
+          </div>
+
+          ${advisory.summary ? `
+          <!-- Summary Section -->
+          <div style="margin-bottom: 25px; padding: 15px; border-left: 4px solid #00ff41; background: rgba(0, 255, 65, 0.1);">
+            <h3 style="color: #00ff41; font-size: 16px; margin: 0 0 10px 0;">📋 EXECUTIVE SUMMARY</h3>
+            <p style="color: #e0e0e0; line-height: 1.6; margin: 0;">${advisory.summary}</p>
+          </div>
+          ` : ''}
+
+          <!-- Description Section -->
+          <div style="margin-bottom: 25px; padding: 15px; border-left: 4px solid #00bfff; background: rgba(0, 191, 255, 0.1);">
+            <h3 style="color: #00bfff; font-size: 16px; margin: 0 0 10px 0;">📖 THREAT DESCRIPTION</h3>
+            <div style="color: #e0e0e0; line-height: 1.6;">${advisory.description.replace(/\n/g, '<br>')}</div>
+          </div>
+
+          <!-- Content Section -->
+          <div style="margin-bottom: 25px; padding: 15px; border-left: 4px solid #ff8000; background: rgba(255, 128, 0, 0.1);">
+            <h3 style="color: #ff8000; font-size: 16px; margin: 0 0 10px 0;">🔍 TECHNICAL ANALYSIS</h3>
+            <div style="color: #e0e0e0; line-height: 1.6; white-space: pre-wrap;">${advisory.content}</div>
+          </div>
+
+          ${advisory.iocs && advisory.iocs.length > 0 ? `
+          <!-- IOCs Section -->
+          <div style="margin-bottom: 25px; padding: 15px; border-left: 4px solid #ff0040; background: rgba(255, 0, 64, 0.1);">
+            <h3 style="color: #ff0040; font-size: 16px; margin: 0 0 15px 0;">🎯 INDICATORS OF COMPROMISE</h3>
+            ${advisory.iocs.map((ioc: any) => `
+              <div style="margin-bottom: 12px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 4px;">
+                <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                  <span style="color: #ff0040; font-weight: bold; width: 80px;">${ioc.type}:</span>
+                  <span style="color: #00ff41; font-family: monospace; word-break: break-all;">${ioc.value}</span>
+                </div>
+                ${ioc.description ? `<div style="color: #e0e0e0; font-size: 12px; margin-left: 80px;">${ioc.description}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+
+          ${advisory.references && advisory.references.length > 0 ? `
+          <!-- References Section -->
+          <div style="margin-bottom: 25px; padding: 15px; border-left: 4px solid #8000ff; background: rgba(128, 0, 255, 0.1);">
+            <h3 style="color: #8000ff; font-size: 16px; margin: 0 0 15px 0;">🔗 REFERENCES</h3>
+            ${advisory.references.map((ref: string, index: number) => `
+              <div style="margin-bottom: 8px; color: #e0e0e0;">
+                <span style="color: #8000ff; font-weight: bold;">${index + 1}.</span>
+                <span style="margin-left: 10px; word-break: break-all;">${ref}</span>
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+
+          <!-- Footer -->
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #00ff41; text-align: center;">
+            <p style="color: #00ff41; font-size: 12px; margin: 0;">
+              Generated by ThreatWatch Intelligence Platform • ${new Date().toLocaleString()}
+            </p>
+            <p style="color: #ff0080; font-size: 10px; margin: 5px 0 0 0;">
+              [CONFIDENTIAL] - This document contains sensitive security information
+            </p>
+          </div>
+        </div>
+      `;
+
+      // Add the element to the DOM temporarily
+      document.body.appendChild(element);
+
+      // Wait for any fonts/styles to load
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Generate canvas from the element
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#0a0f1c',
+        width: element.offsetWidth,
+        height: element.offsetHeight
+      });
+
+      // Remove the temporary element
+      document.body.removeChild(element);
+
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Save the PDF
+      pdf.save(`threatwatch-advisory-${advisory._id}.pdf`);
+      
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
+
   return (
     <HydrationSafe>
       <div className="min-h-screen bg-cyber-dark">
@@ -284,13 +454,16 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                   <span className="hidden sm:inline">SHARE</span>
                 </CyberButton>
                 
-                <Link href={`/api/pdf/${advisory._id}`} target="_blank">
-                  <CyberButton variant="cyber" glowColor="blue" className="text-xs md:text-sm">
-                    <Download className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                    <span className="hidden sm:inline">EXPORT PDF</span>
-                    <span className="sm:hidden">PDF</span>
-                  </CyberButton>
-                </Link>
+                <CyberButton 
+                  variant="cyber" 
+                  glowColor="blue" 
+                  className="text-xs md:text-sm"
+                  onClick={generatePDF}
+                >
+                  <Download className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">EXPORT PDF</span>
+                  <span className="sm:hidden">PDF</span>
+                </CyberButton>
               </div>
             </div>
           </div>
