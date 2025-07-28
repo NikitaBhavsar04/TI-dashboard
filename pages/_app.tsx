@@ -1,6 +1,7 @@
 import '@/styles/globals-new.css';
 import type { AppProps } from 'next/app';
 import Navbar from '@/components/NavbarClean';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -35,6 +36,9 @@ export default function App({ Component, pageProps }: AppProps) {
         {/* Subtle background texture */}
         <div className="absolute inset-0 bg-gradient-to-br from-tech-navy/20 via-transparent to-tech-purple/10 pointer-events-none"></div>
         
+        {/* Animated Background - show on all pages EXCEPT advisory detail page */}
+        {!isAdvisoryDetailPage && <AnimatedBackground />}
+        
         {/* Main content */}
         <div className="relative z-10">
           {/* Only show navbar if not on advisory detail page */}
@@ -45,8 +49,8 @@ export default function App({ Component, pageProps }: AppProps) {
         </div>
 
         {/* Ambient glow effects */}
-        <div className="fixed top-0 left-0 w-96 h-96 bg-neon-blue/5 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-        <div className="fixed bottom-0 right-0 w-96 h-96 bg-neon-purple/5 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="fixed top-0 left-0 w-96 h-96 bg-neon-blue/5 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ zIndex: 2 }}></div>
+        <div className="fixed bottom-0 right-0 w-96 h-96 bg-neon-purple/5 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDelay: '2s', zIndex: 2 }}></div>
       </div>
     </AuthProvider>
   );

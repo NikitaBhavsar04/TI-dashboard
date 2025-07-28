@@ -6,12 +6,14 @@ import HydrationSafe from '@/components/HydrationSafe';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   adminOnly?: boolean;
+  requireAdmin?: boolean;
   redirectTo?: string;
 }
 
 export default function ProtectedRoute({ 
   children, 
   adminOnly = false, 
+  requireAdmin = false,
   redirectTo = '/login' 
 }: ProtectedRouteProps) {
   const { user, loading, isAdmin } = useAuth();
@@ -24,12 +26,12 @@ export default function ProtectedRoute({
         return;
       }
 
-      if (adminOnly && !isAdmin) {
+      if ((adminOnly || requireAdmin) && !isAdmin) {
         router.push('/advisories'); // Redirect non-admin users to advisories
         return;
       }
     }
-  }, [user, loading, isAdmin, adminOnly, router, redirectTo]);
+  }, [user, loading, isAdmin, adminOnly, requireAdmin, router, redirectTo]);
 
   if (loading) {
     return (
@@ -41,7 +43,7 @@ export default function ProtectedRoute({
     );
   }
 
-  if (!user || (adminOnly && !isAdmin)) {
+  if (!user || ((adminOnly || requireAdmin) && !isAdmin)) {
     return (
       <HydrationSafe>
         <div className="min-h-screen bg-cyber-dark flex items-center justify-center">

@@ -3,6 +3,7 @@ import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
 import { 
   Search, 
   Filter, 
@@ -23,13 +24,14 @@ import {
   SortDesc,
   Grid,
   List,
-  Zap
+  Zap,
+  Plus,
+  ChevronDown
 } from 'lucide-react';
-import { CyberCard, CyberButton, CyberBadge } from '@/components/ui/cyber-components';
-import { HolographicOverlay, NeonText, TerminalWindow } from '@/components/ui/cyber-effects';
 import HydrationSafe from '@/components/HydrationSafe';
+import AdvisoryCard from '@/components/AdvisoryCard';
 import { IAdvisory } from '@/models/Advisory';
-import { formatDate, getSeverityColor } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import dbConnect from '@/lib/db';
 import Advisory from '@/models/Advisory';
 import { verifyToken } from '@/lib/auth';
@@ -58,34 +60,46 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
   const [selectedSeverity, setSelectedSeverity] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const severityLevels = ['Critical', 'High', 'Medium', 'Low'];
+
+  const severityStats = [
+    { level: 'Total', count: stats.total, color: 'cyan-400', borderColor: 'border-cyan-400', bgColor: 'from-cyan-400/20 to-cyan-400/10', glowColor: 'shadow-cyan-400/20', icon: TrendingUp },
+    { level: 'Critical', count: stats.critical, color: 'red-500', borderColor: 'border-red-500', bgColor: 'from-red-500/20 to-red-500/10', glowColor: 'shadow-red-500/20', icon: Zap },
+    { level: 'High', count: stats.high, color: 'orange-500', borderColor: 'border-orange-500', bgColor: 'from-orange-500/20 to-orange-500/10', glowColor: 'shadow-orange-500/20', icon: AlertTriangle },
+    { level: 'Medium', count: stats.medium, color: 'yellow-500', borderColor: 'border-yellow-500', bgColor: 'from-yellow-500/20 to-yellow-500/10', glowColor: 'shadow-yellow-500/20', icon: Activity },
+    { level: 'Low', count: stats.low, color: 'blue-500', borderColor: 'border-blue-500', bgColor: 'from-blue-500/20 to-blue-500/10', glowColor: 'shadow-blue-500/20', icon: Shield },
+  ];
+
   useEffect(() => {
-    setIsLoading(true);
-    
+    filterAndSortAdvisories();
+  }, [searchTerm, selectedCategory, selectedSeverity, sortBy]);
+
+  const filterAndSortAdvisories = () => {
     let filtered = [...advisories];
 
-    // Search filter
+    // Apply filters
     if (searchTerm) {
-      filtered = filtered.filter(advisory =>
-        advisory.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        advisory.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        advisory.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        advisory.author.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (advisory) =>
+          advisory.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          advisory.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          advisory.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          advisory.author.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // Category filter
     if (selectedCategory) {
-      filtered = filtered.filter(advisory => advisory.category === selectedCategory);
+      filtered = filtered.filter((advisory) => advisory.category === selectedCategory);
     }
 
-    // Severity filter
     if (selectedSeverity) {
-      filtered = filtered.filter(advisory => advisory.severity === selectedSeverity);
+      filtered = filtered.filter((advisory) => advisory.severity === selectedSeverity);
     }
 
-    // Sorting
+    // Apply sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'newest':
@@ -93,8 +107,8 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
         case 'oldest':
           return new Date(a.publishedDate).getTime() - new Date(b.publishedDate).getTime();
         case 'severity':
-          const severityOrder = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
-          return severityOrder[b.severity] - severityOrder[a.severity];
+          const severityOrder = ['Critical', 'High', 'Medium', 'Low'];
+          return severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity);
         case 'title':
           return a.title.localeCompare(b.title);
         default:
@@ -102,11 +116,15 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
       }
     });
 
+    setFilteredAdvisories(filtered);
+  };
+
+  const handleRefresh = async () => {
+    setIsLoading(true);
     setTimeout(() => {
-      setFilteredAdvisories(filtered);
       setIsLoading(false);
-    }, 200);
-  }, [searchTerm, selectedCategory, selectedSeverity, sortBy, advisories]);
+    }, 1000);
+  };
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -115,393 +133,382 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
     setSortBy('newest');
   };
 
-  const getIconForIOCType = (type: string) => {
-    switch (type) {
-      case 'IP': return <Server className="h-3 w-3" />;
-      case 'Hash': return <Hash className="h-3 w-3" />;
-      case 'URL': return <Globe className="h-3 w-3" />;
-      case 'Domain': return <Globe className="h-3 w-3" />;
-      case 'Email': return <Mail className="h-3 w-3" />;
-      default: return <Activity className="h-3 w-3" />;
-    }
-  };
-
-  const SeverityStats = () => (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-      <CyberCard variant="matrix" className="p-4 text-center">
-        <div className="text-2xl font-mono font-bold text-cyber-blue">{stats.total}</div>
-        <div className="text-xs font-mono text-cyber-green/70">TOTAL</div>
-      </CyberCard>
-      
-      <CyberCard variant="glitch" className="p-4 text-center">
-        <div className="text-2xl font-mono font-bold text-cyber-red">{stats.critical}</div>
-        <div className="text-xs font-mono text-cyber-green/70">CRITICAL</div>
-      </CyberCard>
-      
-      <CyberCard variant="neon" glowColor="orange" className="p-4 text-center">
-        <div className="text-2xl font-mono font-bold text-warning-orange">{stats.high}</div>
-        <div className="text-xs font-mono text-cyber-green/70">HIGH</div>
-      </CyberCard>
-      
-      <CyberCard variant="holographic" className="p-4 text-center">
-        <div className="text-2xl font-mono font-bold text-cyber-blue">{stats.medium}</div>
-        <div className="text-xs font-mono text-cyber-green/70">MEDIUM</div>
-      </CyberCard>
-      
-      <CyberCard variant="matrix" className="p-4 text-center">
-        <div className="text-2xl font-mono font-bold text-cyber-green">{stats.low}</div>
-        <div className="text-xs font-mono text-cyber-green/70">LOW</div>
-      </CyberCard>
-    </div>
-  );
-
-  const AdvisoryGridItem = ({ advisory }: { advisory: IAdvisory }) => (
-    <CyberCard variant="holographic" className="p-6 hover:scale-105 transition-all duration-300">
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <Link href={`/advisory/${advisory._id}`}>
-              <h3 className="font-mono font-bold text-cyber-green hover:text-cyber-blue transition-colors cursor-pointer line-clamp-2">
-                {advisory.title}
-              </h3>
-            </Link>
-            <div className="flex items-center space-x-2 mt-2">
-              <CyberBadge 
-                variant={
-                  advisory.severity === 'Critical' ? 'danger' : 
-                  advisory.severity === 'High' ? 'warning' : 
-                  advisory.severity === 'Medium' ? 'info' : 'success'
-                }
-              >
-                {advisory.severity}
-              </CyberBadge>
-              <span className="text-xs text-cyber-blue/70 font-mono">{advisory.category}</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Link href={`/advisory/${advisory._id}`}>
-              <CyberButton variant="ghost" glowColor="blue" className="text-xs">
-                <Eye className="h-3 w-3 mr-1" />
-                VIEW
-              </CyberButton>
-            </Link>
-          </div>
-        </div>
-
-        {/* Description */}
-        <p className="text-sm text-cyber-blue/80 font-mono line-clamp-3">
-          {advisory.description}
-        </p>
-
-        {/* IOCs */}
-        {advisory.iocs.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-xs font-mono text-cyber-red">INDICATORS ({advisory.iocs.length}):</h4>
-            <div className="flex flex-wrap gap-1">
-              {advisory.iocs.slice(0, 3).map((ioc, index) => (
-                <div key={index} className="flex items-center space-x-1 bg-cyber-dark/30 px-2 py-1 rounded border border-cyber-red/20">
-                  {getIconForIOCType(ioc.type)}
-                  <span className="text-xs font-mono text-cyber-red">{ioc.type}</span>
-                </div>
-              ))}
-              {advisory.iocs.length > 3 && (
-                <div className="bg-cyber-dark/30 px-2 py-1 rounded border border-cyber-red/20">
-                  <span className="text-xs font-mono text-cyber-red">+{advisory.iocs.length - 3}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-cyber-blue/20">
-          <div className="flex items-center space-x-3 text-xs text-cyber-green/70 font-mono">
-            <div className="flex items-center space-x-1">
-              <Calendar className="h-3 w-3" />
-              <span>{formatDate(advisory.publishedDate)}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <User className="h-3 w-3" />
-              <span>{advisory.author}</span>
-            </div>
-          </div>
-          
-          {advisory.cvss && (
-            <CyberBadge variant="warning">
-              CVSS: {advisory.cvss}
-            </CyberBadge>
-          )}
-        </div>
-      </div>
-    </CyberCard>
-  );
-
-  const AdvisoryListItem = ({ advisory }: { advisory: IAdvisory }) => (
-    <CyberCard variant="matrix" className="p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-          <div className="md:col-span-2">
-            <Link href={`/advisory/${advisory._id}`}>
-              <h3 className="font-mono font-bold text-cyber-green hover:text-cyber-blue transition-colors cursor-pointer">
-                {advisory.title}
-              </h3>
-            </Link>
-            <p className="text-sm text-cyber-blue/70 font-mono mt-1 line-clamp-1">
-              {advisory.description}
-            </p>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <CyberBadge 
-              variant={
-                advisory.severity === 'Critical' ? 'danger' : 
-                advisory.severity === 'High' ? 'warning' : 
-                advisory.severity === 'Medium' ? 'info' : 'success'
-              }
-            >
-              {advisory.severity}
-            </CyberBadge>
-            <span className="text-xs text-cyber-blue/70 font-mono">{advisory.category}</span>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-cyber-green/70 font-mono">
-              {formatDate(advisory.publishedDate)}
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              {advisory.iocs.length > 0 && (
-                <span className="text-xs text-cyber-red font-mono">
-                  {advisory.iocs.length} IOCs
-                </span>
-              )}
-              <Link href={`/advisory/${advisory._id}`}>
-                <CyberButton variant="ghost" glowColor="blue" className="text-xs">
-                  <Eye className="h-3 w-3" />
-                </CyberButton>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </CyberCard>
-  );
-
   return (
     <HydrationSafe>
-      <div className="min-h-screen bg-cyber-dark">
+      <div className="min-h-screen bg-tech-gradient pt-20 pb-12">
         <Head>
-          <title>THREAT INTELLIGENCE DATABASE - THREATWATCH</title>
-          <meta name="description" content="Comprehensive cyber threat advisory database with real-time intelligence" />
+          <title>Threat Advisories - THREATWATCH Intelligence Platform</title>
+          <meta name="description" content="Browse comprehensive cybersecurity threat advisories and intelligence reports" />
         </Head>
 
-        {/* Header */}
-        <div className="border-b border-cyber-blue/30 bg-cyber-dark/95 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <HolographicOverlay>
-                  <Activity className="h-10 w-10 text-cyber-blue" />
-                </HolographicOverlay>
-                <div>
-                  <h1 className="text-3xl font-mono font-bold">
-                    <NeonText color="blue" intensity="high">
-                      THREAT INTELLIGENCE DATABASE
-                    </NeonText>
-                  </h1>
-                  <p className="text-cyber-green/70 font-mono text-sm">
-                    [CLASSIFICATION: RESTRICTED] - Real-time Threat Analysis
-                  </p>
-                </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mb-8"
+          >
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+              <div className="mb-6 lg:mb-0">
+                <h1 className="font-orbitron font-bold text-4xl md:text-5xl text-gradient-blue mb-4">
+                  Threat Intelligence
+                </h1>
+                <p className="font-rajdhani text-lg text-slate-400 max-w-2xl">
+                  Comprehensive cybersecurity advisories with real-time threat analysis and IOC intelligence.
+                </p>
               </div>
-              
-              <div className="flex items-center space-x-3">
-                <CyberButton variant="ghost" glowColor="green" onClick={() => window.location.reload()}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  REFRESH
-                </CyberButton>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={handleRefresh}
+                  className={`
+                    relative overflow-hidden group transition-all duration-300
+                    px-6 py-3 rounded-xl font-rajdhani font-semibold
+                    bg-gradient-to-r from-purple-600/20 to-purple-500/20
+                    border-2 border-purple-500/30 backdrop-blur-md
+                    text-purple-300 hover:text-white hover:border-purple-400
+                    shadow-lg shadow-purple-500/20 hover:shadow-purple-400/30
+                    hover:scale-105 active:scale-95 flex items-center space-x-2
+                    before:absolute before:inset-0 before:bg-gradient-to-r 
+                    before:from-purple-600/30 before:to-purple-500/30 before:opacity-0 
+                    before:transition-opacity before:duration-300 hover:before:opacity-100
+                    ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-xl'}
+                  `}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={`w-4 h-4 relative z-10 ${isLoading ? 'animate-spin' : 'group-hover:rotate-180'} transition-transform duration-500`} />
+                  <span className="relative z-10">
+                    {isLoading ? 'Refreshing...' : 'Refresh Data'}
+                  </span>
+                </button>
+                
                 {isAdmin && (
-                  <Link href="/admin/upload">
-                    <CyberButton variant="cyber" glowColor="blue">
-                      <Zap className="h-4 w-4 mr-2" />
-                      NEW ADVISORY
-                    </CyberButton>
+                  <Link 
+                    href="/admin/upload" 
+                    className="
+                      relative overflow-hidden group transition-all duration-300
+                      px-6 py-3 rounded-xl font-rajdhani font-semibold
+                      bg-gradient-to-r from-cyan-600/20 to-cyan-500/20
+                      border-2 border-cyan-500/30 backdrop-blur-md
+                      text-cyan-300 hover:text-white hover:border-cyan-400
+                      shadow-lg shadow-cyan-500/20 hover:shadow-cyan-400/30
+                      hover:scale-105 active:scale-95 flex items-center space-x-2
+                      before:absolute before:inset-0 before:bg-gradient-to-r 
+                      before:from-cyan-600/30 before:to-cyan-500/30 before:opacity-0 
+                      before:transition-opacity before:duration-300 hover:before:opacity-100
+                      hover:shadow-xl
+                    "
+                  >
+                    <Plus className="w-4 h-4 relative z-10 group-hover:scale-110 group-hover:rotate-90 transition-all duration-300" />
+                    <span className="relative z-10">New Advisory</span>
                   </Link>
                 )}
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Stats Dashboard */}
-          <div className="mb-8">
-            <h2 className="text-xl font-mono font-bold text-cyber-green mb-4">
-              THREAT STATISTICS
-            </h2>
-            <SeverityStats />
-          </div>
+          {/* Stats Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8"
+          >
+            {severityStats.map((stat, index) => (
+              <motion.div
+                key={stat.level}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.1 * index }}
+                onClick={() => stat.level === 'Total' ? clearFilters() : setSelectedSeverity(selectedSeverity === stat.level ? '' : stat.level)}
+                className={`
+                  relative group transition-all duration-300
+                  backdrop-blur-md bg-gradient-to-br ${stat.bgColor}
+                  rounded-xl p-4 border-2 ${stat.borderColor}
+                  shadow-lg ${stat.glowColor} hover:shadow-xl hover:scale-105
+                  before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-br 
+                  before:from-white/10 before:to-transparent before:opacity-0 
+                  before:transition-opacity before:duration-300 hover:before:opacity-100
+                  cursor-pointer
+                  ${selectedSeverity === stat.level ? `ring-2 ring-${stat.color}/50 shadow-2xl scale-105` : ''}
+                `}
+              >
+                <div className="relative z-10 flex items-center space-x-3">
+                  <div className={`p-2 rounded-lg bg-gradient-to-br from-${stat.color}/30 to-${stat.color}/10 border border-${stat.color}/20`}>
+                    <stat.icon className={`w-5 h-5 text-${stat.color} drop-shadow-lg`} />
+                  </div>
+                  <div>
+                    <div className={`font-orbitron font-bold text-xl text-${stat.color} drop-shadow-lg`}>
+                      {stat.count}
+                    </div>
+                    <div className="font-rajdhani text-sm text-slate-300 opacity-80">
+                      {stat.level}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
 
           {/* Search and Filters */}
-          <CyberCard variant="glitch" className="p-6 mb-8">
-            <TerminalWindow title="THREAT SEARCH & FILTER CONSOLE">
-              <div className="space-y-6">
-                {/* Search Bar */}
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-cyber-blue h-5 w-5" />
-                  <input
-                    type="text"
-                    placeholder="SEARCH THREAT DATABASE..."
-                    className="w-full pl-12 pr-4 py-3 bg-cyber-dark/50 border border-cyber-blue/30 rounded-lg 
-                             text-cyber-green font-mono focus:outline-none focus:border-cyber-blue 
-                             focus:ring-2 focus:ring-cyber-blue/20 placeholder-cyber-green/50"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="glass-card p-6 mb-8"
+          >
+            <div className="space-y-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search advisories, categories, authors..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="input-glass pl-11 w-full"
+                />
+              </div>
 
-                {/* Filters Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-xs font-mono text-cyber-green mb-2">CATEGORY</label>
-                    <select
-                      className="w-full px-4 py-3 bg-cyber-dark/50 border border-cyber-blue/30 rounded-lg 
-                               text-cyber-green font-mono focus:outline-none focus:border-cyber-blue 
-                               focus:ring-2 focus:ring-cyber-blue/20"
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
+              {/* Filter Toggle */}
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="
+                    relative overflow-hidden group transition-all duration-300
+                    px-6 py-3 rounded-xl font-rajdhani font-semibold w-fit
+                    bg-gradient-to-r from-purple-600/20 to-purple-500/20
+                    border-2 border-purple-500/30 backdrop-blur-md
+                    text-purple-300 hover:text-white hover:border-purple-400
+                    shadow-lg shadow-purple-500/20 hover:shadow-purple-400/30
+                    hover:scale-105 active:scale-95 flex items-center space-x-2
+                    before:absolute before:inset-0 before:bg-gradient-to-r 
+                    before:from-purple-600/30 before:to-purple-500/30 before:opacity-0 
+                    before:transition-opacity before:duration-300 hover:before:opacity-100
+                    hover:shadow-xl
+                  "
+                >
+                  <Filter className="w-4 h-4 relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                  <span className="relative z-10">Advanced Filters</span>
+                  <ChevronDown className={`w-4 h-4 relative z-10 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} />
+                </button>
+
+                <div className="flex items-center space-x-4">
+                  {/* View Mode Toggle */}
+                  <div className="flex items-center space-x-2 bg-slate-800/50 backdrop-blur-md rounded-lg p-1 border border-slate-700/50">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`
+                        p-2 rounded-lg transition-all duration-300 relative
+                        ${viewMode === 'grid' 
+                          ? 'bg-cyan-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20' 
+                          : 'text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10'
+                        }
+                      `}
                     >
-                      <option value="">ALL CATEGORIES</option>
-                      {categories.map(category => (
-                        <option key={category} value={category} className="bg-cyber-dark">
-                          {category.toUpperCase()}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-xs font-mono text-cyber-green mb-2">SEVERITY</label>
-                    <select
-                      className="w-full px-4 py-3 bg-cyber-dark/50 border border-cyber-blue/30 rounded-lg 
-                               text-cyber-green font-mono focus:outline-none focus:border-cyber-blue 
-                               focus:ring-2 focus:ring-cyber-blue/20"
-                      value={selectedSeverity}
-                      onChange={(e) => setSelectedSeverity(e.target.value)}
+                      <Grid className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`
+                        p-2 rounded-lg transition-all duration-300 relative
+                        ${viewMode === 'list' 
+                          ? 'bg-cyan-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20' 
+                          : 'text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10'
+                        }
+                      `}
                     >
-                      <option value="">ALL SEVERITIES</option>
-                      <option value="Critical">CRITICAL</option>
-                      <option value="High">HIGH</option>
-                      <option value="Medium">MEDIUM</option>
-                      <option value="Low">LOW</option>
-                    </select>
+                      <List className="w-4 h-4" />
+                    </button>
                   </div>
-                  
-                  <div>
-                    <label className="block text-xs font-mono text-cyber-green mb-2">SORT BY</label>
+
+                  {/* Sort Dropdown */}
+                  <div className="relative">
                     <select
-                      className="w-full px-4 py-3 bg-cyber-dark/50 border border-cyber-blue/30 rounded-lg 
-                               text-cyber-green font-mono focus:outline-none focus:border-cyber-blue 
-                               focus:ring-2 focus:ring-cyber-blue/20"
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as SortOption)}
+                      className="
+                        appearance-none bg-slate-800/50 backdrop-blur-md border-2 border-slate-700/50
+                        rounded-xl px-4 py-2 text-sm font-rajdhani text-slate-300
+                        focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none
+                        hover:border-slate-600/50 transition-all duration-300 cursor-pointer
+                        pr-10 min-w-[160px]
+                      "
                     >
-                      <option value="newest">NEWEST FIRST</option>
-                      <option value="oldest">OLDEST FIRST</option>
-                      <option value="severity">BY SEVERITY</option>
-                      <option value="title">BY TITLE</option>
+                      <option value="newest" className="bg-slate-800 text-slate-300">Newest First</option>
+                      <option value="oldest" className="bg-slate-800 text-slate-300">Oldest First</option>
+                      <option value="severity" className="bg-slate-800 text-slate-300">By Severity</option>
+                      <option value="title" className="bg-slate-800 text-slate-300">By Title</option>
                     </select>
-                  </div>
-                  
-                  <div className="flex items-end space-x-2">
-                    <CyberButton 
-                      variant="ghost" 
-                      glowColor="red" 
-                      onClick={clearFilters}
-                      className="flex-1"
-                    >
-                      CLEAR FILTERS
-                    </CyberButton>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
                 </div>
               </div>
-            </TerminalWindow>
-          </CyberCard>
 
-          {/* View Controls */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm font-mono text-cyber-green">
-                DISPLAYING {filteredAdvisories.length} OF {advisories.length} THREATS
-              </span>
-              {(searchTerm || selectedCategory || selectedSeverity) && (
-                <CyberBadge variant="info">
-                  FILTERED
-                </CyberBadge>
+              {/* Advanced Filters */}
+              {showFilters && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-700/50"
+                >
+                  {/* Category Filter */}
+                  <div>
+                    <label className="block font-rajdhani font-medium text-slate-300 mb-2">
+                      Category
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="
+                          appearance-none bg-slate-800/50 backdrop-blur-md border-2 border-slate-700/50
+                          rounded-xl px-4 py-3 font-rajdhani text-slate-300 w-full
+                          focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none
+                          hover:border-slate-600/50 transition-all duration-300 cursor-pointer pr-10
+                        "
+                      >
+                        <option value="" className="bg-slate-800 text-slate-300">All Categories</option>
+                        {categories.map((category) => (
+                          <option key={category} value={category} className="bg-slate-800 text-slate-300">
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Severity Filter */}
+                  <div>
+                    <label className="block font-rajdhani font-medium text-slate-300 mb-2">
+                      Severity Level
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={selectedSeverity}
+                        onChange={(e) => setSelectedSeverity(e.target.value)}
+                        className="
+                          appearance-none bg-slate-800/50 backdrop-blur-md border-2 border-slate-700/50
+                          rounded-xl px-4 py-3 font-rajdhani text-slate-300 w-full
+                          focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none
+                          hover:border-slate-600/50 transition-all duration-300 cursor-pointer pr-10
+                        "
+                      >
+                        <option value="" className="bg-slate-800 text-slate-300">All Severities</option>
+                        {severityLevels.map((level) => (
+                          <option key={level} value={level} className="bg-slate-800 text-slate-300">
+                            {level}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Clear Filters */}
+                  <div className="flex items-end">
+                    <button
+                      onClick={clearFilters}
+                      className="
+                        relative overflow-hidden group transition-all duration-300 w-full
+                        px-6 py-3 rounded-xl font-rajdhani font-semibold
+                        bg-gradient-to-r from-pink-600/20 to-pink-500/20
+                        border-2 border-pink-500/30 backdrop-blur-md
+                        text-pink-300 hover:text-white hover:border-pink-400
+                        shadow-lg shadow-pink-500/20 hover:shadow-pink-400/30
+                        hover:scale-105 active:scale-95 flex items-center justify-center space-x-2
+                        before:absolute before:inset-0 before:bg-gradient-to-r 
+                        before:from-pink-600/30 before:to-pink-500/30 before:opacity-0 
+                        before:transition-opacity before:duration-300 hover:before:opacity-100
+                        hover:shadow-xl
+                      "
+                    >
+                      <RefreshCw className="w-4 h-4 relative z-10 group-hover:rotate-180 transition-transform duration-500" />
+                      <span className="relative z-10">Clear All</span>
+                    </button>
+                  </div>
+                </motion.div>
               )}
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-mono text-cyber-green/70">VIEW:</span>
-              <CyberButton
-                variant={viewMode === 'grid' ? 'cyber' : 'ghost'}
-                glowColor="blue"
-                onClick={() => setViewMode('grid')}
-                className="text-xs"
-              >
-                <Grid className="h-3 w-3" />
-              </CyberButton>
-              <CyberButton
-                variant={viewMode === 'list' ? 'cyber' : 'ghost'}
-                glowColor="blue"
-                onClick={() => setViewMode('list')}
-                className="text-xs"
-              >
-                <List className="h-3 w-3" />
-              </CyberButton>
-            </div>
-          </div>
+          </motion.div>
 
-          {/* Advisory Display */}
-          {isLoading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="text-center space-y-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyber-blue border-t-transparent mx-auto"></div>
-                <p className="text-cyber-green font-mono">SCANNING THREAT DATABASE...</p>
-              </div>
+          {/* Results Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="flex items-center justify-between mb-6"
+          >
+            <div className="font-rajdhani text-slate-400">
+              Showing <span className="text-neon-blue font-semibold">{filteredAdvisories.length}</span> of{' '}
+              <span className="text-slate-200 font-semibold">{advisories.length}</span> advisories
             </div>
-          ) : filteredAdvisories.length === 0 ? (
-            <CyberCard variant="matrix" className="p-12 text-center">
-              <div className="space-y-4">
-                <AlertTriangle className="h-16 w-16 text-cyber-red mx-auto" />
-                <h3 className="text-xl font-mono font-bold text-cyber-red">
-                  NO THREATS DETECTED
-                </h3>
-                <p className="text-cyber-green/70 font-mono">
-                  No advisories match your current search criteria.
-                </p>
-                <CyberButton variant="cyber" glowColor="blue" onClick={clearFilters}>
-                  RESET SEARCH PARAMETERS
-                </CyberButton>
-              </div>
-            </CyberCard>
-          ) : (
-            <div className={
-              viewMode === 'grid' 
-                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-                : 'space-y-4'
-            }>
-              {filteredAdvisories.map((advisory) => 
-                viewMode === 'grid' ? (
-                  <AdvisoryGridItem key={advisory._id} advisory={advisory} />
-                ) : (
-                  <AdvisoryListItem key={advisory._id} advisory={advisory} />
-                )
-              )}
-            </div>
-          )}
+          </motion.div>
+
+          {/* Advisories Grid/List */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className={viewMode === 'grid' ? 'card-grid' : 'space-y-4'}
+          >
+            {filteredAdvisories.length > 0 ? (
+              filteredAdvisories.map((advisory, index) => (
+                <motion.div
+                  key={advisory._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className={viewMode === 'list' ? 'w-full' : ''}
+                >
+                  <AdvisoryCard advisory={advisory} />
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6 }}
+                className="col-span-full"
+              >
+                <div className="glass-card p-12 text-center">
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-slate-700/50 to-slate-800/50 flex items-center justify-center">
+                    <Search className="w-10 h-10 text-slate-500" />
+                  </div>
+                  <h3 className="font-orbitron font-semibold text-xl text-slate-300 mb-2">
+                    No Advisories Found
+                  </h3>
+                  <p className="font-rajdhani text-slate-500 mb-6">
+                    Try adjusting your search criteria or filters to find relevant threat intelligence.
+                  </p>
+                  <button
+                    onClick={clearFilters}
+                    className="
+                      relative overflow-hidden group transition-all duration-300
+                      px-8 py-3 rounded-xl font-rajdhani font-semibold
+                      bg-gradient-to-r from-cyan-600/20 to-cyan-500/20
+                      border-2 border-cyan-500/30 backdrop-blur-md
+                      text-cyan-300 hover:text-white hover:border-cyan-400
+                      shadow-lg shadow-cyan-500/20 hover:shadow-cyan-400/30
+                      hover:scale-105 active:scale-95 flex items-center space-x-2
+                      before:absolute before:inset-0 before:bg-gradient-to-r 
+                      before:from-cyan-600/30 before:to-cyan-500/30 before:opacity-0 
+                      before:transition-opacity before:duration-300 hover:before:opacity-100
+                      hover:shadow-xl
+                    "
+                  >
+                    <RefreshCw className="w-4 h-4 relative z-10 group-hover:rotate-180 transition-transform duration-500" />
+                    <span className="relative z-10">Clear All Filters</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
         </div>
       </div>
     </HydrationSafe>
@@ -509,37 +516,15 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ req }) => {
-  // Check authentication
-  const token = req.cookies.token;
-  
-  if (!token) {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
-    };
-  }
-
-  // Verify token
-  const decoded = verifyToken(token);
-  if (!decoded) {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
-    };
-  }
+  await dbConnect();
 
   try {
-    await dbConnect();
+    // Fetch all advisories
+    const advisories = await Advisory.find({}).sort({ publishedDate: -1 }).lean();
     
-    const [advisories, categories] = await Promise.all([
-      Advisory.find({}).sort({ publishedDate: -1 }).lean(),
-      Advisory.distinct('category')
-    ]);
-
+    // Get unique categories
+    const categories = Array.from(new Set(advisories.map(a => a.category))).filter(Boolean);
+    
     // Calculate stats
     const stats = {
       total: advisories.length,
@@ -548,12 +533,13 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
       medium: advisories.filter(a => a.severity === 'Medium').length,
       low: advisories.filter(a => a.severity === 'Low').length,
       recent: advisories.filter(a => {
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return new Date(a.publishedDate) > weekAgo;
+        const publishedDate = new Date(a.publishedDate);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        return publishedDate >= sevenDaysAgo;
       }).length
     };
-    
+
     return {
       props: {
         advisories: JSON.parse(JSON.stringify(advisories)),
@@ -564,10 +550,11 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   } catch (error) {
     console.error('Error fetching advisories:', error);
     return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
+      props: {
+        advisories: [],
+        categories: [],
+        stats: { total: 0, critical: 0, high: 0, medium: 0, low: 0, recent: 0 }
+      }
     };
   }
 };

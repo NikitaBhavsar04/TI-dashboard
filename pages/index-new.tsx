@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
 import { 
   Shield, 
   Activity,
@@ -22,9 +23,15 @@ import {
 } from 'lucide-react';
 import HydrationSafe from '@/components/HydrationSafe';
 
-function Home() {
+export default function Home() {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push('/advisories');
+    }
+  }, [isAuthenticated, loading, router]);
 
   const features = [
     {
@@ -125,7 +132,12 @@ function Home() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center space-y-8">
               {/* Main Heading */}
-              <div className="space-y-4">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="space-y-4"
+              >
                 <h1 className="font-orbitron font-bold text-5xl md:text-7xl lg:text-8xl text-gradient-blue leading-tight">
                   THREATWATCH
                 </h1>
@@ -133,33 +145,36 @@ function Home() {
                 <p className="font-rajdhani text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
                   Advanced Cybersecurity Intelligence Platform
                 </p>
-              </div>
+              </motion.div>
 
               {/* Subtitle */}
-              <p className="font-rajdhani text-lg text-slate-400 max-w-4xl mx-auto leading-relaxed">
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="font-rajdhani text-lg text-slate-400 max-w-4xl mx-auto leading-relaxed"
+              >
                 Next-generation threat intelligence powered by AI, delivering real-time protection 
                 against evolving cyber threats with comprehensive analysis and automated response capabilities.
-              </p>
+              </motion.p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <Link href="/login" className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border-2 border-cyan-400/50 rounded-xl backdrop-blur-md transition-all duration-300 hover:border-cyan-400 hover:shadow-[0_0_30px_rgba(0,212,255,0.4)] hover:scale-105 transform">
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/30 to-blue-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative flex items-center gap-3 text-white font-orbitron font-semibold">
-                    <User className="w-5 h-5 text-cyan-400 group-hover:text-cyan-300 group-hover:drop-shadow-[0_0_12px_rgba(0,212,255,0.8)] transition-all duration-300" />
-                    <span className="group-hover:text-cyan-100 transition-colors duration-300">Access Platform</span>
-                    <ArrowRight className="w-4 h-4 text-cyan-400 group-hover:translate-x-1 group-hover:text-cyan-300 transition-all duration-300" />
-                  </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+              >
+                <Link href="/login" className="btn-neon group">
+                  <User className="w-5 h-5 group-hover:drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] transition-all duration-300" />
+                  <span>Access Platform</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
                 </Link>
-                <Link href="/advisories" className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-2 border-purple-400/50 rounded-xl backdrop-blur-md transition-all duration-300 hover:border-purple-400 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:scale-105 transform">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600/30 to-pink-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative flex items-center gap-3 text-white font-orbitron font-semibold">
-                    <Shield className="w-5 h-5 text-purple-400 group-hover:text-purple-300 group-hover:drop-shadow-[0_0_12px_rgba(168,85,247,0.8)] transition-all duration-300" />
-                    <span className="group-hover:text-purple-100 transition-colors duration-300">View Threat Intel</span>
-                    <ArrowRight className="w-4 h-4 text-purple-400 group-hover:translate-x-1 group-hover:text-purple-300 transition-all duration-300" />
-                  </div>
+                <Link href="/advisories" className="btn-neon-purple group">
+                  <Shield className="w-5 h-5 group-hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.8)] transition-all duration-300" />
+                  <span>View Advisories</span>
                 </Link>
-              </div>
+              </motion.div>
             </div>
           </div>
 
@@ -171,9 +186,22 @@ function Home() {
         {/* Stats Section */}
         <section className="py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            >
               {stats.map((stat, index) => (
-                <div key={index} className="glass-card p-6 text-center hover-glow group">
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  className="glass-card p-6 text-center hover-glow group"
+                >
                   <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-${stat.color}/20 to-${stat.color}/10 mb-4 group-hover:from-${stat.color}/30 group-hover:to-${stat.color}/20 transition-all duration-300`}>
                     <div className={`text-${stat.color}`}>
                       {stat.icon}
@@ -190,16 +218,22 @@ function Home() {
                       {stat.change}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* Features Section */}
         <section className="py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="text-center mb-16"
+            >
               <h2 className="font-orbitron font-bold text-4xl md:text-5xl text-gradient-purple mb-4">
                 Advanced Capabilities
               </h2>
@@ -207,11 +241,18 @@ function Home() {
                 Comprehensive cybersecurity solutions powered by cutting-edge technology 
                 and AI-driven intelligence for maximum protection.
               </p>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {features.map((feature, index) => (
-                <div key={index} className="glass-card p-8 hover-glow group">
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  className="glass-card p-8 hover-glow group"
+                >
                   <div className={`inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-${feature.color}/20 to-${feature.color}/10 mb-6 group-hover:from-${feature.color}/30 group-hover:to-${feature.color}/20 transition-all duration-300`}>
                     <div className={`text-${feature.color} group-hover:drop-shadow-[0_0_8px_rgba(0,212,255,0.6)] transition-all duration-300`}>
                       {feature.icon}
@@ -223,7 +264,7 @@ function Home() {
                   <p className="font-rajdhani text-slate-400 leading-relaxed">
                     {feature.description}
                   </p>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -232,7 +273,13 @@ function Home() {
         {/* CTA Section */}
         <section className="py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="glass-card p-12 hover-glow">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="glass-card p-12 hover-glow"
+            >
               <div className="space-y-6">
                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 mb-6">
                   <Shield className="w-10 h-10 text-neon-blue" />
@@ -244,26 +291,19 @@ function Home() {
                   Join thousands of security professionals who trust THREATWATCH 
                   for comprehensive cyber threat intelligence and protection.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                  <Link href="/login" className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border-2 border-blue-400/50 rounded-xl backdrop-blur-md transition-all duration-300 hover:border-blue-400 hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] hover:scale-105 transform">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600/30 to-indigo-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="relative flex items-center gap-3 text-white font-orbitron font-semibold">
-                      <User className="w-5 h-5 text-blue-400 group-hover:text-blue-300 group-hover:drop-shadow-[0_0_12px_rgba(59,130,246,0.8)] transition-all duration-300" />
-                      <span className="group-hover:text-blue-100 transition-colors duration-300">Get Started</span>
-                      <ArrowRight className="w-4 h-4 text-blue-400 group-hover:translate-x-1 group-hover:text-blue-300 transition-all duration-300" />
-                    </div>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link href="/login" className="btn-neon group">
+                    <User className="w-5 h-5" />
+                    <span>Get Started</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
                   </Link>
-                  <Link href="/advisories" className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-emerald-600/20 to-cyan-600/20 border-2 border-emerald-400/50 rounded-xl backdrop-blur-md transition-all duration-300 hover:border-emerald-400 hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:scale-105 transform">
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/30 to-cyan-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="relative flex items-center gap-3 text-white font-orbitron font-semibold">
-                      <Globe className="w-5 h-5 text-emerald-400 group-hover:text-emerald-300 group-hover:drop-shadow-[0_0_12px_rgba(16,185,129,0.8)] transition-all duration-300" />
-                      <span className="group-hover:text-emerald-100 transition-colors duration-300">Explore Live Threats</span>
-                      <ArrowRight className="w-4 h-4 text-emerald-400 group-hover:translate-x-1 group-hover:text-emerald-300 transition-all duration-300" />
-                    </div>
+                  <Link href="/advisories" className="btn-neon-purple">
+                    <Globe className="w-5 h-5" />
+                    <span>Explore Threats</span>
                   </Link>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </section>
 
@@ -279,5 +319,3 @@ function Home() {
     </HydrationSafe>
   );
 }
-
-export default Home;

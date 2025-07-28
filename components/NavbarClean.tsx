@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import { Shield, User, Settings, LogOut, Menu, X, Activity, Clock } from 'lucide-react';
+import { Shield, User, Settings, LogOut, Menu, X, Activity, Clock, Home } from 'lucide-react';
 
 function Navbar() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
@@ -41,6 +41,11 @@ function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-2 px-4 py-2 text-white">
+              <Home className="h-5 w-5 text-cyan-400" />
+              <span>HOME</span>
+            </Link>
+            
             <Link href="/advisories" className="flex items-center gap-2 px-4 py-2 text-white">
               <Activity className="h-5 w-5 text-cyan-400" />
               <span>INTEL FEED</span>
@@ -95,6 +100,11 @@ function Navbar() {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 mt-2 mx-4 bg-slate-900/90 rounded-xl border border-white/10 p-4 space-y-3">
+            <Link href="/" className="flex items-center gap-3 p-3 text-white" onClick={() => setIsMenuOpen(false)}>
+              <Home className="h-5 w-5 text-cyan-400" />
+              <span>HOME</span>
+            </Link>
+            
             <Link href="/advisories" className="flex items-center gap-3 p-3 text-white" onClick={() => setIsMenuOpen(false)}>
               <Activity className="h-5 w-5 text-cyan-400" />
               <span>INTEL FEED</span>

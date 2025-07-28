@@ -25,8 +25,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   else if (req.method === 'PUT') {
     // Update advisory - Admin only
     const authResult = await requireAdmin(req);
-    if (authResult.error) {
-      return res.status(authResult.status).json({ message: authResult.error });
+    if (!authResult || (authResult as any).error) {
+      const error = (authResult as any).error || 'Unauthorized';
+      const status = (authResult as any).status || 401;
+      return res.status(status).json({ message: error });
     }
 
     try {
@@ -48,8 +50,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   else if (req.method === 'DELETE') {
     // Delete advisory - Admin only
     const authResult = await requireAdmin(req);
-    if (authResult.error) {
-      return res.status(authResult.status).json({ message: authResult.error });
+    if (!authResult || (authResult as any).error) {
+      const error = (authResult as any).error || 'Unauthorized';
+      const status = (authResult as any).status || 401;
+      return res.status(status).json({ message: error });
     }
 
     try {
