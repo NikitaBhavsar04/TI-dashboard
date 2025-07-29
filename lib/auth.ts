@@ -38,10 +38,13 @@ export const extractTokenFromRequest = (req: NextApiRequest): string | null => {
   }
   
   // Also check cookies for web requests
+  console.log('Auth - Checking cookies:', req.cookies);
   if (req.cookies.token) {
+    console.log('Auth - Found token in cookies');
     return req.cookies.token;
   }
   
+  console.log('Auth - No token found in headers or cookies');
   return null;
 };
 

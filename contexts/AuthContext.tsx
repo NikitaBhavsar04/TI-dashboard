@@ -81,6 +81,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data = await response.json();
       setUser(data.user);
       
+      // Store token in localStorage as backup
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
+      
       // Redirect based on role
       if (data.user.role === 'admin') {
         router.push('/admin');
@@ -101,6 +106,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Clear localStorage
+      localStorage.removeItem('token');
       setUser(null);
       router.push('/login');
     }

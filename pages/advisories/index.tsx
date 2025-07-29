@@ -30,6 +30,8 @@ import {
 } from 'lucide-react';
 import HydrationSafe from '@/components/HydrationSafe';
 import AdvisoryCard from '@/components/AdvisoryCard';
+import AdvisoryCardWithEmail from '@/components/AdvisoryCardWithEmail';
+import EmailModal from '@/components/EmailModal';
 import { IAdvisory } from '@/models/Advisory';
 import { formatDate } from '@/lib/utils';
 import dbConnect from '@/lib/db';
@@ -62,6 +64,8 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [selectedAdvisoryForEmail, setSelectedAdvisoryForEmail] = useState<IAdvisory | null>(null);
 
   const severityLevels = ['Critical', 'High', 'Medium', 'Low'];
 
@@ -131,6 +135,13 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
     setSelectedCategory('');
     setSelectedSeverity('');
     setSortBy('newest');
+  };
+
+  const handleEmailAdvisory = (advisory: IAdvisory, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedAdvisoryForEmail(advisory);
+    setEmailModalOpen(true);
   };
 
   return (
@@ -466,7 +477,10 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                   className={viewMode === 'list' ? 'w-full' : ''}
                 >
-                  <AdvisoryCard advisory={advisory} />
+                  <AdvisoryCardWithEmail 
+                    advisory={advisory} 
+                    onEmailClick={isAdmin ? handleEmailAdvisory : undefined}
+                  />
                 </motion.div>
               ))
             ) : (
@@ -511,6 +525,18 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
           </motion.div>
         </div>
       </div>
+
+      {/* Email Modal */}
+      {emailModalOpen && selectedAdvisoryForEmail && (
+        <EmailModal
+          isOpen={emailModalOpen}
+          onClose={() => {
+            setEmailModalOpen(false);
+            setSelectedAdvisoryForEmail(null);
+          }}
+          advisory={selectedAdvisoryForEmail}
+        />
+      )}
     </HydrationSafe>
   );
 }
