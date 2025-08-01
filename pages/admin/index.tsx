@@ -177,7 +177,7 @@ export default function AdminDashboard() {
     <HydrationSafe>
       <div className="min-h-screen bg-cyber-dark">
         <Head>
-          <title>Admin Dashboard - THREATWATCH INTELLIGENCE</title>
+          <title>Admin Dashboard - EaglEye IntelDesk INTELLIGENCE</title>
           <meta name="description" content="ThreatWatch Intelligence Platform Admin Dashboard" />
         </Head>
 

@@ -32,6 +32,8 @@ import HydrationSafe from '@/components/HydrationSafe';
 import AdvisoryCard from '@/components/AdvisoryCard';
 import AdvisoryCardWithEmail from '@/components/AdvisoryCardWithEmail';
 import EmailModal from '@/components/EmailModal';
+import ScheduledEmailsManager from '@/components/ScheduledEmailsManager';
+import EditScheduledEmailModal from '@/components/EditScheduledEmailModal';
 import { IAdvisory } from '@/models/Advisory';
 import { formatDate } from '@/lib/utils';
 import dbConnect from '@/lib/db';
@@ -66,6 +68,10 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
   const [isLoading, setIsLoading] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [selectedAdvisoryForEmail, setSelectedAdvisoryForEmail] = useState<IAdvisory | null>(null);
+  const [showScheduledEmails, setShowScheduledEmails] = useState(false);
+  const [editEmailModalOpen, setEditEmailModalOpen] = useState(false);
+  const [editingEmailData, setEditingEmailData] = useState<any>(null);
+  const [selectedScheduledEmail, setSelectedScheduledEmail] = useState<any>(null);
 
   const severityLevels = ['Critical', 'High', 'Medium', 'Low'];
 
@@ -144,11 +150,41 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
     setEmailModalOpen(true);
   };
 
+  const handleEditScheduledEmail = (scheduledEmail: any) => {
+    setSelectedScheduledEmail(scheduledEmail);
+    setEditEmailModalOpen(true);
+  };
+
+  const handleScheduledEmailsRefresh = () => {
+    // This will be handled by the ScheduledEmailsManager component
+  };
+
+  const handleEditEmailSave = async (emailData: any) => {
+    try {
+      const response = await fetch(`/api/scheduled-emails/${emailData._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(emailData)
+      });
+
+      if (response.ok) {
+        setEditEmailModalOpen(false);
+        setEditingEmailData(null);
+        // Trigger refresh of scheduled emails
+        handleScheduledEmailsRefresh();
+      }
+    } catch (error) {
+      console.error('Error updating scheduled email:', error);
+    }
+  };
+
   return (
     <HydrationSafe>
       <div className="min-h-screen bg-tech-gradient pt-20 pb-12">
         <Head>
-          <title>Threat Advisories - THREATWATCH Intelligence Platform</title>
+          <title>Threat Advisories - EaglEye IntelDesk Intelligence Platform</title>
           <meta name="description" content="Browse comprehensive cybersecurity threat advisories and intelligence reports" />
         </Head>
 
@@ -163,7 +199,7 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
               <div className="mb-6 lg:mb-0">
                 <h1 className="font-orbitron font-bold text-4xl md:text-5xl text-gradient-blue mb-4">
-                  Threat Intelligence
+                  IntelDesk
                 </h1>
                 <p className="font-rajdhani text-lg text-slate-400 max-w-2xl">
                   Comprehensive cybersecurity advisories with real-time threat analysis and IOC intelligence.
@@ -215,6 +251,28 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
                     <Plus className="w-4 h-4 relative z-10 group-hover:scale-110 group-hover:rotate-90 transition-all duration-300" />
                     <span className="relative z-10">New Advisory</span>
                   </Link>
+                )}
+
+                {isAdmin && (
+                  <button
+                    onClick={() => setShowScheduledEmails(!showScheduledEmails)}
+                    className={`
+                      relative overflow-hidden group transition-all duration-300
+                      px-6 py-3 rounded-xl font-rajdhani font-semibold
+                      border-2 backdrop-blur-md
+                      shadow-lg hover:scale-105 active:scale-95 flex items-center space-x-2
+                      before:absolute before:inset-0 before:bg-gradient-to-r 
+                      before:transition-opacity before:duration-300 hover:before:opacity-100
+                      hover:shadow-xl
+                      ${showScheduledEmails 
+                        ? 'bg-gradient-to-r from-orange-600/20 to-orange-500/20 border-orange-500/30 text-orange-300 hover:text-white hover:border-orange-400 shadow-orange-500/20 hover:shadow-orange-400/30 before:from-orange-600/30 before:to-orange-500/30' 
+                        : 'bg-gradient-to-r from-violet-600/20 to-violet-500/20 border-violet-500/30 text-violet-300 hover:text-white hover:border-violet-400 shadow-violet-500/20 hover:shadow-violet-400/30 before:from-violet-600/30 before:to-violet-500/30'
+                      }
+                    `}
+                  >
+                    <Calendar className="w-4 h-4 relative z-10 group-hover:scale-110 transition-all duration-300" />
+                    <span className="relative z-10">{showScheduledEmails ? 'Hide Scheduled' : 'Scheduled Emails'}</span>
+                  </button>
                 )}
               </div>
             </div>
@@ -535,6 +593,31 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
             setSelectedAdvisoryForEmail(null);
           }}
           advisory={selectedAdvisoryForEmail}
+        />
+      )}
+
+      {/* Scheduled Emails Manager */}
+      {showScheduledEmails && (
+        <ScheduledEmailsManager
+          onEditEmail={(email) => {
+            setEditingEmailData(email);
+            setEditEmailModalOpen(true);
+          }}
+          onClose={() => setShowScheduledEmails(false)}
+          onRefresh={handleScheduledEmailsRefresh}
+        />
+      )}
+
+      {/* Edit Scheduled Email Modal */}
+      {editEmailModalOpen && editingEmailData && (
+        <EditScheduledEmailModal
+          isOpen={editEmailModalOpen}
+          onClose={() => {
+            setEditEmailModalOpen(false);
+            setEditingEmailData(null);
+          }}
+          emailData={editingEmailData}
+          onSave={handleEditEmailSave}
         />
       )}
     </HydrationSafe>

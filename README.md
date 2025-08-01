@@ -1,4 +1,4 @@
-# 🔒 THREATWATCH INTELLIGENCE PLATFORM
+# 🔒 EaglEye IntelDesk INTELLIGENCE PLATFORM
 
 A comprehensive cybersecurity threat advisory platform built with Next.js, featuring real-time threat intelligence, secure authentication, and role-based access control.
 

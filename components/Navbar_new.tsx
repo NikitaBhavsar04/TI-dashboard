@@ -40,7 +40,7 @@ export default function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="font-orbitron font-bold text-lg text-white group-hover:text-neon-blue transition-colors duration-300">
-                THREATWATCH
+                EaglEye IntelDesk
               </span>
               <span className="font-rajdhani text-xs text-white/60 -mt-1">
                 INTELLIGENCE PLATFORM

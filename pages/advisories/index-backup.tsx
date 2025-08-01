@@ -360,7 +360,7 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
     <HydrationSafe>
       <div className="min-h-screen bg-cyber-gradient bg-fixed">
         <Head>
-          <title>THREAT INTELLIGENCE DATABASE - THREATWATCH</title>
+          <title>THREAT INTELLIGENCE DATABASE - EaglEye IntelDesk</title>
           <meta name="description" content="Comprehensive cyber threat advisory database with real-time intelligence" />
         </Head>
 

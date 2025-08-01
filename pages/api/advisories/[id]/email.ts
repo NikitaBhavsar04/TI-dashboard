@@ -106,7 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     <body>
       <div class="container">
         <div class="header">
-          <div class="logo">🛡️ THREATWATCH</div>
+          <div class="logo">🛡️ EaglEye IntelDesk</div>
           <div class="subtitle">Cybersecurity Intelligence Platform</div>
         </div>
         

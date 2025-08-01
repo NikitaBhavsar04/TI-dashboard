@@ -117,7 +117,7 @@ export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
       <HydrationSafe>
         <div className="min-h-screen bg-cyber-dark">
           <Head>
-            <title>Edit Advisory - THREATWATCH INTELLIGENCE</title>
+            <title>Edit Advisory - EaglEye IntelDesk INTELLIGENCE</title>
             <meta name="description" content="Edit threat advisory" />
           </Head>
 

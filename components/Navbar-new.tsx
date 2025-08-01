@@ -34,7 +34,7 @@ export default function Navbar() {
               <Shield className="w-6 h-6 text-neon-blue group-hover:drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] transition-all duration-300" />
             </div>
             <span className="font-orbitron font-bold text-xl text-gradient-blue tracking-wider">
-              THREATWATCH
+              EaglEye IntelDesk
             </span>
           </Link>
 

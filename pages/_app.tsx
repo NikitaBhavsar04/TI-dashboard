@@ -12,6 +12,14 @@ export default function App({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     setMounted(true);
+    
+    // Start Agenda in development
+    if (process.env.NODE_ENV !== 'production') {
+      fetch('/api/start-agenda', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => console.log('📧 Agenda startup:', data))
+        .catch(err => console.error('❌ Failed to start Agenda:', err));
+    }
   }, []);
 
   // Check if current page is an advisory detail page

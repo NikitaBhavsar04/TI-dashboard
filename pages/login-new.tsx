@@ -56,8 +56,8 @@ export default function Login() {
     <HydrationSafe>
       <div className="min-h-screen bg-tech-gradient flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <Head>
-          <title>Login - THREATWATCH Intelligence Platform</title>
-          <meta name="description" content="Access the THREATWATCH cybersecurity intelligence platform" />
+          <title>Login - EaglEye IntelDesk Intelligence Platform</title>
+          <meta name="description" content="Access the EaglEye IntelDesk cybersecurity intelligence platform" />
         </Head>
 
         <div className="max-w-md w-full space-y-8">
@@ -76,7 +76,7 @@ export default function Login() {
 
             {/* Title */}
             <h1 className="font-orbitron font-bold text-4xl text-gradient-blue mb-2">
-              THREATWATCH
+              EaglEye IntelDesk
             </h1>
             <p className="font-rajdhani text-slate-400 text-lg">
               Access Intelligence Platform

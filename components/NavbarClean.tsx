@@ -36,7 +36,7 @@ function Navbar() {
           {/* Logo */}
           <Link href={isAuthenticated ? "/advisories" : "/"} className="flex items-center gap-3">
             <Shield className="h-6 w-6 text-cyan-400" />
-            <span className="font-orbitron font-bold text-lg text-white">THREATWATCH</span>
+            <span className="font-orbitron font-bold text-lg text-white">EaglEye IntelDesk</span>
           </Link>
 
           {/* Desktop Navigation */}

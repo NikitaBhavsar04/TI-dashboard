@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, X, Plus, Minus, Send, Users, Eye, EyeOff } from 'lucide-react';
+import { Mail, X, Plus, Minus, Send, Users, Eye, EyeOff, Clock, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { IAdvisory } from '@/models/Advisory';
 
@@ -12,12 +12,15 @@ interface EmailModalProps {
 const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, advisory }) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isScheduled, setIsScheduled] = useState(false);
   const [emailData, setEmailData] = useState({
     to: [''],
     cc: [''],
     bcc: [''],
     subject: `THREAT ALERT: ${advisory.title}`,
-    customMessage: ''
+    customMessage: '',
+    scheduledDate: '',
+    scheduledTime: ''
   });
   const [showCC, setShowCC] = useState(false);
   const [showBCC, setShowBCC] = useState(false);
@@ -73,6 +76,55 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, advisory }) =>
         return;
       }
 
+      // Handle scheduled emails
+      if (isScheduled) {
+        if (!emailData.scheduledDate || !emailData.scheduledTime) {
+          alert('Please select both date and time for scheduled email');
+          return;
+        }
+
+        const scheduledDateTime = new Date(`${emailData.scheduledDate}T${emailData.scheduledTime}`);
+        const now = new Date();
+        
+        if (scheduledDateTime <= now) {
+          alert('Scheduled time must be in the future');
+          return;
+        }
+
+        const scheduleData = {
+          ...cleanedData,
+          advisoryId: advisory._id || advisory.id,
+          scheduledDate: scheduledDateTime.toISOString()
+        };
+
+        const token = localStorage.getItem('token');
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json'
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch('/api/scheduled-emails', {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify(scheduleData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          alert(`Email scheduled successfully for ${scheduledDateTime.toLocaleString()}!`);
+          onClose();
+        } else {
+          alert(`Failed to schedule email: ${result.message}`);
+        }
+        return;
+      }
+
+      // Handle immediate emails (existing logic)
       const token = localStorage.getItem('token');
       const headers: HeadersInit = {
         'Content-Type': 'application/json'
@@ -274,6 +326,58 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, advisory }) =>
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:outline-none resize-vertical"
             />
           </div>
+
+          {/* Schedule Toggle */}
+          <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-lg border border-slate-700">
+            <div className="flex items-center gap-3">
+              <Clock className="h-5 w-5 text-cyan-400" />
+              <div>
+                <h4 className="text-white font-medium">Schedule Email</h4>
+                <p className="text-sm text-slate-400">Send this email at a specific time</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsScheduled(!isScheduled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                isScheduled ? 'bg-cyan-600' : 'bg-slate-600'
+              }`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                isScheduled ? 'translate-x-6' : 'translate-x-1'
+              }`} />
+            </button>
+          </div>
+
+          {/* Schedule Date/Time */}
+          {isScheduled && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  <Calendar className="inline h-4 w-4 mr-1" />
+                  Date:
+                </label>
+                <input
+                  type="date"
+                  value={emailData.scheduledDate}
+                  onChange={(e) => setEmailData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-cyan-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  <Clock className="inline h-4 w-4 mr-1" />
+                  Time:
+                </label>
+                <input
+                  type="time"
+                  value={emailData.scheduledTime}
+                  onChange={(e) => setEmailData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-cyan-400 focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -291,10 +395,12 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, advisory }) =>
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : isScheduled ? (
+              <Clock className="h-4 w-4" />
             ) : (
               <Send className="h-4 w-4" />
             )}
-            {isLoading ? 'Sending...' : 'Send Email'}
+            {isLoading ? (isScheduled ? 'Scheduling...' : 'Sending...') : isScheduled ? 'Schedule Email' : 'Send Email'}
           </button>
         </div>
       </div>

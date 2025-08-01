@@ -74,7 +74,7 @@ export default function Home() {
     <HydrationSafe>
       <div className="min-h-screen bg-tech-gradient relative">
         <Head>
-          <title>THREATWATCH - Advanced Cybersecurity Intelligence Platform</title>
+          <title>EaglEye IntelDesk - Advanced Cybersecurity Intelligence Platform</title>
           <meta name="description" content="Advanced threat intelligence and advisory platform with real-time monitoring and AI-powered analysis" />
         </Head>
 
@@ -99,7 +99,7 @@ export default function Home() {
                 
                 <div className="space-y-4">
                   <h1 className="font-orbitron font-bold text-5xl md:text-7xl bg-gradient-to-r from-white via-neon-blue to-neon-purple bg-clip-text text-transparent">
-                    THREATWATCH
+                    EaglEye IntelDesk
                   </h1>
                   <div className="font-rajdhani text-xl md:text-2xl text-white/80 tracking-wider">
                     ADVANCED CYBERSECURITY INTELLIGENCE PLATFORM
@@ -252,7 +252,7 @@ export default function Home() {
             <div className="text-center space-y-4">
               <div className="flex justify-center items-center gap-3">
                 <Shield className="h-6 w-6 text-neon-blue" />
-                <span className="font-orbitron font-bold text-lg text-white">THREATWATCH</span>
+                <span className="font-orbitron font-bold text-lg text-white">EaglEye IntelDesk</span>
               </div>
               <p className="font-rajdhani text-white/60">
                 Advanced Cybersecurity Intelligence Platform © 2024
@@ -277,7 +277,7 @@ export default function Home() {
                 </HolographicOverlay>
                 <h1 className="text-5xl md:text-7xl font-mono font-bold mb-4">
                   <NeonText color="red" intensity="high">
-                    THREATWATCH
+                    EaglEye IntelDesk
                   </NeonText>
                 </h1>
                 <h2 className="text-2xl md:text-3xl font-mono font-bold text-cyber-blue mb-6">
@@ -427,7 +427,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center">
               <p className="text-cyber-green/60 font-mono text-sm">
-                THREATWATCH INTELLIGENCE PLATFORM - CONFIDENTIAL
+                EaglEye IntelDesk INTELLIGENCE PLATFORM - CONFIDENTIAL
               </p>
               <p className="text-cyber-green/40 font-mono text-xs mt-2">
                 Advanced Cyber Threat Analysis & Intelligence System

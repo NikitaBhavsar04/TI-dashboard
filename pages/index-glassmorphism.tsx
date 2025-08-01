@@ -37,7 +37,7 @@ export default function Home() {
     <HydrationSafe>
       <div className="min-h-screen relative cyber-background">
         <Head>
-          <title>THREATWATCH INTELLIGENCE - Cyber Threat Analysis Platform</title>
+          <title>EaglEye IntelDesk INTELLIGENCE - Cyber Threat Analysis Platform</title>
           <meta name="description" content="Advanced threat intelligence and advisory platform" />
         </Head>
 
@@ -50,7 +50,7 @@ export default function Home() {
               <div className="mb-8 animate-fade-in-up">
                 <Shield className="h-24 w-24 text-neon-blue mx-auto mb-6 neon-glow" />
                 <h1 className="heading-glass text-5xl md:text-7xl mb-4">
-                  THREATWATCH
+                  EaglEye IntelDesk
                 </h1>
                 <h2 className="heading-glass text-2xl md:text-3xl text-neon-cyan mb-6">
                   INTELLIGENCE PLATFORM
@@ -189,7 +189,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center">
               <p className="text-secondary text-sm">
-                THREATWATCH INTELLIGENCE PLATFORM - CONFIDENTIAL
+                EaglEye IntelDesk INTELLIGENCE PLATFORM - CONFIDENTIAL
               </p>
               <p className="text-muted text-xs mt-2">
                 Advanced Cyber Threat Analysis & Intelligence System

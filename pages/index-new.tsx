@@ -122,7 +122,7 @@ export default function Home() {
     <HydrationSafe>
       <div className="min-h-screen bg-tech-gradient">
         <Head>
-          <title>THREATWATCH - Advanced Cybersecurity Intelligence Platform</title>
+          <title>EaglEye IntelDesk - Advanced Cybersecurity Intelligence Platform</title>
           <meta name="description" content="Next-generation cybersecurity threat intelligence platform with AI-powered analysis, real-time monitoring, and comprehensive threat protection." />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
@@ -139,7 +139,7 @@ export default function Home() {
                 className="space-y-4"
               >
                 <h1 className="font-orbitron font-bold text-5xl md:text-7xl lg:text-8xl text-gradient-blue leading-tight">
-                  THREATWATCH
+                  EaglEye IntelDesk
                 </h1>
                 <div className="h-1 w-32 bg-gradient-to-r from-neon-blue via-neon-purple to-neon-pink mx-auto rounded-full"></div>
                 <p className="font-rajdhani text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
@@ -288,7 +288,7 @@ export default function Home() {
                   Ready to Secure Your Digital Assets?
                 </h2>
                 <p className="font-rajdhani text-lg text-slate-400 max-w-2xl mx-auto">
-                  Join thousands of security professionals who trust THREATWATCH 
+                  Join thousands of security professionals who trust EaglEye IntelDesk 
                   for comprehensive cyber threat intelligence and protection.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -311,7 +311,7 @@ export default function Home() {
         <footer className="py-8 px-4 sm:px-6 lg:px-8 border-t border-slate-800/50">
           <div className="max-w-7xl mx-auto text-center">
             <p className="font-rajdhani text-slate-500">
-              © 2024 THREATWATCH. Advanced Cybersecurity Intelligence Platform.
+              © 2024 EaglEye IntelDesk. Advanced Cybersecurity Intelligence Platform.
             </p>
           </div>
         </footer>

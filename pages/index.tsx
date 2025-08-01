@@ -115,7 +115,7 @@ function Home() {
     <HydrationSafe>
       <div className="min-h-screen bg-tech-gradient">
         <Head>
-          <title>THREATWATCH - Advanced Cybersecurity Intelligence Platform</title>
+          <title>EaglEye IntelDesk - Advanced Cybersecurity Intelligence Platform</title>
           <meta name="description" content="Next-generation cybersecurity threat intelligence platform with AI-powered analysis, real-time monitoring, and comprehensive threat protection." />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
@@ -126,8 +126,8 @@ function Home() {
             <div className="text-center space-y-8">
               {/* Main Heading */}
               <div className="space-y-4">
-                <h1 className="font-orbitron font-bold text-5xl md:text-7xl lg:text-8xl text-gradient-blue leading-tight">
-                  THREATWATCH
+                <h1 className="font-orbitron font-bold text-5xl md:text-7xl lg:text-8xl text-gradient-blue leading-tight pb-3">
+                  EaglEye IntelDesk
                 </h1>
                 <div className="h-1 w-32 bg-gradient-to-r from-neon-blue via-neon-purple to-neon-pink mx-auto rounded-full"></div>
                 <p className="font-rajdhani text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
@@ -143,19 +143,19 @@ function Home() {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <Link href="/login" className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border-2 border-cyan-400/50 rounded-xl backdrop-blur-md transition-all duration-300 hover:border-cyan-400 hover:shadow-[0_0_30px_rgba(0,212,255,0.4)] hover:scale-105 transform">
+                {/* <Link href="/login" className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border-2 border-cyan-400/50 rounded-xl backdrop-blur-md transition-all duration-300 hover:border-cyan-400 hover:shadow-[0_0_30px_rgba(0,212,255,0.4)] hover:scale-105 transform">
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/30 to-blue-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="relative flex items-center gap-3 text-white font-orbitron font-semibold">
-                    <User className="w-5 h-5 text-cyan-400 group-hover:text-cyan-300 group-hover:drop-shadow-[0_0_12px_rgba(0,212,255,0.8)] transition-all duration-300" />
+                    <Shield className="w-5 h-5 text-cyan-400 group-hover:text-cyan-300 group-hover:drop-shadow-[0_0_12px_rgba(0,212,255,0.8)] transition-all duration-300" />
                     <span className="group-hover:text-cyan-100 transition-colors duration-300">Access Platform</span>
                     <ArrowRight className="w-4 h-4 text-cyan-400 group-hover:translate-x-1 group-hover:text-cyan-300 transition-all duration-300" />
                   </div>
-                </Link>
-                <Link href="/advisories" className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-2 border-purple-400/50 rounded-xl backdrop-blur-md transition-all duration-300 hover:border-purple-400 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:scale-105 transform">
+                </Link> */}
+                <Link href="/login" className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-2 border-purple-400/50 rounded-xl backdrop-blur-md transition-all duration-300 hover:border-purple-400 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:scale-105 transform">
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-600/30 to-pink-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="relative flex items-center gap-3 text-white font-orbitron font-semibold">
                     <Shield className="w-5 h-5 text-purple-400 group-hover:text-purple-300 group-hover:drop-shadow-[0_0_12px_rgba(168,85,247,0.8)] transition-all duration-300" />
-                    <span className="group-hover:text-purple-100 transition-colors duration-300">View Threat Intel</span>
+                    <span className="group-hover:text-purple-100 transition-colors duration-300">Access Platform</span>
                     <ArrowRight className="w-4 h-4 text-purple-400 group-hover:translate-x-1 group-hover:text-purple-300 transition-all duration-300" />
                   </div>
                 </Link>
@@ -241,7 +241,7 @@ function Home() {
                   Ready to Secure Your Digital Assets?
                 </h2>
                 <p className="font-rajdhani text-lg text-slate-400 max-w-2xl mx-auto">
-                  Join thousands of security professionals who trust THREATWATCH 
+                  Join thousands of security professionals who trust EaglEye IntelDesk 
                   for comprehensive cyber threat intelligence and protection.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-6 justify-center">
@@ -271,7 +271,7 @@ function Home() {
         <footer className="py-8 px-4 sm:px-6 lg:px-8 border-t border-slate-800/50">
           <div className="max-w-7xl mx-auto text-center">
             <p className="font-rajdhani text-slate-500">
-              © 2024 THREATWATCH. Advanced Cybersecurity Intelligence Platform.
+              © 2025 EaglEye IntelDesk. Advanced Cybersecurity Intelligence Platform.
             </p>
           </div>
         </footer>

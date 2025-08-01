@@ -55,8 +55,8 @@ export default function Login() {
     <HydrationSafe>
       <div className="min-h-screen bg-tech-gradient relative flex items-center justify-center px-4 py-20">
         <Head>
-          <title>Secure Login - THREATWATCH Intelligence Platform</title>
-          <meta name="description" content="Secure access to the THREATWATCH cybersecurity intelligence platform" />
+          <title>Secure Login - EaglEye IntelDesk Intelligence Platform</title>
+          <meta name="description" content="Secure access to the EaglEye IntelDesk cybersecurity intelligence platform" />
         </Head>
 
         {/* Background Effects */}
