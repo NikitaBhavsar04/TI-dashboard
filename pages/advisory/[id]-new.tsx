@@ -602,7 +602,8 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req }) =>
   try {
     await dbConnect();
     
-    const advisory = await Advisory.findById(params?.id).lean();
+    const advisoryResult = await Advisory.findById(params?.id).lean();
+    const advisory = Array.isArray(advisoryResult) ? advisoryResult[0] : advisoryResult;
     
     if (!advisory) {
       return {
@@ -630,7 +631,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req }) =>
     // Convert ObjectId and Date objects for serialization
     const serializedAdvisory = {
       ...advisory,
-      _id: advisory._id.toString(),
+      _id: advisory._id?.toString(),
       publishedDate: advisory.publishedDate?.toISOString() || new Date().toISOString(),
       createdAt: advisory.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: advisory.updatedAt?.toISOString() || new Date().toISOString(),

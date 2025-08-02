@@ -71,53 +71,146 @@ interface ExtendedAdvisory {
   author?: string;
   category?: string;
   tags?: string[];
-  references?: string[];
-  iocs?: Array<{ type: string; value: string; description?: string }>;
-  cveIds?: string[];
   content?: string;
   summary?: string;
-  
-  // Extended threat intelligence fields
-  threatDesignation?: string;
-  threatCategory?: string;
-  threatLevel?: string;
-  tlpClassification?: string;
-  tlp?: string;
-  cves?: string[];
   executiveSummary?: string;
-  affectedProducts?: string[];
-  targetSectors?: string[];
-  regions?: string[];
+  cvss?: string;
+  cveIds?: string[];
+  cves?: string[];
+  iocs?: Array<{
+    type: string;
+    value: string;
+    description?: string;
+  }>;
   mitreTactics?: Array<{
     tacticName: string;
     techniqueId: string;
     technique: string;
   }>;
   recommendations?: string[];
+  references?: string[];
   patchDetails?: string;
-  cvss?: string;
+  threatDesignation?: string;
+  threatCategory?: string;
+  threatLevel?: string;
+  tlpClassification?: string;
+  affectedProducts?: string[];
+  targetSectors?: string[];
+  regions?: string[];
 }
 
 interface AdvisoryDetailProps {
   advisory: ExtendedAdvisory;
 }
 
-export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
-  const router = useRouter();
-  const { user, isAdmin } = useAuth();
-  const [copiedItem, setCopiedItem] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [notifications, setNotifications] = useState<Array<{id: string, message: string, type: 'success' | 'error' | 'info'}>>([]);
+// Utility Functions
+const getTLPClassificationColor = (classification: string) => {
+  switch (classification?.toLowerCase()) {
+    case 'red':
+      return 'bg-red-500/20 text-red-300 border-red-400/50';
+    case 'amber':
+      return 'bg-yellow-500/20 text-yellow-300 border-yellow-400/50';
+    case 'green':
+      return 'bg-green-500/20 text-green-300 border-green-400/50';
+    case 'white':
+      return 'bg-slate-500/20 text-slate-300 border-slate-400/50';
+    default:
+      return 'bg-slate-500/20 text-slate-300 border-slate-400/50';
+  }
+};
 
-  const copyToClipboard = async (text: string, identifier: string) => {
+const getIndustryIcon = (sector: string) => {
+  const lowerSector = sector.toLowerCase();
+  if (lowerSector.includes('health') || lowerSector.includes('medical')) {
+    return <Heart className="h-4 w-4 text-purple-400" />;
+  }
+  if (lowerSector.includes('financial') || lowerSector.includes('banking')) {
+    return <Briefcase className="h-4 w-4 text-purple-400" />;
+  }
+  if (lowerSector.includes('retail') || lowerSector.includes('commerce')) {
+    return <ShoppingCart className="h-4 w-4 text-purple-400" />;
+  }
+  if (lowerSector.includes('manufacturing') || lowerSector.includes('industrial')) {
+    return <Factory className="h-4 w-4 text-purple-400" />;
+  }
+  if (lowerSector.includes('government') || lowerSector.includes('public')) {
+    return <Building className="h-4 w-4 text-purple-400" />;
+  }
+  if (lowerSector.includes('telecom') || lowerSector.includes('communication')) {
+    return <Wifi className="h-4 w-4 text-purple-400" />;
+  }
+  if (lowerSector.includes('transport') || lowerSector.includes('aviation')) {
+    return <Plane className="h-4 w-4 text-purple-400" />;
+  }
+  return <Building className="h-4 w-4 text-purple-400" />;
+};
+
+const getSeverityIcon = (severity?: string) => {
+  switch (severity?.toLowerCase()) {
+    case 'critical':
+      return <AlertTriangle className="h-4 w-4" />;
+    case 'high':
+      return <Zap className="h-4 w-4" />;
+    case 'medium':
+      return <Info className="h-4 w-4" />;
+    case 'low':
+      return <CheckCircle className="h-4 w-4" />;
+    default:
+      return <Info className="h-4 w-4" />;
+  }
+};
+
+const getIconForIOCType = (type: string) => {
+  const lowerType = type.toLowerCase();
+  if (lowerType.includes('ip') || lowerType.includes('address')) {
+    return <Globe className="h-4 w-4 text-neon-pink" />;
+  }
+  if (lowerType.includes('domain') || lowerType.includes('url')) {
+    return <Link2 className="h-4 w-4 text-neon-pink" />;
+  }
+  if (lowerType.includes('hash') || lowerType.includes('md5') || lowerType.includes('sha')) {
+    return <Hash className="h-4 w-4 text-neon-pink" />;
+  }
+  if (lowerType.includes('file') || lowerType.includes('path')) {
+    return <FileText className="h-4 w-4 text-neon-pink" />;
+  }
+  if (lowerType.includes('email')) {
+    return <Mail className="h-4 w-4 text-neon-pink" />;
+  }
+  return <Target className="h-4 w-4 text-neon-pink" />;
+};
+
+export default function AdvisoryDetailPage({ advisory }: AdvisoryDetailProps) {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    type: 'success' | 'error' | 'info';
+    message: string;
+  }>>([]);
+
+  // Helper Functions
+  const copyToClipboard = async (text: string, type: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedItem(identifier);
-      setTimeout(() => setCopiedItem(null), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
+      showNotification('success', `${type} copied to clipboard!`);
+    } catch (err) {
+      showNotification('error', 'Failed to copy to clipboard');
     }
+  };
+
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    const id = Date.now().toString();
+    setNotifications(prev => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 3000);
+  };
+
+  const generatePDF = () => {
+    window.print();
   };
 
   const handleDelete = async () => {
@@ -127,197 +220,79 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
       });
 
       if (response.ok) {
+        showNotification('success', 'Advisory deleted successfully');
         router.push('/advisories');
       } else {
-        const error = await response.json();
-        alert('Failed to delete advisory: ' + error.message);
+        showNotification('error', 'Failed to delete advisory');
       }
     } catch (error) {
-      console.error('Delete error:', error);
-      alert('Failed to delete advisory. Please try again.');
+      showNotification('error', 'An error occurred while deleting');
     }
-  };
-
-  const getIconForIOCType = (type: string) => {
-    switch (type) {
-      case 'IP': return <Server className="h-4 w-4" />;
-      case 'Hash': return <Hash className="h-4 w-4" />;
-      case 'URL': return <Globe className="h-4 w-4" />;
-      case 'Domain': return <Globe className="h-4 w-4" />;
-      case 'Email': return <Mail className="h-4 w-4" />;
-      default: return <Activity className="h-4 w-4" />;
-    }
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity?.toLowerCase()) {
-      case 'critical': return 'red-500';
-      case 'high': return 'orange-500';
-      case 'medium': return 'yellow-500';
-      case 'low': return 'blue-500';
-      default: return 'gray-500';
-    }
-  };
-
-  const getSeverityIcon = (severity: string) => {
-    switch (severity?.toLowerCase()) {
-      case 'critical': return <Zap className="h-4 w-4" />;
-      case 'high': return <AlertTriangle className="h-4 w-4" />;
-      case 'medium': return <Activity className="h-4 w-4" />;
-      case 'low': return <Shield className="h-4 w-4" />;
-      default: return <Info className="h-4 w-4" />;
-    }
-  };
-
-  const getTLPClassificationColor = (tlp: string) => {
-    switch (tlp?.toLowerCase()) {
-      case 'tlp:red': return 'bg-red-500/20 text-red-300 border-red-400/50';
-      case 'tlp:amber': return 'bg-orange-500/20 text-orange-300 border-orange-400/50';
-      case 'tlp:green': return 'bg-green-500/20 text-green-300 border-green-400/50';
-      case 'tlp:white': return 'bg-slate-500/20 text-slate-300 border-slate-400/50';
-      default: return 'bg-blue-500/20 text-blue-300 border-blue-400/50';
-    }
-  };
-
-  const getIndustryIcon = (sector: string) => {
-    switch (sector?.toLowerCase()) {
-      case 'finance': 
-      case 'banking': return <Database className="h-4 w-4" />;
-      case 'healthcare': return <Activity className="h-4 w-4" />;
-      case 'government': return <Shield className="h-4 w-4" />;
-      case 'technology': return <Server className="h-4 w-4" />;
-      case 'education': return <FileText className="h-4 w-4" />;
-      default: return <Grid className="h-4 w-4" />;
-    }
-  };
-
-  const generatePDF = async () => {
-    try {
-      const response = await fetch(`/api/pdf/${advisory._id}`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `advisory-${advisory._id}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      alert('Failed to generate PDF. Please try again.');
-    }
+    setShowDeleteConfirm(false);
   };
 
   return (
     <HydrationSafe>
       <div className="min-h-screen bg-tech-gradient">
         <Head>
-          <title>{advisory.title} - EaglEye IntelDesk Intelligence</title>
-          <meta name="description" content={advisory.description} />
+          <title>{advisory.title} - ForensicCyberTech Threat Advisory</title>
+          <meta name="description" content={advisory.description || advisory.summary || 'Comprehensive threat intelligence advisory'} />
+          <meta name="keywords" content={`cybersecurity, threat advisory, ${advisory.category}, ${advisory.tags?.join(', ')}`} />
         </Head>
 
         {/* Header with Logos */}
-        <div className="glass-panel-hover mx-4 mt-4 mb-6 border border-neon-blue/30 bg-slate-900/80">
-          <div className="flex items-center justify-between p-4">
-            {/* Left Logo - Forensic Cyber Tech */}
-            <div className="flex items-center space-x-3">
-              <img 
-                src="/forensiccybertech-logo.png" 
-                alt="Forensic Cyber Tech" 
-                className="h-10 w-auto"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              <div className="hidden sm:block">
-                <div className="font-orbitron font-bold text-neon-blue text-lg">
-                  Forensic Cyber Tech
+        <div className="relative bg-slate-900/90 backdrop-blur-sm border-b border-slate-700/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-20">
+              {/* Left Logo */}
+              <Link href="/" className="flex items-center space-x-3">
+                <img 
+                  src="/forensiccybertech-logo.png" 
+                  alt="ForensicCyberTech" 
+                  className="h-12 w-auto"
+                />
+                <div className="hidden sm:block">
+                  <div className="font-orbitron font-bold text-lg text-white">
+                    ForensicCyberTech
+                  </div>
+                  <div className="font-rajdhani text-sm text-slate-400">
+                    Threat Advisory System
+                  </div>
                 </div>
-                <div className="font-rajdhani text-xs text-slate-400">
-                  Digital Forensics & Cybersecurity
-                </div>
+              </Link>
+
+              {/* Center Navigation */}
+              <div className="hidden md:flex items-center space-x-6">
+                <Link href="/advisories" 
+                  className="text-slate-300 hover:text-white font-rajdhani font-medium transition-colors">
+                  All Advisories
+                </Link>
+                <Link href="/dashboard" 
+                  className="text-slate-300 hover:text-white font-rajdhani font-medium transition-colors">
+                  Dashboard
+                </Link>
               </div>
-            </div>
 
-            {/* Right Logo - EagleEye */}
-            <div className="flex items-center space-x-3">
-              <div className="hidden sm:block text-right">
-                <div className="font-orbitron font-bold text-neon-purple text-lg">
-                  EaglEye IntelDesk
-                </div>
-                <div className="font-rajdhani text-xs text-slate-400">
-                  Threat Intelligence Platform
-                </div>
-              </div>
-              <img 
-                src="/Eagleye-S.png" 
-                alt="EagleEye" 
-                className="h-10 w-auto"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation and Actions */}
-        <div className="sticky top-0 z-40 bg-cyber-gradient backdrop-blur-md border-b border-neon-blue/20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <div className="flex items-center justify-between">
-              {/* Back Button */}
-              <button 
-                onClick={() => router.push('/advisories')}
-                className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105"
-              >
-                <ArrowLeft className="h-4 w-4 text-neon-blue" />
-                <span className="text-white font-rajdhani font-medium">Back to Advisories</span>
-              </button>
-
-              {/* Action Buttons */}
-              <div className="flex items-center space-x-3">
-                {isAdmin && (
-                  <>
-                    <Link href={`/admin/edit/${advisory._id}`}>
-                      <button className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105">
-                        <Edit className="h-4 w-4 text-neon-green" />
-                        <span className="hidden sm:inline text-white font-rajdhani font-medium">Edit</span>
-                      </button>
-                    </Link>
-                    
-                    <button 
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105"
-                    >
-                      <Trash2 className="h-4 w-4 text-neon-pink" />
-                      <span className="hidden sm:inline text-white font-rajdhani font-medium">Delete</span>
-                    </button>
-                  </>
-                )}
-                
-                <button 
-                  onClick={() => copyToClipboard(window.location.href, 'url')}
+              {/* Right Logo */}
+              <div className="flex items-center space-x-4">
+                <img 
+                  src="/Eagleye-S.png" 
+                  alt="EagleEye Security" 
+                  className="h-12 w-auto"
+                />
+                <button
+                  onClick={() => router.back()}
                   className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105"
                 >
-                  <Share2 className="h-4 w-4 text-neon-purple" />
-                  <span className="hidden sm:inline text-white font-rajdhani font-medium">Share</span>
-                </button>
-                
-                <button 
-                  onClick={generatePDF}
-                  className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105"
-                >
-                  <Download className="h-4 w-4 text-neon-cyan" />
-                  <span className="hidden sm:inline text-white font-rajdhani font-medium">Export PDF</span>
+                  <ArrowLeft className="h-4 w-4 text-neon-blue" />
+                  <span className="text-neon-blue font-rajdhani font-medium">Back</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             
@@ -392,14 +367,14 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
               </motion.div>
 
               {/* 🚨 BASIC THREAT PARAMETERS */}
-              {(advisory.threatDesignation || advisory.threatCategory || advisory.threatLevel || advisory.tlpClassification || advisory.tlp || advisory.cveIds?.length || advisory.cves?.length) && (
+              {(advisory.threatDesignation || advisory.threatCategory || advisory.threatLevel || advisory.tlpClassification || advisory.cveIds?.length || advisory.cves?.length) && (
                 <motion.div 
                   className="glass-panel-hover p-8"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.1 }}
                 >
-                  <div className="flex items-center space-x-3 mb-6 p-4 bg-red-500/10 border border-red-400/30 rounded-lg">
+                  <div className="flex items-center space-x-3 mb-6">
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/20 border border-red-400/50">
                       <AlertTriangle className="h-5 w-5 text-red-400" />
                     </div>
@@ -436,12 +411,12 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                       </div>
                     )}
                     
-                    {(advisory.tlpClassification || advisory.tlp) && (
+                    {advisory.tlpClassification && (
                       <div>
                         <label className="block text-slate-400 font-rajdhani text-sm mb-2">TLP CLASSIFICATION</label>
-                        <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border ${getTLPClassificationColor(advisory.tlpClassification || advisory.tlp)}`}>
+                        <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border ${getTLPClassificationColor(advisory.tlpClassification)}`}>
                           <Lock className="h-4 w-4" />
-                          <span className="font-rajdhani font-semibold text-sm">{(advisory.tlpClassification || advisory.tlp)?.toUpperCase()}</span>
+                          <span className="font-rajdhani font-semibold text-sm">{advisory.tlpClassification.toUpperCase()}</span>
                         </div>
                       </div>
                     )}
@@ -487,7 +462,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.2 }}
                 >
-                  <div className="flex items-center space-x-3 mb-6 p-4 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+                  <div className="flex items-center space-x-3 mb-6">
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-400/50">
                       <FileText className="h-5 w-5 text-blue-400" />
                     </div>
@@ -498,8 +473,8 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                   {(advisory.executiveSummary || advisory.summary || advisory.description) && (
                     <div className="mb-6">
                       <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Executive Summary</h3>
-                      <div className="prose prose-invert max-w-none bg-slate-800/30 border border-slate-600/50 rounded-lg p-6">
-                        <p className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap text-justify">
+                      <div className="prose prose-invert max-w-none">
+                        <p className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap">
                           {advisory.executiveSummary || advisory.summary || advisory.description}
                         </p>
                       </div>
@@ -554,8 +529,8 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                   {advisory.content && (
                     <div>
                       <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Detailed Analysis</h3>
-                      <div className="prose prose-invert max-w-none bg-slate-800/30 border border-slate-600/50 rounded-lg p-6">
-                        <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap text-justify">
+                      <div className="prose prose-invert max-w-none">
+                        <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap">
                           {advisory.content}
                         </div>
                       </div>
@@ -572,7 +547,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
                 >
-                  <div className="flex items-center space-x-3 mb-6 p-4 bg-neon-pink/10 border border-neon-pink/30 rounded-lg">
+                  <div className="flex items-center space-x-3 mb-6">
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-neon-pink/20 border border-neon-pink/50">
                       <Target className="h-5 w-5 text-neon-pink" />
                     </div>
@@ -599,7 +574,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                           {ioc.value}
                         </div>
                         {ioc.description && (
-                          <p className="text-slate-400 font-rajdhani text-sm text-justify">
+                          <p className="text-slate-400 font-rajdhani text-sm">
                             {ioc.description}
                           </p>
                         )}
@@ -617,35 +592,27 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
                 >
-                  <div className="flex items-center space-x-3 mb-6 p-4 bg-green-500/10 border border-green-400/30 rounded-lg">
+                  <div className="flex items-center space-x-3 mb-6">
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500/20 border border-green-400/50">
                       <Grid className="h-5 w-5 text-green-400" />
                     </div>
                     <h2 className="font-orbitron font-bold text-xl text-white">🕸️ MITRE ATT&CK FRAMEWORK</h2>
                   </div>
-                  <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
+                  <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-green-500/10 border-b border-green-400/30">
-                        <tr>
-                          <th className="text-left text-green-300 font-rajdhani font-semibold text-sm py-4 px-6">TACTIC NAME</th>
-                          <th className="text-left text-green-300 font-rajdhani font-semibold text-sm py-4 px-6">TECHNIQUE ID</th>
-                          <th className="text-left text-green-300 font-rajdhani font-semibold text-sm py-4 px-6">TECHNIQUE</th>
+                      <thead>
+                        <tr className="border-b border-slate-600">
+                          <th className="text-left text-slate-400 font-rajdhani font-semibold text-sm py-3">TACTIC NAME</th>
+                          <th className="text-left text-slate-400 font-rajdhani font-semibold text-sm py-3">TECHNIQUE ID</th>
+                          <th className="text-left text-slate-400 font-rajdhani font-semibold text-sm py-3">TECHNIQUE</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {advisory.mitreTactics.map((tactic: any, index: number) => (
-                          <tr key={index} className="border-b border-slate-700/50 hover:bg-green-500/10 transition-colors">
-                            <td className="py-4 px-6 text-white font-orbitron font-semibold">
-                              {tactic.tacticName || tactic.name || 'N/A'}
-                            </td>
-                            <td className="py-4 px-6">
-                              <span className="inline-block text-green-400 font-mono bg-green-500/10 border border-green-400/30 rounded px-2 py-1">
-                                {tactic.techniqueId || tactic.id || 'N/A'}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6 text-slate-300 font-rajdhani">
-                              {tactic.technique || tactic.techniques?.[0] || 'N/A'}
-                            </td>
+                        {advisory.mitreTactics.map((tactic, index) => (
+                          <tr key={index} className="border-b border-slate-700/50 hover:bg-green-500/5 transition-colors">
+                            <td className="py-3 text-white font-orbitron font-semibold">{tactic.tacticName}</td>
+                            <td className="py-3 text-green-400 font-mono">{tactic.techniqueId}</td>
+                            <td className="py-3 text-slate-300 font-rajdhani">{tactic.technique}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -662,7 +629,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.5 }}
                 >
-                  <div className="flex items-center space-x-3 mb-6 p-4 bg-green-500/10 border border-green-400/30 rounded-lg">
+                  <div className="flex items-center space-x-3 mb-6">
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500/20 border border-green-400/50">
                       <Shield className="h-5 w-5 text-green-400" />
                     </div>
@@ -672,7 +639,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                     {advisory.recommendations.map((recommendation, index) => (
                       <div key={index} className="flex items-start space-x-3 p-3 bg-green-500/5 border border-green-400/20 rounded-lg">
                         <div className="flex-shrink-0 w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-                        <p className="text-slate-300 font-rajdhani text-base leading-relaxed text-justify">{recommendation}</p>
+                        <p className="text-slate-300 font-rajdhani text-base leading-relaxed">{recommendation}</p>
                       </div>
                     ))}
                   </div>
@@ -687,14 +654,14 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.6 }}
                 >
-                  <div className="flex items-center space-x-3 mb-6 p-4 bg-orange-500/10 border border-orange-400/30 rounded-lg">
+                  <div className="flex items-center space-x-3 mb-6">
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-500/20 border border-orange-400/50">
                       <Download className="h-5 w-5 text-orange-400" />
                     </div>
                     <h2 className="font-orbitron font-bold text-xl text-white">🧩 PATCH DETAILS</h2>
                   </div>
                   <div className="prose prose-invert max-w-none">
-                    <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap text-justify">
+                    <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap">
                       {advisory.patchDetails}
                     </div>
                   </div>
@@ -709,7 +676,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.7 }}
                 >
-                  <div className="flex items-center space-x-3 mb-6 p-4 bg-purple-500/10 border border-purple-400/30 rounded-lg">
+                  <div className="flex items-center space-x-3 mb-6">
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-500/20 border border-purple-400/50">
                       <Link2 className="h-5 w-5 text-purple-400" />
                     </div>
@@ -763,10 +730,48 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                 </motion.div>
               )}
             </div>
-
+            
             {/* Sidebar */}
             <div className="lg:col-span-1 space-y-6">
               
+              {/* Actions Panel */}
+              <motion.div 
+                className="glass-panel-hover p-6"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <h3 className="font-orbitron font-bold text-lg text-white mb-4 flex items-center space-x-2">
+                  <Settings className="h-5 w-5" />
+                  <span>Actions</span>
+                </h3>
+                <div className="space-y-3">
+                  <button 
+                    onClick={generatePDF}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-neon-blue/20 border border-neon-blue/50 text-neon-blue hover:bg-neon-blue/30 transition-all duration-200 rounded-lg font-rajdhani font-semibold"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Export PDF</span>
+                  </button>
+                  
+                  <button 
+                    onClick={() => copyToClipboard(advisory.title, 'title')}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-neon-purple/20 border border-neon-purple/50 text-neon-purple hover:bg-neon-purple/30 transition-all duration-200 rounded-lg font-rajdhani font-semibold"
+                  >
+                    <Copy className="h-4 w-4" />
+                    <span>Copy Title</span>
+                  </button>
+                  
+                  <button 
+                    onClick={() => window.print()}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-neon-pink/20 border border-neon-pink/50 text-neon-pink hover:bg-neon-pink/30 transition-all duration-200 rounded-lg font-rajdhani font-semibold"
+                  >
+                    <Printer className="h-4 w-4" />
+                    <span>Print</span>
+                  </button>
+                </div>
+              </motion.div>
+
               {/* Quick Stats */}
               <motion.div 
                 className="glass-panel-hover p-6"
@@ -781,13 +786,13 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400 font-rajdhani text-sm">Published</span>
-                    <span className="text-white font-orbitron text-sm text-right">{formatDate(advisory.publishedDate)}</span>
+                    <span className="text-white font-orbitron text-sm">{formatDate(advisory.publishedDate)}</span>
                   </div>
                   
                   {advisory.severity && (
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 font-rajdhani text-sm">Severity</span>
-                      <span className={`font-orbitron text-sm text-right ${
+                      <span className={`font-orbitron text-sm ${
                         advisory.severity?.toLowerCase() === 'critical' ? 'text-neon-pink' :
                         advisory.severity?.toLowerCase() === 'high' ? 'text-red-300' :
                         advisory.severity?.toLowerCase() === 'medium' ? 'text-yellow-300' :
@@ -801,49 +806,30 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                   {advisory.category && (
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 font-rajdhani text-sm">Category</span>
-                      <span className="text-white font-orbitron text-sm text-right">{advisory.category}</span>
+                      <span className="text-white font-orbitron text-sm">{advisory.category}</span>
                     </div>
                   )}
                   
-                  {(advisory.tlpClassification || advisory.tlp) && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-400 font-rajdhani text-sm">TLP</span>
-                      <span className={`font-orbitron text-sm text-right ${
-                        (advisory.tlpClassification || advisory.tlp)?.toLowerCase() === 'tlp:red' ? 'text-red-300' :
-                        (advisory.tlpClassification || advisory.tlp)?.toLowerCase() === 'tlp:amber' ? 'text-orange-300' :
-                        (advisory.tlpClassification || advisory.tlp)?.toLowerCase() === 'tlp:green' ? 'text-green-300' :
-                        'text-slate-300'
-                      }`}>
-                        {(advisory.tlpClassification || advisory.tlp)?.toUpperCase().replace('TLP:', '')}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {(advisory.cveIds?.length || advisory.cves?.length) ? (
+                  {(advisory.cveIds?.length || advisory.cves?.length) && (
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 font-rajdhani text-sm">CVEs</span>
-                      <span className="text-orange-300 font-orbitron text-sm text-right">
+                      <span className="text-orange-300 font-orbitron text-sm">
                         {(advisory.cveIds || advisory.cves || []).length}
                       </span>
-                    </div>
-                  ) : (
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-400 font-rajdhani text-sm">CVEs</span>
-                      <span className="text-slate-500 font-orbitron text-sm text-right italic">None</span>
                     </div>
                   )}
                   
                   {advisory.iocs?.length && (
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 font-rajdhani text-sm">IOCs</span>
-                      <span className="text-neon-pink font-orbitron text-sm text-right">{advisory.iocs.length}</span>
+                      <span className="text-neon-pink font-orbitron text-sm">{advisory.iocs.length}</span>
                     </div>
                   )}
                   
                   {advisory.references?.length && (
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 font-rajdhani text-sm">References</span>
-                      <span className="text-neon-purple font-orbitron text-sm text-right">{advisory.references.length}</span>
+                      <span className="text-neon-purple font-orbitron text-sm">{advisory.references.length}</span>
                     </div>
                   )}
                 </div>
@@ -922,6 +908,51 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                 </motion.div>
               )}
 
+              {/* Navigation */}
+              <motion.div 
+                className="glass-panel-hover p-6"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
+                <h3 className="font-orbitron font-bold text-lg text-white mb-4 flex items-center space-x-2">
+                  <Navigation className="h-5 w-5" />
+                  <span>Quick Navigation</span>
+                </h3>
+                <div className="space-y-2">
+                  <button 
+                    onClick={() => document.getElementById('basic-threat')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200 font-rajdhani text-sm"
+                  >
+                    🚨 Basic Parameters
+                  </button>
+                  <button 
+                    onClick={() => document.getElementById('threat-details')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200 font-rajdhani text-sm"
+                  >
+                    📄 Threat Details
+                  </button>
+                  <button 
+                    onClick={() => document.getElementById('iocs')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200 font-rajdhani text-sm"
+                  >
+                    🧠 IOCs
+                  </button>
+                  <button 
+                    onClick={() => document.getElementById('mitre')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200 font-rajdhani text-sm"
+                  >
+                    🕸️ MITRE ATT&CK
+                  </button>
+                  <button 
+                    onClick={() => document.getElementById('recommendations')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200 font-rajdhani text-sm"
+                  >
+                    🛡️ Recommendations
+                  </button>
+                </div>
+              </motion.div>
+
               {/* Related Advisories */}
               <motion.div 
                 className="glass-panel-hover p-6"
@@ -929,13 +960,13 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.6 }}
               >
-                <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Related</h3>
+                <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Actions</h3>
                 <div className="text-center">
                   <button 
                     onClick={() => router.push('/advisories')}
                     className="text-neon-blue font-rajdhani text-sm hover:text-neon-cyan transition-colors"
                   >
-                    View All Advisories →
+                    View Related Advisories →
                   </button>
                 </div>
               </motion.div>
