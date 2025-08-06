@@ -18,7 +18,8 @@ import {
   Settings,
   LogOut,
   Calendar,
-  Eye
+  Eye,
+  Building
 } from 'lucide-react';
 
 interface User {
@@ -294,6 +295,12 @@ export default function AdminDashboard() {
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add New User
                 </CyberButton>
+                <Link href="/admin/clients">
+                  <CyberButton variant="ghost" glowColor="green" className="w-full">
+                    <Users className="h-4 w-4 mr-2" />
+                    Manage Clients
+                  </CyberButton>
+                </Link>
                 <CyberButton variant="ghost" glowColor="green" className="w-full">
                   <Settings className="h-4 w-4 mr-2" />
                   Manage Permissions

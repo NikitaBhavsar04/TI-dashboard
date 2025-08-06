@@ -143,13 +143,3 @@ export default function AdvisoryCard({ advisory }: AdvisoryCardProps) {
     </div>
   );
 }
-            )}
-            <Link href={`/advisory/${advisory._id}`} className="flex items-center space-x-1 text-cyber-blue hover:text-cyber-green transition-colors">
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-          </div>
-        </div>
-      </div>
-    </CyberCard>
-  );
-}

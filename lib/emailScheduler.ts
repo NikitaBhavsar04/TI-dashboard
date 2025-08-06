@@ -19,7 +19,7 @@ const getEmailConfig = (): EmailConfig => {
 
 const createTransporter = () => {
   const config = getEmailConfig();
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     service: config.service,
     auth: {
       user: config.user,

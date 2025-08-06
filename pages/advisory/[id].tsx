@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -56,6 +56,13 @@ import {
   Plane
 } from 'lucide-react';
 import HydrationSafe from '@/components/HydrationSafe';
+import dynamic from 'next/dynamic';
+
+// Dynamic import to avoid SSR issues
+const EmailModal = dynamic(() => import('@/components/EmailModal'), {
+  ssr: false
+});
+
 import { IAdvisory } from '@/models/Advisory';
 import dbConnect from '@/lib/db';
 import Advisory from '@/models/Advisory';
@@ -109,6 +116,11 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [notifications, setNotifications] = useState<Array<{id: string, message: string, type: 'success' | 'error' | 'info'}>>([]);
+
+  // Debug log for showEmailModal state changes
+  useEffect(() => {
+    console.log('showEmailModal state changed:', showEmailModal);
+  }, [showEmailModal]);
 
   const copyToClipboard = async (text: string, identifier: string) => {
     try {
@@ -281,6 +293,20 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
               <div className="flex items-center space-x-3">
                 {isAdmin && (
                   <>
+                    <button 
+                      onClick={() => {
+                        console.log('Send Email button clicked');
+                        console.log('isAdmin:', isAdmin);
+                        console.log('Current showEmailModal:', showEmailModal);
+                        setShowEmailModal(true);
+                        console.log('setShowEmailModal(true) called');
+                      }}
+                      className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105"
+                    >
+                      <Mail className="h-4 w-4 text-neon-blue" />
+                      <span className="hidden sm:inline text-white font-rajdhani font-medium">Send Email</span>
+                    </button>
+                    
                     <Link href={`/admin/edit/${advisory._id}`}>
                       <button className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105">
                         <Edit className="h-4 w-4 text-neon-green" />
@@ -944,28 +970,15 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
         </div>
 
         {/* Email Modal */}
-        {showEmailModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowEmailModal(false)}>
-            <div className="glass-panel-hover p-8 max-w-md w-full"
-              onClick={(e) => e.stopPropagation()}>
-              <div className="text-center">
-                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-neon-blue/20 border border-neon-blue/50">
-                  <Mail className="h-8 w-8 text-neon-blue" />
-                </div>
-                <h3 className="font-orbitron font-bold text-xl text-white mb-2">Email Advisory</h3>
-                <p className="text-slate-300 font-rajdhani mb-6">
-                  Email functionality will be available soon.
-                </p>
-                <button
-                  onClick={() => setShowEmailModal(false)}
-                  className="px-6 py-2 glass-panel-hover text-white font-rajdhani font-medium"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
+        {(() => {
+          console.log('EmailModal render condition:', { showEmailModal, advisory: advisory?.title });
+          return showEmailModal;
+        })() && (
+          <EmailModal
+            isOpen={showEmailModal}
+            onClose={() => setShowEmailModal(false)}
+            advisory={advisory}
+          />
         )}
 
         {/* Delete Confirmation Modal */}

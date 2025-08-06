@@ -1,154 +1,173 @@
-import React, { useState } from 'react';
-import { Mail, X, Plus, Minus, Send, Users, Eye, EyeOff, Clock, Calendar } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { IAdvisory } from '@/models/Advisory';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Mail, Send, Clock, Search, ChevronDown, User, Building, Plus, Check } from 'lucide-react';
+
+interface Advisory {
+  _id: string;
+  title: string;
+  description?: string;
+}
+
+interface Client {
+  _id: string;
+  name: string;
+  emails: string[];
+  description?: string;
+}
+
+interface Recipient {
+  id: string;
+  type: 'client' | 'individual';
+  label: string;
+  emails: string[];
+  clientId?: string;
+}
 
 interface EmailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  advisory: IAdvisory;
+  advisory: Advisory;
 }
 
 const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, advisory }) => {
-  const { user } = useAuth();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedRecipients, setSelectedRecipients] = useState<Recipient[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showNewEmailInput, setShowNewEmailInput] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
   const [emailData, setEmailData] = useState({
-    to: [''],
-    cc: [''],
-    bcc: [''],
     subject: `THREAT ALERT: ${advisory.title}`,
     customMessage: '',
     scheduledDate: '',
     scheduledTime: ''
   });
-  const [showCC, setShowCC] = useState(false);
-  const [showBCC, setShowBCC] = useState(false);
+  
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      fetchClients();
+    }
+  }, [isOpen]);
 
-  const addEmailField = (field: 'to' | 'cc' | 'bcc') => {
-    setEmailData(prev => ({
-      ...prev,
-      [field]: [...prev[field], '']
-    }));
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+        setShowNewEmailInput(false);
+      }
+    };
 
-  const removeEmailField = (field: 'to' | 'cc' | 'bcc', index: number) => {
-    setEmailData(prev => ({
-      ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
-    }));
-  };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  const updateEmailField = (field: 'to' | 'cc' | 'bcc', index: number, value: string) => {
-    setEmailData(prev => ({
-      ...prev,
-      [field]: prev[field].map((email, i) => i === index ? value : email)
-    }));
-  };
-
-  const handleSendEmail = async () => {
+  const fetchClients = async () => {
     try {
-      setIsLoading(true);
-
-      // Filter out empty email addresses
-      const cleanedData = {
-        to: emailData.to.filter(email => email.trim()),
-        cc: emailData.cc.filter(email => email.trim()),
-        bcc: emailData.bcc.filter(email => email.trim()),
-        subject: emailData.subject,
-        customMessage: emailData.customMessage
-      };
-
-      if (cleanedData.to.length === 0) {
-        alert('Please add at least one recipient email address');
-        return;
+      const response = await fetch('/api/clients?active=true');
+      if (response.ok) {
+        const clientsData = await response.json();
+        setClients(clientsData);
       }
+    } catch (error) {
+      console.error('Failed to fetch clients:', error);
+    }
+  };
 
-      // Validate email addresses
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const allEmails = [...cleanedData.to, ...cleanedData.cc, ...cleanedData.bcc];
-      const invalidEmails = allEmails.filter(email => !emailRegex.test(email));
-      
-      if (invalidEmails.length > 0) {
-        alert(`Invalid email addresses: ${invalidEmails.join(', ')}`);
-        return;
-      }
+  const filteredClients = clients.filter(client =>
+    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.emails.some(email => email.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
-      // Handle scheduled emails
-      if (isScheduled) {
-        if (!emailData.scheduledDate || !emailData.scheduledTime) {
-          alert('Please select both date and time for scheduled email');
-          return;
-        }
+  const handleClientSelect = (client: Client) => {
+    const existingRecipient = selectedRecipients.find(r => r.clientId === client._id);
+    if (existingRecipient) return;
 
-        const scheduledDateTime = new Date(`${emailData.scheduledDate}T${emailData.scheduledTime}`);
-        const now = new Date();
-        
-        if (scheduledDateTime <= now) {
-          alert('Scheduled time must be in the future');
-          return;
-        }
+    const recipient: Recipient = {
+      id: `client-${client._id}`,
+      type: 'client',
+      label: `${client.name} (${client.emails.length} emails)`,
+      emails: client.emails,
+      clientId: client._id
+    };
 
-        const scheduleData = {
-          ...cleanedData,
-          advisoryId: advisory._id || advisory.id,
-          scheduledDate: scheduledDateTime.toISOString()
-        };
+    setSelectedRecipients(prev => [...prev, recipient]);
+    setSearchTerm('');
+    setDropdownOpen(false);
+  };
 
-        const token = localStorage.getItem('token');
-        const headers: HeadersInit = {
-          'Content-Type': 'application/json'
-        };
-        
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        const response = await fetch('/api/scheduled-emails', {
-          method: 'POST',
-          headers,
-          credentials: 'include',
-          body: JSON.stringify(scheduleData)
-        });
+  const handleAddNewEmail = () => {
+    if (!newEmail.trim()) return;
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      alert('Please enter a valid email address');
+      return;
+    }
 
-        const result = await response.json();
+    const existingRecipient = selectedRecipients.find(r => 
+      r.type === 'individual' && r.emails.includes(newEmail.toLowerCase())
+    );
+    if (existingRecipient) return;
 
-        if (response.ok) {
-          alert(`Email scheduled successfully for ${scheduledDateTime.toLocaleString()}!`);
-          onClose();
-        } else {
-          alert(`Failed to schedule email: ${result.message}`);
-        }
-        return;
-      }
+    const recipient: Recipient = {
+      id: `individual-${Date.now()}`,
+      type: 'individual',
+      label: newEmail,
+      emails: [newEmail.toLowerCase()]
+    };
 
-      // Handle immediate emails (existing logic)
-      const token = localStorage.getItem('token');
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json'
-      };
-      
-      // Add Authorization header if token is available
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const response = await fetch(`/api/advisories/${advisory._id || advisory.id}/email`, {
+    setSelectedRecipients(prev => [...prev, recipient]);
+    setNewEmail('');
+    setShowNewEmailInput(false);
+    setDropdownOpen(false);
+  };
+
+  const removeRecipient = (recipientId: string) => {
+    setSelectedRecipients(prev => prev.filter(r => r.id !== recipientId));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRecipients.length) {
+      alert('Please select at least one recipient');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const recipients = selectedRecipients.map(recipient => ({
+        type: recipient.type,
+        id: recipient.clientId,
+        emails: recipient.type === 'individual' ? recipient.emails : undefined
+      }));
+
+      const response = await fetch('/api/emails/send-advisory', {
         method: 'POST',
-        headers,
-        credentials: 'include', // Also send cookies as backup
-        body: JSON.stringify(cleanedData)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          advisoryId: advisory._id,
+          recipients,
+          subject: emailData.subject,
+          customMessage: emailData.customMessage,
+          scheduledDate: emailData.scheduledDate,
+          scheduledTime: emailData.scheduledTime,
+          isScheduled
+        }),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        alert(`Email sent successfully to ${result.recipients.to} recipients!`);
+        alert(result.message);
         onClose();
       } else {
-        alert(`Failed to send email: ${result.message}`);
+        alert('Failed to send email: ' + result.message);
       }
     } catch (error) {
       console.error('Email sending error:', error);
@@ -158,251 +177,300 @@ const EmailModal: React.FC<EmailModalProps> = ({ isOpen, onClose, advisory }) =>
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-cyan-500/20 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-700">
-          <div className="flex items-center gap-3">
-            <Mail className="h-6 w-6 text-cyan-400" />
-            <h2 className="text-xl font-orbitron font-bold text-white">Send Advisory Email</h2>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
+      <div className="glass-panel-hover max-w-4xl w-full max-h-[90vh] overflow-y-auto z-50">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-slate-600/50">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-neon-blue/20 border border-neon-blue/50">
+                <Mail className="h-5 w-5 text-neon-blue" />
+              </div>
+              <div>
+                <h2 className="font-orbitron font-bold text-xl text-white">Send Advisory Email</h2>
+                <p className="text-slate-400 font-rajdhani text-sm">
+                  {advisory.title}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 transition-all duration-200"
+            >
+              <X className="h-5 w-5 text-slate-400" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-          >
-            <X className="h-5 w-5 text-slate-400" />
-          </button>
-        </div>
 
-        {/* Advisory Info */}
-        <div className="p-6 border-b border-slate-700 bg-slate-800/50">
-          <h3 className="text-lg font-semibold text-white mb-2">{advisory.title}</h3>
-          <div className="flex flex-wrap gap-4 text-sm text-slate-300">
-            <span>Severity: <span className={`font-semibold ${
-              advisory.severity === 'Critical' ? 'text-red-400' :
-              advisory.severity === 'High' ? 'text-orange-400' :
-              advisory.severity === 'Medium' ? 'text-yellow-400' : 'text-green-400'
-            }`}>{advisory.severity}</span></span>
-            <span>Author: {advisory.author}</span>
-            <span>Date: {new Date(advisory.publishedDate).toLocaleDateString()}</span>
-          </div>
-        </div>
+          <div className="px-6 space-y-6">
+            
+            {/* Recipients Section */}
+            <div>
+              <label className="block text-slate-400 font-rajdhani text-sm mb-3">
+                Recipients *
+              </label>
+              
+              {/* Selected Recipients */}
+              {selectedRecipients.length > 0 && (
+                <div className="mb-4 space-y-2">
+                  {selectedRecipients.map((recipient) => (
+                    <div key={recipient.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+                      <div className="flex items-center space-x-3">
+                        <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${
+                          recipient.type === 'client' ? 'bg-blue-500/20 border border-blue-400/50' : 'bg-green-500/20 border border-green-400/50'
+                        }`}>
+                          {recipient.type === 'client' ? 
+                            <Building className="h-4 w-4 text-blue-400" /> : 
+                            <User className="h-4 w-4 text-green-400" />
+                          }
+                        </div>
+                        <div>
+                          <div className="text-white font-rajdhani">{recipient.label}</div>
+                          <div className="text-slate-400 font-rajdhani text-xs">
+                            {recipient.emails.slice(0, 3).join(', ')}
+                            {recipient.emails.length > 3 && ` +${recipient.emails.length - 3} more`}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeRecipient(recipient.id)}
+                        className="p-1 rounded bg-red-500/20 hover:bg-red-500/30 transition-all duration-200"
+                      >
+                        <X className="h-4 w-4 text-red-400" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-        {/* Email Form */}
-        <div className="p-6 space-y-6">
-          {/* To Field */}
-          <div>
-            <label className="block text-sm font-medium text-white mb-2">
-              To: <span className="text-red-400">*</span>
-            </label>
-            {emailData.to.map((email, index) => (
-              <div key={index} className="flex gap-2 mb-2">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => updateEmailField('to', index, e.target.value)}
-                  placeholder="recipient@example.com"
-                  className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:outline-none"
-                />
-                {emailData.to.length > 1 && (
-                  <button
-                    onClick={() => removeEmailField('to', index)}
-                    className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
+              {/* Recipient Selector */}
+              <div className="relative" ref={dropdownRef}>
+                <div 
+                  className="relative w-full p-3 bg-slate-800/50 border border-slate-600/50 rounded-lg cursor-pointer hover:border-neon-blue/50 transition-all duration-200"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Search className="h-4 w-4 text-slate-400" />
+                      <span className="text-slate-400 font-rajdhani">
+                        Select clients or add emails...
+                      </span>
+                    </div>
+                    <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </div>
+
+                {/* Dropdown */}
+                {dropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600/50 rounded-lg shadow-xl z-10 max-h-64 overflow-y-auto">
+                    
+                    {/* Search Input */}
+                    <div className="p-3 border-b border-slate-600/50">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Search clients..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Add New Email Option */}
+                    <div className="p-2 border-b border-slate-600/50">
+                      {!showNewEmailInput ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowNewEmailInput(true);
+                          }}
+                          className="w-full text-left p-2 hover:bg-slate-700/50 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                        >
+                          <Plus className="h-4 w-4 text-green-400" />
+                          <span className="text-green-400 font-rajdhani">Add new email address</span>
+                        </button>
+                      ) : (
+                        <div className="flex space-x-2">
+                          <input
+                            type="email"
+                            placeholder="Enter email address"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddNewEmail();
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50"
+                            onClick={(e) => e.stopPropagation()}
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddNewEmail();
+                            }}
+                            className="px-3 py-2 bg-green-500/20 border border-green-400/50 rounded-lg text-green-400 hover:bg-green-500/30 transition-all duration-200"
+                          >
+                            <Check className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Client List */}
+                    <div className="max-h-40 overflow-y-auto">
+                      {filteredClients.length === 0 ? (
+                        <div className="p-4 text-center text-slate-400 font-rajdhani">
+                          {searchTerm ? 'No clients found' : 'No active clients available'}
+                        </div>
+                      ) : (
+                        filteredClients.map((client) => {
+                          const isSelected = selectedRecipients.some(r => r.clientId === client._id);
+                          return (
+                            <button
+                              key={client._id}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!isSelected) handleClientSelect(client);
+                              }}
+                              disabled={isSelected}
+                              className={`w-full text-left p-3 hover:bg-slate-700/50 transition-all duration-200 flex items-center justify-between ${
+                                isSelected ? 'opacity-50 cursor-not-allowed' : ''
+                              }`}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/50">
+                                  <Building className="h-4 w-4 text-blue-400" />
+                                </div>
+                                <div>
+                                  <div className="text-white font-rajdhani">{client.name}</div>
+                                  <div className="text-slate-400 font-rajdhani text-xs">
+                                    {client.emails.length} email{client.emails.length !== 1 ? 's' : ''}
+                                  </div>
+                                </div>
+                              </div>
+                              {isSelected && <Check className="h-4 w-4 text-green-400" />}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
-            ))}
-            <button
-              onClick={() => addEmailField('to')}
-              className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm"
-            >
-              <Plus className="h-4 w-4" />
-              Add recipient
-            </button>
-          </div>
+            </div>
 
-          {/* CC/BCC Toggle Buttons */}
-          <div className="flex gap-4">
-            <button
-              onClick={() => setShowCC(!showCC)}
-              className="flex items-center gap-2 text-slate-400 hover:text-white text-sm"
-            >
-              {showCC ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {showCC ? 'Hide CC' : 'Add CC'}
-            </button>
-            <button
-              onClick={() => setShowBCC(!showBCC)}
-              className="flex items-center gap-2 text-slate-400 hover:text-white text-sm"
-            >
-              {showBCC ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {showBCC ? 'Hide BCC' : 'Add BCC'}
-            </button>
-          </div>
-
-          {/* CC Field */}
-          {showCC && (
+            {/* Subject */}
             <div>
-              <label className="block text-sm font-medium text-white mb-2">CC:</label>
-              {emailData.cc.map((email, index) => (
-                <div key={index} className="flex gap-2 mb-2">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => updateEmailField('cc', index, e.target.value)}
-                    placeholder="cc@example.com"
-                    className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:outline-none"
-                  />
-                  <button
-                    onClick={() => removeEmailField('cc', index)}
-                    className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={() => addEmailField('cc')}
-                className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm"
-              >
-                <Plus className="h-4 w-4" />
-                Add CC
-              </button>
+              <label className="block text-slate-400 font-rajdhani text-sm mb-2">
+                Subject *
+              </label>
+              <input
+                type="text"
+                value={emailData.subject}
+                onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50 transition-all duration-200"
+                placeholder="Email subject"
+                required
+              />
             </div>
-          )}
 
-          {/* BCC Field */}
-          {showBCC && (
+            {/* Custom Message */}
             <div>
-              <label className="block text-sm font-medium text-white mb-2">BCC:</label>
-              {emailData.bcc.map((email, index) => (
-                <div key={index} className="flex gap-2 mb-2">
+              <label className="block text-slate-400 font-rajdhani text-sm mb-2">
+                Custom Message
+              </label>
+              <textarea
+                value={emailData.customMessage}
+                onChange={(e) => setEmailData(prev => ({ ...prev, customMessage: e.target.value }))}
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50 transition-all duration-200 resize-none"
+                placeholder="Add a personal message (optional)..."
+                rows={4}
+              />
+            </div>
+
+            {/* Schedule Toggle */}
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="schedule-email"
+                checked={isScheduled}
+                onChange={(e) => setIsScheduled(e.target.checked)}
+                className="w-4 h-4 text-neon-blue bg-slate-800 border-slate-600 rounded focus:ring-neon-blue focus:ring-2"
+              />
+              <label htmlFor="schedule-email" className="text-white font-rajdhani flex items-center space-x-2">
+                <Clock className="h-4 w-4 text-neon-blue" />
+                <span>Schedule for later</span>
+              </label>
+            </div>
+
+            {/* Schedule DateTime */}
+            {isScheduled && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-600/50">
+                <div>
+                  <label className="block text-slate-400 font-rajdhani text-sm mb-2">
+                    Date *
+                  </label>
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => updateEmailField('bcc', index, e.target.value)}
-                    placeholder="bcc@example.com"
-                    className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:outline-none"
+                    type="date"
+                    value={emailData.scheduledDate}
+                    onChange={(e) => setEmailData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white font-rajdhani focus:outline-none focus:border-neon-blue/50 transition-all duration-200"
+                    required={isScheduled}
                   />
-                  <button
-                    onClick={() => removeEmailField('bcc', index)}
-                    className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
                 </div>
-              ))}
-              <button
-                onClick={() => addEmailField('bcc')}
-                className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm"
-              >
-                <Plus className="h-4 w-4" />
-                Add BCC
-              </button>
-            </div>
-          )}
-
-          {/* Subject */}
-          <div>
-            <label className="block text-sm font-medium text-white mb-2">Subject:</label>
-            <input
-              type="text"
-              value={emailData.subject}
-              onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:outline-none"
-            />
-          </div>
-
-          {/* Custom Message */}
-          <div>
-            <label className="block text-sm font-medium text-white mb-2">Custom Message (Optional):</label>
-            <textarea
-              value={emailData.customMessage}
-              onChange={(e) => setEmailData(prev => ({ ...prev, customMessage: e.target.value }))}
-              placeholder="Add a custom message that will appear at the top of the email..."
-              rows={4}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:outline-none resize-vertical"
-            />
-          </div>
-
-          {/* Schedule Toggle */}
-          <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-lg border border-slate-700">
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-cyan-400" />
-              <div>
-                <h4 className="text-white font-medium">Schedule Email</h4>
-                <p className="text-sm text-slate-400">Send this email at a specific time</p>
+                <div>
+                  <label className="block text-slate-400 font-rajdhani text-sm mb-2">
+                    Time *
+                  </label>
+                  <input
+                    type="time"
+                    value={emailData.scheduledTime}
+                    onChange={(e) => setEmailData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white font-rajdhani focus:outline-none focus:border-neon-blue/50 transition-all duration-200"
+                    required={isScheduled}
+                  />
+                </div>
               </div>
-            </div>
-            <button
-              onClick={() => setIsScheduled(!isScheduled)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                isScheduled ? 'bg-cyan-600' : 'bg-slate-600'
-              }`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                isScheduled ? 'translate-x-6' : 'translate-x-1'
-              }`} />
-            </button>
-          </div>
-
-          {/* Schedule Date/Time */}
-          {isScheduled && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">
-                  <Calendar className="inline h-4 w-4 mr-1" />
-                  Date:
-                </label>
-                <input
-                  type="date"
-                  value={emailData.scheduledDate}
-                  onChange={(e) => setEmailData(prev => ({ ...prev, scheduledDate: e.target.value }))}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-cyan-400 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">
-                  <Clock className="inline h-4 w-4 mr-1" />
-                  Time:
-                </label>
-                <input
-                  type="time"
-                  value={emailData.scheduledTime}
-                  onChange={(e) => setEmailData(prev => ({ ...prev, scheduledTime: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-cyan-400 focus:outline-none"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 border-t border-slate-700">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-slate-400 hover:text-white border border-slate-600 hover:border-slate-500 rounded-lg transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSendEmail}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-6 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-800 text-white rounded-lg transition-colors"
-          >
-            {isLoading ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : isScheduled ? (
-              <Clock className="h-4 w-4" />
-            ) : (
-              <Send className="h-4 w-4" />
             )}
-            {isLoading ? (isScheduled ? 'Scheduling...' : 'Sending...') : isScheduled ? 'Schedule Email' : 'Send Email'}
-          </button>
-        </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between p-6 border-t border-slate-600/50">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-slate-300 font-rajdhani font-medium hover:bg-slate-600/50 transition-all duration-200"
+            >
+              Cancel
+            </button>
+            
+            <button
+              type="submit"
+              disabled={isLoading || selectedRecipients.length === 0}
+              className="flex items-center space-x-2 px-6 py-3 bg-neon-blue/20 border border-neon-blue/50 rounded-lg text-neon-blue font-rajdhani font-semibold hover:bg-neon-blue/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              <Send className="h-4 w-4" />
+              <span>
+                {isLoading ? 'Sending...' : isScheduled ? 'Schedule Email' : 'Send Now'}
+              </span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

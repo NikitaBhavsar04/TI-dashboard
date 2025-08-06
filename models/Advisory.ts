@@ -19,7 +19,7 @@ export interface IAdvisory extends Document {
   cvss?: number;
   cveIds: string[];
   // New fields
-  affectedProduct?: string;
+  affectedProducts?: string[];
   targetSectors?: string[];
   regions?: string[];
   tlp?: string;
@@ -79,7 +79,7 @@ const AdvisorySchema = new Schema({
   cvss: Number,
   cveIds: [String],
   // New fields
-  affectedProduct: String,
+  affectedProducts: [String],
   targetSectors: [String],
   regions: [String],
   tlp: String,
