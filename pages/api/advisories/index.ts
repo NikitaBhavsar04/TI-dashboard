@@ -56,6 +56,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           req.body.author = currentUser.username;
         }
         
+        // Transform affectedProduct (singular string) to affectedProducts (array)
+        if (req.body.affectedProduct && typeof req.body.affectedProduct === 'string') {
+          // Split by comma if multiple products are listed, or create array with single item
+          req.body.affectedProducts = req.body.affectedProduct.split(',').map((product: string) => product.trim()).filter((product: string) => product.length > 0);
+          console.log('Transformed affectedProduct to affectedProducts:', req.body.affectedProducts);
+        }
+        
         const advisory = new Advisory(req.body);
         console.log('Advisory object before save:', JSON.stringify(advisory.toObject(), null, 2));
         

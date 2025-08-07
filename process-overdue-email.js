@@ -167,9 +167,9 @@ const processOverdueEmail = async () => {
               ` : ''}
               
               <div class="section">
-                <h3>📖 Detailed Analysis</h3>
+                <h3>📖 Technical Analysis</h3>
                 <div style="background: white; padding: 20px; border-radius: 6px; line-height: 1.8;">
-                  ${advisory.content || 'No detailed analysis available.'}
+                  ${advisory.content || 'No technical analysis available.'}
                 </div>
               </div>
               
@@ -231,7 +231,7 @@ const processOverdueEmail = async () => {
     console.log('✅ EMAIL SENT SUCCESSFULLY WITH RICH CONTENT!');
     console.log(`📧 Sent to: ${email.to.join(', ')}`);
     console.log(`📋 Subject: ${email.subject}`);
-    console.log(`📊 Content included: Title, Summary, CVE IDs, IOCs, Detailed Analysis, References, Tags`);
+    console.log(`📊 Content included: Title, Summary, CVE IDs, IOCs, Technical Analysis, References, Tags`);
 
     await mongoose.disconnect();
   } catch (error) {

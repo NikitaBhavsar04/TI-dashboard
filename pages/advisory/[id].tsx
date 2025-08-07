@@ -93,6 +93,8 @@ interface ExtendedAdvisory {
   cves?: string[];
   executiveSummary?: string;
   affectedProducts?: string[];
+  affectedProduct?: string; // Legacy field from form
+  affectedSystems?: string[];
   targetSectors?: string[];
   regions?: string[];
   mitreTactics?: Array<{
@@ -116,6 +118,16 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [notifications, setNotifications] = useState<Array<{id: string, message: string, type: 'success' | 'error' | 'info'}>>([]);
+
+  // Debug log to check advisory data
+  useEffect(() => {
+    console.log('Full Advisory Data:', advisory);
+    console.log('affectedProducts:', advisory.affectedProducts);
+    console.log('affectedProduct:', advisory.affectedProduct);
+    console.log('affectedSystems:', advisory.affectedSystems);
+    console.log('targetSectors:', advisory.targetSectors);
+    console.log('regions:', advisory.regions);
+  }, [advisory]);
 
   // Debug log for showEmailModal state changes
   useEffect(() => {
@@ -205,18 +217,174 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
 
   const generatePDF = async () => {
     try {
-      const response = await fetch(`/api/pdf/${advisory._id}`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `advisory-${advisory._id}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+      // Import jsPDF dynamically to avoid SSR issues
+      const jsPDF = (await import('jspdf')).default;
+      const html2canvas = (await import('html2canvas')).default;
+      
+      // Create a container for PDF content
+      const printContent = document.createElement('div');
+      printContent.style.width = '210mm'; // A4 width
+      printContent.style.padding = '20mm';
+      printContent.style.backgroundColor = 'white';
+      printContent.style.color = 'black';
+      printContent.style.fontFamily = 'Arial, sans-serif';
+      
+      // Generate HTML content for PDF
+      printContent.innerHTML = `
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px;">
+          <h1 style="margin: 0; font-size: 24px; color: #000;">EaglEye IntelDesk - Threat Advisory</h1>
+          <p style="margin: 5px 0; color: #666;">Forensic Cyber Tech - Digital Forensics & Cybersecurity</p>
+        </div>
+        
+        <div style="margin-bottom: 25px;">
+          <h2 style="font-size: 20px; margin-bottom: 15px; color: #000;">${advisory.title}</h2>
+          
+          <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
+            ${advisory.severity ? `<span style="background: #fee; padding: 5px 10px; border: 1px solid #f00; border-radius: 15px; font-size: 12px;">SEVERITY: ${advisory.severity.toUpperCase()}</span>` : ''}
+            <span style="background: #f0f0f0; padding: 5px 10px; border: 1px solid #ccc; border-radius: 15px; font-size: 12px;">DATE: ${formatDate(advisory.publishedDate)}</span>
+            ${advisory.author ? `<span style="background: #f0f0f0; padding: 5px 10px; border: 1px solid #ccc; border-radius: 15px; font-size: 12px;">AUTHOR: ${advisory.author}</span>` : ''}
+          </div>
+          
+          ${advisory.category ? `<div style="margin-bottom: 10px;"><strong>Category:</strong> ${advisory.category}</div>` : ''}
+        </div>
+        
+        ${(advisory.executiveSummary || advisory.summary || advisory.description) ? `
+        <div style="margin-bottom: 25px;">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: #000; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Executive Summary</h3>
+          <p style="line-height: 1.6; text-align: justify;">${advisory.executiveSummary || advisory.summary || advisory.description}</p>
+        </div>
+        ` : ''}
+        
+        ${(advisory.affectedProducts?.length || advisory.affectedProduct) ? `
+        <div style="margin-bottom: 25px;">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: #000; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Affected Products</h3>
+          <ul style="margin: 0; padding-left: 20px;">
+            ${advisory.affectedProducts?.map(product => `<li style="margin-bottom: 5px;">${product}</li>`).join('') || 
+              (advisory.affectedProduct ? advisory.affectedProduct.split(',').map(product => `<li style="margin-bottom: 5px;">${product.trim()}</li>`).join('') : '')}
+          </ul>
+        </div>
+        ` : ''}
+        
+        ${advisory.targetSectors?.length ? `
+        <div style="margin-bottom: 25px;">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: #000; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Target Sectors</h3>
+          <ul style="margin: 0; padding-left: 20px;">
+            ${advisory.targetSectors.map(sector => `<li style="margin-bottom: 5px;">${sector}</li>`).join('')}
+          </ul>
+        </div>
+        ` : ''}
+        
+        ${advisory.regions?.length ? `
+        <div style="margin-bottom: 25px;">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: #000; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Affected Regions</h3>
+          <p>${advisory.regions.join(', ')}</p>
+        </div>
+        ` : ''}
+        
+        ${(advisory.cveIds?.length || advisory.cves?.length) ? `
+        <div style="margin-bottom: 25px;">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: #000; border-bottom: 1px solid #ccc; padding-bottom: 5px;">CVE Identifiers</h3>
+          <ul style="margin: 0; padding-left: 20px;">
+            ${(advisory.cveIds || advisory.cves || []).map((cve: string) => `<li style="margin-bottom: 5px; font-family: monospace;">${cve}</li>`).join('')}
+          </ul>
+        </div>
+        ` : ''}
+        
+        ${advisory.iocs?.length ? `
+        <div style="margin-bottom: 25px;">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: #000; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Indicators of Compromise</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+              <tr style="background: #f5f5f5;">
+                <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">Type</th>
+                <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">Value</th>
+                <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${advisory.iocs.map((ioc: any) => `
+                <tr>
+                  <td style="border: 1px solid #ccc; padding: 8px;">${ioc.type}</td>
+                  <td style="border: 1px solid #ccc; padding: 8px; font-family: monospace; word-break: break-all;">${ioc.value}</td>
+                  <td style="border: 1px solid #ccc; padding: 8px;">${ioc.description || 'N/A'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        ` : ''}
+        
+        ${advisory.recommendations?.length ? `
+        <div style="margin-bottom: 25px;">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: #000; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Security Recommendations</h3>
+          <ul style="margin: 0; padding-left: 20px;">
+            ${advisory.recommendations.map(rec => `<li style="margin-bottom: 8px; line-height: 1.5;">${rec}</li>`).join('')}
+          </ul>
+        </div>
+        ` : ''}
+        
+        ${advisory.references?.length ? `
+        <div style="margin-bottom: 25px;">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: #000; border-bottom: 1px solid #ccc; padding-bottom: 5px;">References</h3>
+          <ul style="margin: 0; padding-left: 20px;">
+            ${advisory.references.map((ref: string) => `<li style="margin-bottom: 5px; word-break: break-all;"><a href="${ref}" style="color: #0066cc;">${ref}</a></li>`).join('')}
+          </ul>
+        </div>
+        ` : ''}
+        
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center; font-size: 12px; color: #666;">
+          <p>Generated by EaglEye IntelDesk - Threat Intelligence Platform</p>
+          <p>Forensic Cyber Tech - Digital Forensics & Cybersecurity</p>
+          <p>Generated on: ${new Date().toLocaleString()}</p>
+        </div>
+      `;
+      
+      // Add to DOM temporarily for rendering
+      printContent.style.position = 'absolute';
+      printContent.style.left = '-9999px';
+      printContent.style.top = '0';
+      document.body.appendChild(printContent);
+      
+      try {
+        // Convert to canvas
+        const canvas = await html2canvas(printContent, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        });
+        
+        // Create PDF
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdfWidth = 210; // A4 width in mm
+        const pdfHeight = 297; // A4 height in mm
+        const imgWidth = pdfWidth;
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        // Add image to PDF, handle multiple pages if needed
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+        
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight;
+        }
+        
+        // Download the PDF
+        pdf.save(`advisory-${advisory._id}.pdf`);
+        
+      } finally {
+        // Clean up
+        document.body.removeChild(printContent);
       }
+      
     } catch (error) {
       console.error('PDF generation error:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -506,7 +674,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
               )}
 
               {/* 📄 THREAT DETAILS */}
-              {(advisory.description || advisory.executiveSummary || advisory.summary || advisory.affectedProducts?.length || advisory.targetSectors?.length || advisory.regions?.length) && (
+              {(advisory.description || advisory.executiveSummary || advisory.summary) && (
                 <motion.div 
                   className="glass-panel-hover p-8"
                   initial={{ opacity: 0, y: 20 }}
@@ -520,28 +688,52 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                     <h2 className="font-orbitron font-bold text-xl text-white">📄 THREAT DETAILS</h2>
                   </div>
 
-                  {/* Executive Summary / Description */}
-                  {(advisory.executiveSummary || advisory.summary || advisory.description) && (
-                    <div className="mb-6">
-                      <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Executive Summary</h3>
-                      <div className="prose prose-invert max-w-none bg-slate-800/30 border border-slate-600/50 rounded-lg p-6">
-                        <p className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap text-justify">
-                          {advisory.executiveSummary || advisory.summary || advisory.description}
-                        </p>
-                      </div>
+                  {/* Executive Summary Only */}
+                  <div className="mb-6">
+                    <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Executive Summary</h3>
+                    <div className="prose prose-invert max-w-none bg-slate-800/30 border border-slate-600/50 rounded-lg p-6">
+                      <p className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap text-justify">
+                        {advisory.executiveSummary || advisory.summary || advisory.description}
+                      </p>
                     </div>
-                  )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* 🎯 AFFECTED SYSTEMS & TARGETS */}
+              {(advisory.affectedProducts?.length || advisory.affectedProduct || advisory.affectedSystems?.length || advisory.targetSectors?.length || advisory.regions?.length) && (
+                <motion.div 
+                  className="glass-panel-hover p-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.25 }}
+                >
+                  <div className="flex items-center space-x-3 mb-6 p-4 bg-red-500/10 border border-red-400/30 rounded-lg">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/20 border border-red-400/50">
+                      <Target className="h-5 w-5 text-red-400" />
+                    </div>
+                    <h2 className="font-orbitron font-bold text-xl text-white">🎯 AFFECTED SYSTEMS & TARGETS</h2>
+                  </div>
 
                   {/* Affected Products */}
-                  {advisory.affectedProducts?.length && (
+                  {(advisory.affectedProducts?.length > 0 || advisory.affectedProduct || advisory.affectedSystems?.length > 0) && (
                     <div className="mb-6">
                       <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Affected Products</h3>
                       <div className="flex flex-wrap gap-2">
-                        {advisory.affectedProducts.map((product, index) => (
+                        {/* Handle array format */}
+                        {(advisory.affectedProducts || advisory.affectedSystems || []).map((product, index) => (
                           <div key={index} className="px-3 py-1 rounded-full bg-red-500/20 border border-red-400/30 text-red-300 font-rajdhani text-sm">
                             {product}
                           </div>
                         ))}
+                        {/* Handle string format (split by comma if needed) */}
+                        {advisory.affectedProduct && !advisory.affectedProducts?.length && (
+                          advisory.affectedProduct.split(',').map((product, index) => (
+                            <div key={index} className="px-3 py-1 rounded-full bg-red-500/20 border border-red-400/30 text-red-300 font-rajdhani text-sm">
+                              {product.trim()}
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
                   )}
@@ -563,7 +755,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
 
                   {/* Regions */}
                   {advisory.regions?.length && (
-                    <div className="mb-6">
+                    <div>
                       <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Regions</h3>
                       <div className="flex flex-wrap gap-2">
                         {advisory.regions.map((region, index) => (
@@ -572,18 +764,6 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                             <span>{region}</span>
                           </div>
                         ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Technical Analysis */}
-                  {advisory.content && (
-                    <div>
-                      <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Detailed Analysis</h3>
-                      <div className="prose prose-invert max-w-none bg-slate-800/30 border border-slate-600/50 rounded-lg p-6">
-                        <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap text-justify">
-                          {advisory.content}
-                        </div>
                       </div>
                     </div>
                   )}

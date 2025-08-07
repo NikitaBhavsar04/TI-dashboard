@@ -385,7 +385,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
 
                 {/* Content */}
                 <div>
-                  <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Detailed Analysis</h3>
+                  <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Technical Analysis</h3>
                   <div className="prose prose-invert max-w-none">
                     <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap">
                       {advisory.content}
