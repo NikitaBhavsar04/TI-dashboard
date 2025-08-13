@@ -115,7 +115,7 @@ export default function Login() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="input-glass pl-10 w-full"
-                    placeholder="admin@threatwatch.com"
+                    placeholder="admin@forensiccybertech.com"
                     required
                   />
                 </div>
@@ -180,17 +180,6 @@ export default function Login() {
                 )}
               </button>
             </form>
-
-            {/* Demo Credentials */}
-            <div className="mt-8 p-4 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
-              <h3 className="font-rajdhani font-semibold text-amber-400 mb-2">
-                Demo Credentials
-              </h3>
-              <div className="space-y-1 text-sm font-jetbrains">
-                <p className="text-slate-300">Email: admin@threatwatch.com</p>
-                <p className="text-slate-300">Password: admin123</p>
-              </div>
-            </div>
 
             {/* Back to Home */}
             <div className="mt-6 text-center">

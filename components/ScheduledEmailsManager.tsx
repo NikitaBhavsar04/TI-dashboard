@@ -23,9 +23,11 @@ interface ScheduledEmail {
 
 interface ScheduledEmailsManagerProps {
   onEditEmail: (email: ScheduledEmail) => void;
+  onClose?: () => void;
+  onRefresh?: () => void;
 }
 
-const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditEmail }) => {
+const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditEmail, onClose, onRefresh }) => {
   const { user } = useAuth();
   const [scheduledEmails, setScheduledEmails] = useState<ScheduledEmail[]>([]);
   const [loading, setLoading] = useState(true);

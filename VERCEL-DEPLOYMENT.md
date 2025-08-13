@@ -48,7 +48,7 @@ In Vercel Dashboard → Settings → Environment Variables, add:
 MONGODB_URI=mongodb+srv://threatadvisory:7U%402dRJagX5kFXE@threatadvisory.atzvfoo.mongodb.net/threat-advisory?retryWrites=true&w=majority
 
 # Authentication
-NEXTAUTH_URL=https://your-app-name.vercel.app
+NEXTAUTH_URL=https://inteldesk.eagleyesoc.ai
 NEXTAUTH_SECRET=super-secure-nextauth-secret-key-for-production-2024-threatwatch
 JWT_SECRET=ultra-secure-jwt-secret-key-for-production-threatwatch-2024-forensic-cyber-tech
 
@@ -60,8 +60,8 @@ SMTP_PASS=hbts_qbew_cwsm_gapf
 
 # Application Settings
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://your-app-name.vercel.app
-ALLOWED_ORIGINS=https://your-app-name.vercel.app
+NEXT_PUBLIC_APP_URL=https://inteldesk.eagleyesoc.ai
+ALLOWED_ORIGINS=https://inteldesk.eagleyesoc.ai,https://www.inteldesk.eagleyesoc.ai
 
 # Security
 CRON_SECRET=super-secure-cron-secret-key-2024-vercel-deployment
@@ -95,9 +95,9 @@ TTL: 1 Hour
 ### Step 5: Verify Deployment
 
 #### Test URLs:
-- **Main App:** `https://your-app-name.vercel.app`
-- **Health Check:** `https://your-app-name.vercel.app/api/health`
-- **Admin Panel:** `https://your-app-name.vercel.app/admin`
+- **Main App:** `https://inteldesk.eagleyesoc.ai`
+- **Health Check:** `https://inteldesk.eagleyesoc.ai/api/health`
+- **Admin Panel:** `https://inteldesk.eagleyesoc.ai/admin`
 
 #### Test Features:
 - [ ] User authentication works

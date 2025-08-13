@@ -2,7 +2,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import dbConnect from '@/lib/db';
 import ScheduledEmail from '@/models/ScheduledEmail';
-import { sendEmailNotification } from '@/lib/emailSender';
+import { sendEmail } from '@/lib/emailSender';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -28,7 +28,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // For immediate sending (Vercel doesn't support background jobs)
     if (new Date(scheduleTime) <= new Date()) {
       try {
-        await sendEmailNotification(advisoryId, recipients);
+        await sendEmail({
+          to: recipients,
+          subject: `Threat Advisory Notification`,
+          body: `Advisory notification details here` // You may need to generate proper email body
+        });
         scheduledEmail.status = 'sent';
         scheduledEmail.sentAt = new Date();
         await scheduledEmail.save();

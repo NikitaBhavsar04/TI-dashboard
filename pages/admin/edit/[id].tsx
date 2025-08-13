@@ -35,7 +35,7 @@ export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
     author: advisory.author || '',
     cvss: advisory.cvss || '',
     tlp: advisory.tlp || '',
-    affectedProduct: advisory.affectedProduct || '',
+    affectedProduct: advisory.affectedProducts?.join(', ') || '',
     tags: advisory.tags || [],
     cveIds: advisory.cveIds || [],
     targetSectors: advisory.targetSectors || [],

@@ -1,66 +1,83 @@
-// process-overdue-email.js - Process overdue emails with rich content template
-const mongoose = require('mongoose');
-const nodemailer = require('nodemailer');
-require('dotenv').config();
+// pages/api/preview-email.js
+import dbConnect from '../../lib/db';
+import Advisory from '../../models/Advisory';
 
-const processOverdueEmail = async () => {
+export default async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+
   try {
-    console.log('🚀 Starting overdue email processing...');
+    await dbConnect();
     
-    // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('✅ Connected to MongoDB');
-
-    // Define schemas
-    const AdvisorySchema = new mongoose.Schema({}, { strict: false });
-    const Advisory = mongoose.models.Advisory || mongoose.model('Advisory', AdvisorySchema);
-
-    const ScheduledEmailSchema = new mongoose.Schema({}, { strict: false });
-    const ScheduledEmail = mongoose.models.ScheduledEmail || mongoose.model('ScheduledEmail', ScheduledEmailSchema);
-
-    // Get specific overdue email
-    const email = await ScheduledEmail.findById('688c56474e3f28c5d57b7599');
+    // Get the specific advisory for testing - try to find any advisory if the provided ID doesn't work
+    let advisoryId = req.query.id || '6894441d2038c841fde030a6';
+    let advisory;
     
-    if (!email) {
-      console.log('❌ Email not found');
-      return;
+    try {
+      advisory = await Advisory.findById(advisoryId);
+    } catch (error) {
+      // If the ID format is invalid, get the first available advisory
+      advisory = await Advisory.findOne();
     }
-
-    console.log('📧 Processing email:', email.subject);
-    console.log('📅 Scheduled for:', email.scheduledTime);
-    console.log('👥 Recipients:', email.to);
-
-    // Get the advisory
-    const advisory = await Advisory.findById(email.advisoryId);
     
     if (!advisory) {
-      console.log('❌ Advisory not found');
-      return;
+      // If still no advisory found, create a sample one for preview
+      advisory = {
+        _id: 'sample-id',
+        title: 'Sample Critical Vulnerability Advisory',
+        severity: 'critical',
+        category: 'Vulnerability',
+        publishedDate: new Date(),
+        author: 'Security Team',
+        tlp: 'amber',
+        cveIds: ['CVE-2024-1234', 'CVE-2024-5678'],
+        executiveSummary: 'This is a sample threat advisory demonstrating the new dark theme email template. A critical vulnerability has been discovered affecting multiple systems worldwide.',
+        affectedProducts: ['Windows Server', 'Linux Systems', 'Network Infrastructure'],
+        targetSectors: ['Financial Services', 'Healthcare', 'Government'],
+        regions: ['North America', 'Europe', 'Asia-Pacific'],
+        mitreTactics: [
+          { name: 'Initial Access', id: 'T1190', technique: 'Exploit Public-Facing Application' },
+          { name: 'Execution', id: 'T1059', technique: 'Command and Scripting Interpreter' }
+        ],
+        recommendations: [
+          'Apply security patches immediately to all affected systems',
+          'Monitor network traffic for suspicious activities',
+          'Implement additional access controls and authentication measures',
+          'Conduct thorough security assessments of all public-facing applications'
+        ]
+      };
     }
 
-    console.log('📋 Found advisory:', advisory.title);
-    console.log('📊 Advisory data length:', JSON.stringify(advisory).length, 'characters');
+    // Generate the email HTML using the same function from send-advisory.js
+    const emailHTML = generateEmailBody(advisory, 'This is a preview of our professional threat advisory email template. Our security team has reviewed this advisory and recommends immediate attention to the outlined recommendations.');
 
-    // Generate rich email content with dark theme
-    const generateEmailBody = (advisory, customMessage = '') => {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://inteldesk.eagleyesoc.ai';
-      
-      // TLP Color mapping
-      const tlpColors = {
-        'clear': { bg: '#f8fafc', text: '#1e293b', border: '#64748b' },
-        'white': { bg: '#ffffff', text: '#1e293b', border: '#94a3b8' },
-        'green': { bg: '#22c55e', text: '#ffffff', border: '#16a34a' },
-        'amber': { bg: '#f59e0b', text: '#ffffff', border: '#d97706' },
-        'yellow': { bg: '#eab308', text: '#ffffff', border: '#ca8a04' },
-        'red': { bg: '#ef4444', text: '#ffffff', border: '#dc2626' }
-      };
-      
-      const tlpColor = tlpColors[advisory.tlp?.toLowerCase()] || tlpColors.clear;
-      
-      return `
+    // Return the HTML directly for preview
+    res.setHeader('Content-Type', 'text/html');
+    res.status(200).send(emailHTML);
+
+  } catch (error) {
+    console.error('Preview email error:', error);
+    res.status(500).json({ message: 'Failed to generate email preview' });
+  }
+}
+
+function generateEmailBody(advisory, customMessage = '') {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://inteldesk.eagleyesoc.ai';
+  
+  // TLP Color mapping
+  const tlpColors = {
+    'clear': { bg: '#f8fafc', text: '#1e293b', border: '#64748b' },
+    'white': { bg: '#ffffff', text: '#1e293b', border: '#94a3b8' },
+    'green': { bg: '#22c55e', text: '#ffffff', border: '#16a34a' },
+    'amber': { bg: '#f59e0b', text: '#ffffff', border: '#d97706' },
+    'yellow': { bg: '#eab308', text: '#ffffff', border: '#ca8a04' },
+    'red': { bg: '#ef4444', text: '#ffffff', border: '#dc2626' }
+  };
+  
+  const tlpColor = tlpColors[advisory.tlp?.toLowerCase()] || tlpColors.clear;
+  
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -81,8 +98,6 @@ const processOverdueEmail = async () => {
             padding: 0;
             width: 100%;
             min-height: 100vh;
-            -webkit-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
         }
         
         .container {
@@ -358,6 +373,28 @@ const processOverdueEmail = async () => {
             .section {
                 margin: 10px 0 !important;
                 padding: 15px !important;
+            }
+        }
+        
+        @media only screen and (max-width: 480px) {
+            .section {
+                padding: 16px !important;
+                margin: 16px 0 !important;
+            }
+            .section-header {
+                padding: 12px 16px !important;
+                flex-direction: column !important;
+                text-align: center !important;
+                gap: 8px !important;
+            }
+            .section-icon {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 14px !important;
+            }
+            .tag, .cve-tag {
+                font-size: 11px !important;
+                padding: 4px 8px !important;
             }
         }
         
@@ -1052,63 +1089,5 @@ const processOverdueEmail = async () => {
     </div>
 </body>
 </html>
-      `;
-    };
-
-    const emailBody = generateEmailBody(advisory, email.customMessage);
-
-    // Create SMTP transporter
-    const transporter = nodemailer.createTransporter({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-    });
-
-    // Send email
-    const mailOptions = {
-      from: process.env.SMTP_USER,
-      to: email.to.join(','),
-      cc: email.cc ? email.cc.join(',') : undefined,
-      bcc: email.bcc ? email.bcc.join(',') : undefined,
-      subject: email.subject,
-      html: emailBody
-    };
-
-    console.log('📤 Sending email...');
-    await transporter.sendMail(mailOptions);
-    
-    // Update email status
-    await ScheduledEmail.findByIdAndUpdate(email._id, {
-      status: 'sent',
-      sentAt: new Date()
-    });
-
-    console.log('✅ EMAIL SENT SUCCESSFULLY WITH COMPLETE RICH TEMPLATE!');
-    console.log(`📧 Sent to: ${email.to.join(', ')}`);
-    console.log(`📋 Subject: ${email.subject}`);
-    console.log(`📊 Rich template included: Metadata grids, CVE tags, MITRE tactics, recommendations, responsive design`);
-
-    await mongoose.disconnect();
-  } catch (error) {
-    console.error('❌ Error processing email:', error);
-    
-    try {
-      const ScheduledEmailSchema = new mongoose.Schema({}, { strict: false });
-      const ScheduledEmail = mongoose.models.ScheduledEmail || mongoose.model('ScheduledEmail', ScheduledEmailSchema);
-      
-      await ScheduledEmail.findByIdAndUpdate('688c56474e3f28c5d57b7599', {
-        status: 'failed',
-        errorMessage: error.message,
-        sentAt: new Date()
-      });
-    } catch (updateError) {
-      console.error('Failed to update email status:', updateError);
-    }
-  }
-};
-
-processOverdueEmail();
+  `.trim();
+}

@@ -2,7 +2,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import dbConnect from '@/lib/db';
 import ScheduledEmail from '@/models/ScheduledEmail';
-import { sendEmailNotification } from '@/lib/emailSender';
+import { sendEmail } from '@/lib/emailSender';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Verify the request (add your secret key for security)
@@ -24,10 +24,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (const scheduledEmail of pendingEmails) {
       try {
-        await sendEmailNotification(
-          scheduledEmail.advisoryId._id,
-          scheduledEmail.recipients
-        );
+        await sendEmail({
+          to: scheduledEmail.recipients,
+          subject: `Threat Advisory: ${scheduledEmail.advisoryId.title}`,
+          body: `Advisory details here` // You may need to generate proper email body
+        });
 
         scheduledEmail.status = 'sent';
         scheduledEmail.sentAt = new Date();

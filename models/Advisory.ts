@@ -4,8 +4,10 @@ export interface IAdvisory extends Document {
   title: string;
   description: string;
   summary?: string;
+  executiveSummary?: string;
   severity: 'Critical' | 'High' | 'Medium' | 'Low';
   category: string;
+  threatId?: string;
   iocs: {
     type: 'IP' | 'Hash' | 'URL' | 'Domain' | 'Email';
     value: string;
@@ -52,6 +54,7 @@ const AdvisorySchema = new Schema({
     required: true
   },
   summary: String,
+  executiveSummary: String,
   severity: {
     type: String,
     enum: ['Critical', 'High', 'Medium', 'Low'],
@@ -61,6 +64,7 @@ const AdvisorySchema = new Schema({
     type: String,
     required: true
   },
+  threatId: String,
   iocs: [IOCSchema],
   publishedDate: {
     type: Date,

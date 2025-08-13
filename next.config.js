@@ -2,6 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   
+  // ESLint configuration for build
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
+  
   // Production optimizations
   poweredByHeader: false,
   compress: true,

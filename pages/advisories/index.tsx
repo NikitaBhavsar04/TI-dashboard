@@ -592,7 +592,7 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
             setEmailModalOpen(false);
             setSelectedAdvisoryForEmail(null);
           }}
-          advisory={selectedAdvisoryForEmail}
+          advisory={selectedAdvisoryForEmail as any}
         />
       )}
 
@@ -616,8 +616,12 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
             setEditEmailModalOpen(false);
             setEditingEmailData(null);
           }}
-          emailData={editingEmailData}
-          onSave={handleEditEmailSave}
+          scheduledEmail={editingEmailData}
+          onUpdate={() => {
+            setEditEmailModalOpen(false);
+            setEditingEmailData(null);
+            handleScheduledEmailsRefresh();
+          }}
         />
       )}
     </HydrationSafe>

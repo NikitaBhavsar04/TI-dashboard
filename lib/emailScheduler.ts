@@ -116,7 +116,7 @@ const generateEmailHTML = (advisory: any, customMessage: string = '') => {
           ` : ''}
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/advisory/${advisory._id || advisory.id}" class="cta-button">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://inteldesk.eagleyesoc.ai'}/advisory/${advisory._id || advisory.id}" class="cta-button">
               📖 View Full Advisory
             </a>
           </div>

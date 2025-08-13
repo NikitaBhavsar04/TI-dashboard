@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Template Test - Cyber Threat Advisory</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0a0a0a;
+            font-family: Arial, sans-serif;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-header {
+            background: #1f2937;
+            color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .iframe-container {
+            border: 2px solid #374151;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+        iframe {
+            width: 100%;
+            min-height: 800px;
+            border: none;
+        }
+        .device-buttons {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .device-btn {
+            background: #3b82f6;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .device-btn:hover {
+            background: #2563eb;
+        }
+        .device-btn.active {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🛡️ Cyber Threat Email Template Preview</h1>
+            <p>Production-ready HTML email template with full responsive design</p>
+        </div>
+        
+        <div class="device-buttons">
+            <button class="device-btn active" onclick="setViewport('100%', '800px')">Desktop</button>
+            <button class="device-btn" onclick="setViewport('768px', '900px')">Tablet</button>
+            <button class="device-btn" onclick="setViewport('375px', '700px')">Mobile</button>
+            <button class="device-btn" onclick="setViewport('320px', '650px')">Small Mobile</button>
+        </div>
+        
+        <div class="iframe-container">
+            <iframe id="emailPreview" src="cyber-threat-email-template.html"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function setViewport(width, height) {
+            const iframe = document.getElementById('emailPreview');
+            const container = iframe.parentElement;
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.device-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Set iframe dimensions
+            iframe.style.width = width;
+            iframe.style.height = height;
+            
+            // Center the iframe if it's smaller than container
+            if (width !== '100%') {
+                container.style.display = 'flex';
+                container.style.justifyContent = 'center';
+                container.style.alignItems = 'center';
+                container.style.minHeight = height;
+            } else {
+                container.style.display = 'block';
+                container.style.minHeight = 'auto';
+            }
+        }
+    </script>
+</body>
+</html>

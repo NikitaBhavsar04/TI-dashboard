@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "threat-advisory-platform",
+  "name": "inteldesk-eagleyesoc",
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",

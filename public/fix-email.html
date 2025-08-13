@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Advisory and Test Email</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .button { background: #dc3545; color: white; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px; }
+        .button:hover { background: #c82333; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Fix Advisory & Test Email</h1>
+    <p><strong>This will:</strong></p>
+    <ol>
+        <li>Add patch details to your most recent advisory</li>
+        <li>Add metadata fields (MITRE tactics, affected products, etc.)</li>
+        <li>Send a test email with ALL sections</li>
+    </ol>
+    
+    <button class="button" onclick="fixAndTest()">Fix Advisory & Send Test Email</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function fixAndTest() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Processing...</p>';
+            
+            try {
+                const response = await fetch('/api/fix-and-test-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ Success!</h3>
+                            <p>${data.message}</p>
+                            <p><strong>Advisory ID:</strong> ${data.advisoryId}</p>
+                            <p><strong>Patch Details Added:</strong> ${data.patchDetailsCount} items</p>
+                            <p><strong>Sections Added:</strong></p>
+                            <ul>
+                                <li>🔧 Patch Details: ${data.sectionsAdded.patchDetails} items</li>
+                                <li>⚔️ MITRE Tactics: ${data.sectionsAdded.mitreTactics} items</li>
+                                <li>📦 Affected Products: ${data.sectionsAdded.affectedProducts} items</li>
+                                <li>🎯 Target Sectors: ${data.sectionsAdded.targetSectors} items</li>
+                                <li>🌍 Regions: ${data.sectionsAdded.regions} items</li>
+                            </ul>
+                            <p><strong>Check your email - it should now have all three sections!</strong></p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ Error</h3>
+                            <p>${data.message}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Network Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

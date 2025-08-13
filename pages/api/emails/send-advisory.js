@@ -5,6 +5,7 @@ import Advisory from '../../../models/Advisory';
 import ScheduledEmail from '../../../models/ScheduledEmail';
 import { verifyToken } from '../../../lib/auth';
 import nodemailer from 'nodemailer';
+import { generateCyberThreatEmailTemplate } from '../../../lib/emailTemplateGenerator';
 
 const { agenda } = require('../../../lib/agenda');
 
@@ -122,8 +123,8 @@ export default async function handler(req, res) {
       });
     }
 
-    // Generate email body with advisory content
-    const emailBody = generateEmailBody(advisory, customMessage);
+    // Generate email body with the new production-ready template
+    const emailBody = generateCyberThreatEmailTemplate(advisory, customMessage);
 
     // Schedule or send emails
     const scheduledEmails = [];
@@ -186,100 +187,5 @@ export default async function handler(req, res) {
   }
 }
 
-function generateEmailBody(advisory, customMessage = '') {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Threat Advisory: ${advisory.title}</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .header { background: #1e40af; color: white; padding: 20px; text-align: center; }
-        .content { padding: 20px; }
-        .severity { 
-            display: inline-block; 
-            padding: 5px 10px; 
-            border-radius: 4px; 
-            color: white; 
-            font-weight: bold; 
-        }
-        .critical { background: #dc2626; }
-        .high { background: #ea580c; }
-        .medium { background: #ca8a04; }
-        .low { background: #2563eb; }
-        .cve-list { background: #f3f4f6; padding: 10px; border-radius: 4px; }
-        .footer { background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>🚨 THREAT ADVISORY</h1>
-        <h2>${advisory.title}</h2>
-    </div>
-    
-    <div class="content">
-        ${customMessage ? `
-        <div style="background: #eff6ff; padding: 15px; border-left: 4px solid #2563eb; margin-bottom: 20px;">
-            <h3>Message from Security Team:</h3>
-            <p>${customMessage.replace(/\n/g, '<br>')}</p>
-        </div>
-        ` : ''}
-        
-        <h3>Advisory Details</h3>
-        <p><strong>Severity:</strong> 
-            <span class="severity ${advisory.severity?.toLowerCase() || 'low'}">
-                ${advisory.severity?.toUpperCase() || 'UNKNOWN'}
-            </span>
-        </p>
-        
-        ${advisory.category ? `<p><strong>Category:</strong> ${advisory.category}</p>` : ''}
-        ${advisory.publishedDate ? `<p><strong>Published:</strong> ${new Date(advisory.publishedDate).toLocaleDateString()}</p>` : ''}
-        
-        ${advisory.executiveSummary || advisory.summary || advisory.description ? `
-        <h3>Executive Summary</h3>
-        <p>${advisory.executiveSummary || advisory.summary || advisory.description}</p>
-        ` : ''}
-        
-        ${advisory.cveIds?.length || advisory.cves?.length ? `
-        <h3>CVE Identifiers</h3>
-        <div class="cve-list">
-            ${(advisory.cveIds || advisory.cves || []).map(cve => `<span style="margin-right: 10px;">${cve}</span>`).join('')}
-        </div>
-        ` : ''}
-        
-        ${advisory.affectedProducts?.length ? `
-        <h3>Affected Products</h3>
-        <ul>
-            ${advisory.affectedProducts.map(product => `<li>${product}</li>`).join('')}
-        </ul>
-        ` : ''}
-        
-        ${advisory.recommendations?.length ? `
-        <h3>Recommendations</h3>
-        <ul>
-            ${advisory.recommendations.map(rec => `<li>${rec}</li>`).join('')}
-        </ul>
-        ` : ''}
-        
-        <div style="margin-top: 30px; padding: 15px; background: #f0f9ff; border-radius: 4px;">
-            <p><strong>For detailed information, please visit:</strong></p>
-            <p><a href="${baseUrl}/advisory/${advisory._id}" style="color: #2563eb;">
-                ${baseUrl}/advisory/${advisory._id}
-            </a></p>
-        </div>
-    </div>
-    
-    <div class="footer">
-        <p><strong>EaglEye IntelDesk - Threat Intelligence Platform</strong></p>
-        <p>Forensic Cyber Tech | Digital Forensics & Cybersecurity</p>
-        <p style="font-size: 12px; color: #6b7280;">
-            This is an automated security advisory. Please do not reply to this email.
-        </p>
-    </div>
-</body>
-</html>
-  `.trim();
-}
+// The generateEmailBody function is now replaced by the production-ready template
+// No longer needed as we're using generateCyberThreatEmailTemplate from lib/emailTemplateGenerator.js
