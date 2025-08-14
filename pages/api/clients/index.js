@@ -1,41 +1,40 @@
 // pages/api/clients/index.js
 import dbConnect from '../../../lib/db';
 import Client from '../../../models/Client';
-import { verifyToken } from '../../../lib/auth';
+import { requireAuth } from '../../../lib/auth';
+import { logActivity } from '../../../lib/auditLogger';
 
 export default async function handler(req, res) {
   try {
     await dbConnect();
 
-    // Verify admin access
-    const token = req.cookies.token;
-    if (!token) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded || decoded.role !== 'admin') {
+    // Verify authentication - require admin or above
+    const currentUser = requireAuth(req);
+    if (!currentUser || !['admin', 'super_admin'].includes(currentUser.role)) {
       return res.status(403).json({ message: 'Admin access required' });
     }
 
     switch (req.method) {
       case 'GET':
-        await handleGet(req, res);
+        await handleGet(req, res, currentUser);
         break;
       case 'POST':
-        await handlePost(req, res, decoded.userId);
+        await handlePost(req, res, currentUser);
         break;
       default:
         res.setHeader('Allow', ['GET', 'POST']);
         res.status(405).json({ message: 'Method not allowed' });
     }
   } catch (error) {
+    if (error.message === 'Authentication required' || error.message === 'Insufficient permissions') {
+      return res.status(401).json({ error: error.message });
+    }
     console.error('API Error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
 
-async function handleGet(req, res) {
+async function handleGet(req, res, currentUser) {
   try {
     const { search, active } = req.query;
     
@@ -56,14 +55,34 @@ async function handleGet(req, res) {
       .sort({ name: 1 })
       .select('name emails description isActive createdAt');
 
-    res.status(200).json(clients);
+    // Filter email addresses for admin role
+    const filteredClients = clients.map(client => {
+      const clientObj = client.toObject();
+      
+      // Only super_admin can see email addresses
+      if (currentUser.role !== 'super_admin') {
+        delete clientObj.emails;
+        clientObj.emailCount = client.emails?.length || 0; // Provide count instead
+      }
+      
+      return clientObj;
+    });
+
+    // Log the activity
+    await logActivity(currentUser, {
+      action: 'clients_accessed',
+      resource: 'client_list',
+      details: `Viewed ${clients.length} clients, emails visible: ${currentUser.role === 'super_admin'}`
+    }, req);
+
+    res.status(200).json(filteredClients);
   } catch (error) {
     console.error('Get clients error:', error);
     res.status(500).json({ message: 'Failed to fetch clients' });
   }
 }
 
-async function handlePost(req, res, userId) {
+async function handlePost(req, res, currentUser) {
   try {
     const { name, emails, description } = req.body;
 
@@ -91,20 +110,38 @@ async function handlePost(req, res, userId) {
     const client = new Client({
       name: name.trim(),
       emails: emails.map(email => email.toLowerCase().trim()),
-      description: description?.trim()
+      description: description?.trim(),
+      createdBy: currentUser.username
     });
 
     await client.save();
 
+    // Log the activity
+    await logActivity(currentUser, {
+      action: 'client_created',
+      resource: 'client',
+      resourceId: client._id.toString(),
+      details: `Created client: ${client.name} with ${client.emails.length} emails`
+    }, req);
+
+    // Filter response for admin
+    const responseClient = {
+      _id: client._id,
+      name: client.name,
+      description: client.description,
+      isActive: client.isActive
+    };
+
+    // Only super_admin gets email addresses in response
+    if (currentUser.role === 'super_admin') {
+      responseClient.emails = client.emails;
+    } else {
+      responseClient.emailCount = client.emails.length;
+    }
+
     res.status(201).json({
       message: 'Client created successfully',
-      client: {
-        _id: client._id,
-        name: client.name,
-        emails: client.emails,
-        description: client.description,
-        isActive: client.isActive
-      }
+      client: responseClient
     });
   } catch (error) {
     console.error('Create client error:', error);

@@ -20,7 +20,8 @@ import {
 interface Client {
   _id: string;
   name: string;
-  emails: string[];
+  emails?: string[]; // Optional for admin users
+  emailCount?: number; // For admin users who can't see emails
   description?: string;
   isActive: boolean;
   createdAt: string;
@@ -35,7 +36,7 @@ interface ClientFormData {
 }
 
 export default function ClientsManagement() {
-  const { user, isAdmin } = useAuth();
+  const { user, hasRole, canViewEmails } = useAuth();
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,12 +52,12 @@ export default function ClientsManagement() {
   const [showInactive, setShowInactive] = useState(false);
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!hasRole('admin')) {
       router.push('/');
       return;
     }
     fetchClients();
-  }, [isAdmin, router]);
+  }, [router]);
 
   const fetchClients = async () => {
     try {
@@ -77,7 +78,7 @@ export default function ClientsManagement() {
 
   const filteredClients = clients.filter(client => {
     const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.emails.some(email => email.toLowerCase().includes(searchTerm.toLowerCase()));
+                         (canViewEmails() && client.emails?.some(email => email.toLowerCase().includes(searchTerm.toLowerCase())));
     const matchesActiveFilter = showInactive ? true : client.isActive;
     return matchesSearch && matchesActiveFilter;
   });
@@ -209,7 +210,7 @@ export default function ClientsManagement() {
     }
   };
 
-  if (!isAdmin) {
+  if (!hasRole('admin')) {
     return null;
   }
 
@@ -249,7 +250,7 @@ export default function ClientsManagement() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search clients by name or email..."
+                  placeholder={canViewEmails() ? "Search clients by name or email..." : "Search clients by name..."}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50"
@@ -304,7 +305,12 @@ export default function ClientsManagement() {
                           <div className="flex items-center space-x-4 text-slate-400 font-rajdhani text-sm">
                             <span className="flex items-center space-x-1">
                               <Mail className="h-4 w-4" />
-                              <span>{client.emails.length} email{client.emails.length !== 1 ? 's' : ''}</span>
+                              <span>
+                                {canViewEmails() 
+                                  ? `${client.emails?.length || 0} email${(client.emails?.length || 0) !== 1 ? 's' : ''}`
+                                  : `${client.emailCount || 0} email${(client.emailCount || 0) !== 1 ? 's' : ''}`
+                                }
+                              </span>
                             </span>
                             <span className={`px-2 py-1 rounded-full text-xs ${
                               client.isActive 
@@ -324,17 +330,28 @@ export default function ClientsManagement() {
                       )}
                       
                       <div className="ml-13">
-                        <div className="text-slate-400 font-rajdhani text-sm mb-2">Email Addresses:</div>
-                        <div className="flex flex-wrap gap-2">
-                          {client.emails.map((email, index) => (
-                            <span
-                              key={index}
-                              className="px-3 py-1 bg-slate-700/50 border border-slate-600/50 rounded-lg text-slate-300 font-mono text-sm"
-                            >
-                              {email}
-                            </span>
-                          ))}
-                        </div>
+                        {canViewEmails() ? (
+                          <>
+                            <div className="text-slate-400 font-rajdhani text-sm mb-2">Email Addresses:</div>
+                            <div className="flex flex-wrap gap-2">
+                              {client.emails?.map((email, index) => (
+                                <span
+                                  key={index}
+                                  className="px-3 py-1 bg-slate-700/50 border border-slate-600/50 rounded-lg text-slate-300 font-mono text-sm"
+                                >
+                                  {email}
+                                </span>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-slate-400 font-rajdhani text-sm">
+                            <div className="flex items-center space-x-2">
+                              <EyeOff className="h-4 w-4" />
+                              <span>Email addresses hidden (Admin access level)</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
@@ -346,13 +363,15 @@ export default function ClientsManagement() {
                       >
                         <Edit className="h-4 w-4" />
                       </button>
-                      <button
-                        onClick={() => handleDelete(client)}
-                        className="p-2 bg-red-500/20 border border-red-400/50 rounded-lg text-red-400 hover:bg-red-500/30 transition-all duration-200"
-                        title="Delete client"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      {user?.role === 'super_admin' && (
+                        <button
+                          onClick={() => handleDelete(client)}
+                          className="p-2 bg-red-500/20 border border-red-400/50 rounded-lg text-red-400 hover:bg-red-500/30 transition-all duration-200"
+                          title="Delete client (Super Admin only)"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

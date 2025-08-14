@@ -5,7 +5,7 @@ interface User {
   id: string;
   username: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'super_admin' | 'admin' | 'user';
   lastLogin?: Date;
   createdAt?: Date;
 }
@@ -16,7 +16,12 @@ interface AuthContextType {
   logout: () => Promise<void>;
   loading: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   isAuthenticated: boolean;
+  hasRole: (requiredRole: 'user' | 'admin' | 'super_admin') => boolean;
+  canManageUsers: () => boolean;
+  canViewEmails: () => boolean;
+  canCreateRole: (targetRole: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -87,7 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       // Redirect based on role
-      if (data.user.role === 'admin') {
+      if (data.user.role === 'super_admin' || data.user.role === 'admin') {
         router.push('/admin');
       } else {
         router.push('/advisories');
@@ -113,13 +118,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const hasRole = (requiredRole: 'user' | 'admin' | 'super_admin'): boolean => {
+    if (!user) return false;
+    
+    const roleHierarchy = {
+      super_admin: 3,
+      admin: 2,
+      user: 1
+    };
+
+    const userLevel = roleHierarchy[user.role as keyof typeof roleHierarchy] || 0;
+    const requiredLevel = roleHierarchy[requiredRole] || 0;
+    
+    return userLevel >= requiredLevel;
+  };
+
+  const canManageUsers = (): boolean => {
+    return hasRole('admin'); // Both admin and super_admin can manage users
+  };
+
+  const canViewEmails = (): boolean => {
+    return user?.role === 'super_admin'; // Only super_admin can see email addresses
+  };
+
+  const canCreateRole = (targetRole: string): boolean => {
+    if (!user) return false;
+    
+    if (user.role === 'super_admin') {
+      return ['user', 'admin', 'super_admin'].includes(targetRole);
+    }
+    
+    if (user.role === 'admin') {
+      return targetRole === 'user';
+    }
+    
+    return false;
+  };
+
   const value = {
     user,
     login,
     logout,
     loading,
-    isAdmin: user?.role === 'admin',
-    isAuthenticated: !!user
+    isAdmin: user?.role === 'admin' || user?.role === 'super_admin',
+    isSuperAdmin: user?.role === 'super_admin',
+    isAuthenticated: !!user,
+    hasRole,
+    canManageUsers,
+    canViewEmails,
+    canCreateRole
   };
 
   return (

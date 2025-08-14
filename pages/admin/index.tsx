@@ -286,15 +286,12 @@ export default function AdminDashboard() {
                 USER MANAGEMENT
               </h3>
               <div className="space-y-3">
-                <CyberButton 
-                  variant="cyber" 
-                  glowColor="green" 
-                  className="w-full"
-                  onClick={() => setShowCreateUser(true)}
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Add New User
-                </CyberButton>
+                <Link href="/admin/users">
+                  <CyberButton variant="cyber" glowColor="green" className="w-full">
+                    <Users className="h-4 w-4 mr-2" />
+                    Manage Users
+                  </CyberButton>
+                </Link>
                 <Link href="/admin/clients">
                   <CyberButton variant="ghost" glowColor="green" className="w-full">
                     <Users className="h-4 w-4 mr-2" />

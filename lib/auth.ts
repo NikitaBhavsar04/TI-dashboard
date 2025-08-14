@@ -8,7 +8,7 @@ export interface TokenPayload {
   userId: string;
   username: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'super_admin' | 'admin' | 'user';
 }
 
 export const generateToken = (user: IUser): string => {
@@ -55,14 +55,14 @@ export const getUserFromRequest = (req: NextApiRequest): TokenPayload | null => 
   return verifyToken(token);
 };
 
-export const requireAuth = (req: NextApiRequest, requiredRole?: 'admin' | 'user'): TokenPayload => {
+export const requireAuth = (req: NextApiRequest, requiredRole?: 'super_admin' | 'admin' | 'user'): TokenPayload => {
   const user = getUserFromRequest(req);
   
   if (!user) {
     throw new Error('Authentication required');
   }
   
-  if (requiredRole && user.role !== 'admin' && user.role !== requiredRole) {
+  if (requiredRole && user.role !== 'super_admin' && user.role !== requiredRole) {
     throw new Error('Insufficient permissions');
   }
   
@@ -70,5 +70,19 @@ export const requireAuth = (req: NextApiRequest, requiredRole?: 'admin' | 'user'
 };
 
 export const requireAdmin = (req: NextApiRequest): TokenPayload => {
-  return requireAuth(req, 'admin');
+  const user = getUserFromRequest(req);
+  
+  if (!user) {
+    throw new Error('Authentication required');
+  }
+  
+  if (user.role !== 'super_admin' && user.role !== 'admin') {
+    throw new Error('Admin access required');
+  }
+  
+  return user;
+};
+
+export const requireSuperAdmin = (req: NextApiRequest): TokenPayload => {
+  return requireAuth(req, 'super_admin');
 };

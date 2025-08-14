@@ -1,20 +1,16 @@
 // pages/api/clients/[id].js
 import dbConnect from '../../../lib/db';
 import Client from '../../../models/Client';
-import { verifyToken } from '../../../lib/auth';
+import { requireAuth } from '../../../lib/auth';
+import { logActivity } from '../../../lib/auditLogger';
 
 export default async function handler(req, res) {
   try {
     await dbConnect();
 
-    // Verify admin access
-    const token = req.cookies.token;
-    if (!token) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded || decoded.role !== 'admin') {
+    // Verify authentication
+    const currentUser = requireAuth(req);
+    if (!currentUser || !['admin', 'super_admin'].includes(currentUser.role)) {
       return res.status(403).json({ message: 'Admin access required' });
     }
 
@@ -22,25 +18,28 @@ export default async function handler(req, res) {
 
     switch (req.method) {
       case 'GET':
-        await handleGet(req, res, id);
+        await handleGet(req, res, id, currentUser);
         break;
       case 'PUT':
-        await handlePut(req, res, id);
+        await handlePut(req, res, id, currentUser);
         break;
       case 'DELETE':
-        await handleDelete(req, res, id);
+        await handleDelete(req, res, id, currentUser);
         break;
       default:
         res.setHeader('Allow', ['GET', 'PUT', 'DELETE']);
         res.status(405).json({ message: 'Method not allowed' });
     }
   } catch (error) {
+    if (error.message === 'Authentication required' || error.message === 'Insufficient permissions') {
+      return res.status(401).json({ error: error.message });
+    }
     console.error('API Error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
 
-async function handleGet(req, res, id) {
+async function handleGet(req, res, id, currentUser) {
   try {
     const client = await Client.findById(id);
     
@@ -48,14 +47,29 @@ async function handleGet(req, res, id) {
       return res.status(404).json({ message: 'Client not found' });
     }
 
-    res.status(200).json(client);
+    // Filter email for admin role
+    const clientObj = client.toObject();
+    if (currentUser.role !== 'super_admin') {
+      delete clientObj.emails;
+      clientObj.emailCount = client.emails?.length || 0;
+    }
+
+    // Log the activity
+    await logActivity(currentUser, {
+      action: 'client_viewed',
+      resource: 'client',
+      resourceId: id,
+      details: `Viewed client: ${client.name}, emails visible: ${currentUser.role === 'super_admin'}`
+    }, req);
+
+    res.status(200).json(clientObj);
   } catch (error) {
     console.error('Get client error:', error);
     res.status(500).json({ message: 'Failed to fetch client' });
   }
 }
 
-async function handlePut(req, res, id) {
+async function handlePut(req, res, id, currentUser) {
   try {
     const { name, emails, description, isActive } = req.body;
 
@@ -99,9 +113,24 @@ async function handlePut(req, res, id) {
       return res.status(404).json({ message: 'Client not found' });
     }
 
+    // Log the activity
+    await logActivity(currentUser, {
+      action: 'client_updated',
+      resource: 'client',
+      resourceId: id,
+      details: `Updated client: ${updatedClient.name}`
+    }, req);
+
+    // Filter response for admin
+    const responseClient = updatedClient.toObject();
+    if (currentUser.role !== 'super_admin') {
+      delete responseClient.emails;
+      responseClient.emailCount = updatedClient.emails?.length || 0;
+    }
+
     res.status(200).json({
       message: 'Client updated successfully',
-      client: updatedClient
+      client: responseClient
     });
   } catch (error) {
     console.error('Update client error:', error);
@@ -113,17 +142,33 @@ async function handlePut(req, res, id) {
   }
 }
 
-async function handleDelete(req, res, id) {
+async function handleDelete(req, res, id, currentUser) {
   try {
+    // Only super_admin can delete clients
+    if (currentUser.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Only super administrators can delete clients' });
+    }
+
     const deletedClient = await Client.findByIdAndDelete(id);
 
     if (!deletedClient) {
       return res.status(404).json({ message: 'Client not found' });
     }
 
+    // Log the activity
+    await logActivity(currentUser, {
+      action: 'client_deleted',
+      resource: 'client',
+      resourceId: id,
+      details: `Deleted client: ${deletedClient.name} with ${deletedClient.emails.length} emails`
+    }, req);
+
     res.status(200).json({
       message: 'Client deleted successfully',
-      client: deletedClient
+      client: {
+        _id: deletedClient._id,
+        name: deletedClient.name
+      }
     });
   } catch (error) {
     console.error('Delete client error:', error);
