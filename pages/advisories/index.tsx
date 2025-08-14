@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { 
@@ -57,7 +58,8 @@ type SortOption = 'newest' | 'oldest' | 'severity' | 'title';
 type ViewMode = 'grid' | 'list';
 
 export default function AdvisoriesPage({ advisories, categories, stats }: AdvisoriesPageProps) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAuthenticated, loading } = useAuth();
+  const router = useRouter();
   const [filteredAdvisories, setFilteredAdvisories] = useState(advisories);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -72,6 +74,13 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
   const [editEmailModalOpen, setEditEmailModalOpen] = useState(false);
   const [editingEmailData, setEditingEmailData] = useState<any>(null);
   const [selectedScheduledEmail, setSelectedScheduledEmail] = useState<any>(null);
+
+  // Client-side authentication check
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, loading, router]);
 
   const severityLevels = ['Critical', 'High', 'Medium', 'Low'];
 
@@ -182,7 +191,20 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
 
   return (
     <HydrationSafe>
-      <div className="min-h-screen bg-tech-gradient pt-20 pb-12">
+      {/* Show loading state while checking authentication */}
+      {loading && (
+        <div className="min-h-screen bg-tech-gradient flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-blue mx-auto mb-4"></div>
+            <div className="text-slate-400 font-rajdhani">Loading...</div>
+          </div>
+        </div>
+      )}
+
+      {/* Show content only if authenticated */}
+      {!loading && isAuthenticated && (
+        <>
+        <div className="min-h-screen bg-tech-gradient pt-20 pb-12">
         <Head>
           <title>Threat Advisories - EaglEye IntelDesk Intelligence Platform</title>
           <meta name="description" content="Browse comprehensive cybersecurity threat advisories and intelligence reports" />
@@ -624,11 +646,48 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
           }}
         />
       )}
+
+      {/* End of authenticated content fragment */}
+      </>
+      )}
     </HydrationSafe>
   );
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ req }) => {
+  // Check authentication first
+  const token = req.cookies.token;
+  
+  if (!token) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
+  try {
+    // Verify the token
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return {
+        redirect: {
+          destination: '/login',
+          permanent: false,
+        },
+      };
+    }
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
   await dbConnect();
 
   try {
