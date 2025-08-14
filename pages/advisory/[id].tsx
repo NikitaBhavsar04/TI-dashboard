@@ -393,7 +393,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
 
   return (
     <HydrationSafe>
-      <div className="min-h-screen bg-tech-gradient">
+      <div className="min-h-screen bg-tech-gradient pt-20">
         <Head>
           <title>{advisory.title} - EaglEye IntelDesk Intelligence</title>
           <meta name="description" content={advisory.description} />

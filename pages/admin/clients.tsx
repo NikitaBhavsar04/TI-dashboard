@@ -215,7 +215,7 @@ export default function ClientsManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-tech-gradient">
+    <div className="min-h-screen bg-tech-gradient pt-20">
       <Head>
         <title>Client Management - EaglEye IntelDesk</title>
       </Head>
