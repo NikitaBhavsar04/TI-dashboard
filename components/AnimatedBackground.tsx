@@ -10,7 +10,11 @@ interface Particle {
   color: string;
 }
 
-const AnimatedBackground: React.FC = () => {
+interface AnimatedBackgroundProps {
+  opacity?: number;
+}
+
+const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ opacity = 0.3 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animationRef = useRef<number>();
@@ -146,6 +150,7 @@ const AnimatedBackground: React.FC = () => {
       style={{
         zIndex: 1,
         background: 'transparent',
+        opacity: opacity,
       }}
     />
   );

@@ -4,6 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import HydrationSafe from '@/components/HydrationSafe';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import { 
   Users, 
   FileText, 
@@ -189,11 +190,13 @@ export default function AdminDashboard() {
 
   return (
     <HydrationSafe>
-      <div className="min-h-screen bg-slate-900 pt-20">
-        <Head>
-          <title>Admin Dashboard - EaglEye IntelDesk</title>
-          <meta name="description" content="IntelDesk Admin Dashboard - Manage Users and System" />
-        </Head>
+      <div className="relative min-h-screen bg-slate-900">
+        <AnimatedBackground opacity={0.3} />
+        <div className="relative z-10 pt-20">
+          <Head>
+            <title>Admin Dashboard - EaglEye IntelDesk</title>
+            <meta name="description" content="IntelDesk Admin Dashboard - Manage Users and System" />
+          </Head>
 
         {/* Header */}
         <div className="glass-panel border-b border-slate-700/50">
@@ -341,7 +344,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <div className="glass-panel-hover p-6">
               <h3 className="text-xl font-orbitron font-bold text-white mb-6 flex items-center">
                 <FileText className="h-5 w-5 text-neon-blue mr-3" />
@@ -362,6 +365,33 @@ export default function AdminDashboard() {
                     <div className="flex items-center space-x-3">
                       <Eye className="h-5 w-5" />
                       <span className="font-rajdhani font-medium">View All Advisories</span>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            <div className="glass-panel-hover p-6">
+              <h3 className="text-xl font-orbitron font-bold text-white mb-6 flex items-center">
+                <Mail className="h-5 w-5 text-orange-400 mr-3" />
+                Client Management
+              </h3>
+              <div className="space-y-4">
+                <Link href="/admin/clients">
+                  <button className="w-full flex items-center justify-between p-4 bg-orange-500/10 border border-orange-400/30 rounded-lg text-orange-400 hover:bg-orange-500/20 transition-all duration-200 group">
+                    <div className="flex items-center space-x-3">
+                      <Mail className="h-5 w-5" />
+                      <span className="font-rajdhani font-medium">Manage Clients</span>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
+                  </button>
+                </Link>
+                <Link href="/admin/clients">
+                  <button className="w-full flex items-center justify-between p-4 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200 group">
+                    <div className="flex items-center space-x-3">
+                      <Plus className="h-5 w-5" />
+                      <span className="font-rajdhani font-medium">Add New Client</span>
                     </div>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
                   </button>
@@ -454,6 +484,7 @@ export default function AdminDashboard() {
               </table>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </HydrationSafe>

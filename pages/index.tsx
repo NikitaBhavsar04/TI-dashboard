@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import { 
   Shield, 
   Activity,
@@ -113,12 +114,14 @@ function Home() {
 
   return (
     <HydrationSafe>
-      <div className="min-h-screen bg-tech-gradient">
-        <Head>
-          <title>EaglEye IntelDesk - Advanced Cybersecurity Intelligence Platform</title>
-          <meta name="description" content="Next-generation cybersecurity threat intelligence platform with AI-powered analysis, real-time monitoring, and comprehensive threat protection." />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-        </Head>
+      <div className="relative min-h-screen bg-tech-gradient">
+        <AnimatedBackground opacity={0.8} />
+        <div className="relative z-10">
+          <Head>
+            <title>EaglEye IntelDesk - Advanced Cybersecurity Intelligence Platform</title>
+            <meta name="description" content="Next-generation cybersecurity threat intelligence platform with AI-powered analysis, real-time monitoring, and comprehensive threat protection." />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+          </Head>
 
         {/* Hero Section */}
         <section className="relative pt-24 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -275,6 +278,7 @@ function Home() {
             </p>
           </div>
         </footer>
+        </div>
       </div>
     </HydrationSafe>
   );

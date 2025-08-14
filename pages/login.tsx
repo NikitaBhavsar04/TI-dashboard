@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff, User, Lock, Shield, ArrowRight } from 'lucide-react';
 import HydrationSafe from '@/components/HydrationSafe';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import { motion } from 'framer-motion';
 
 export default function Login() {
@@ -54,13 +55,15 @@ export default function Login() {
 
   return (
     <HydrationSafe>
-      <div className="min-h-screen bg-tech-gradient flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <Head>
-          <title>Login - EaglEye IntelDesk Intelligence Platform</title>
-          <meta name="description" content="Access the EaglEye IntelDesk cybersecurity intelligence platform" />
-        </Head>
+      <div className="relative min-h-screen bg-tech-gradient flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <AnimatedBackground opacity={0.8} />
+        <div className="relative z-10 w-full">
+          <Head>
+            <title>Login - EaglEye IntelDesk Intelligence Platform</title>
+            <meta name="description" content="Access the EaglEye IntelDesk cybersecurity intelligence platform" />
+          </Head>
 
-        <div className="max-w-md w-full space-y-8">
+          <div className="max-w-md w-full space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -203,11 +206,12 @@ export default function Login() {
               Protected by advanced encryption and multi-layer security protocols
             </p>
           </motion.div>
-        </div>
+          </div>
 
-        {/* Background Effects */}
-        <div className="fixed top-1/4 left-1/4 w-96 h-96 bg-neon-blue/5 rounded-full blur-3xl animate-pulse opacity-60 pointer-events-none"></div>
-        <div className="fixed bottom-1/4 right-1/4 w-96 h-96 bg-neon-purple/5 rounded-full blur-3xl animate-pulse opacity-60 pointer-events-none" style={{ animationDelay: '2s' }}></div>
+          {/* Background Effects */}
+          <div className="fixed top-1/4 left-1/4 w-96 h-96 bg-neon-blue/5 rounded-full blur-3xl animate-pulse opacity-60 pointer-events-none"></div>
+          <div className="fixed bottom-1/4 right-1/4 w-96 h-96 bg-neon-purple/5 rounded-full blur-3xl animate-pulse opacity-60 pointer-events-none" style={{ animationDelay: '2s' }}></div>
+        </div>
       </div>
     </HydrationSafe>
   );

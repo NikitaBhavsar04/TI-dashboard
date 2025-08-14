@@ -4,6 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import { motion } from 'framer-motion';
 import { 
   Search, 
@@ -204,7 +205,9 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
       {/* Show content only if authenticated */}
       {!loading && isAuthenticated && (
         <>
-        <div className="min-h-screen bg-tech-gradient pt-20 pb-12">
+        <div className="relative min-h-screen bg-tech-gradient pt-20 pb-12">
+        <AnimatedBackground opacity={0.8} />
+        <div className="relative z-10">
         <Head>
           <title>Threat Advisories - EaglEye IntelDesk Intelligence Platform</title>
           <meta name="description" content="Browse comprehensive cybersecurity threat advisories and intelligence reports" />
@@ -647,7 +650,7 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
         />
       )}
 
-      {/* End of authenticated content fragment */}
+      </div>
       </>
       )}
     </HydrationSafe>

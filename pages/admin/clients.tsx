@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import HydrationSafe from '@/components/HydrationSafe';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import { 
   Plus, 
   Edit, 
@@ -36,7 +38,7 @@ interface ClientFormData {
 }
 
 export default function ClientsManagement() {
-  const { user, hasRole, canViewEmails } = useAuth();
+  const { user, hasRole, canViewEmails, loading: authLoading } = useAuth();
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,12 +54,15 @@ export default function ClientsManagement() {
   const [showInactive, setShowInactive] = useState(false);
 
   useEffect(() => {
-    if (!hasRole('admin')) {
+    if (!authLoading && (!user || !hasRole('admin'))) {
       router.push('/');
       return;
     }
-    fetchClients();
-  }, [router]);
+    
+    if (hasRole('admin')) {
+      fetchClients();
+    }
+  }, [user, hasRole, authLoading, router]);
 
   const fetchClients = async () => {
     try {
@@ -210,15 +215,31 @@ export default function ClientsManagement() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <HydrationSafe>
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-blue mx-auto mb-4"></div>
+            <div className="text-slate-400 font-rajdhani">Loading...</div>
+          </div>
+        </div>
+      </HydrationSafe>
+    );
+  }
+
   if (!hasRole('admin')) {
     return null;
   }
 
   return (
-    <div className="min-h-screen bg-tech-gradient pt-20">
-      <Head>
-        <title>Client Management - EaglEye IntelDesk</title>
-      </Head>
+    <HydrationSafe>
+      <div className="relative min-h-screen bg-tech-gradient pt-20">
+        <AnimatedBackground opacity={0.6} />
+        <div className="relative z-10">
+          <Head>
+            <title>Client Management - EaglEye IntelDesk</title>
+          </Head>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -519,6 +540,8 @@ export default function ClientsManagement() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+      </div>
+    </HydrationSafe>
   );
 }

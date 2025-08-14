@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import { 
   Upload, 
   FileText, 
@@ -367,10 +368,12 @@ export default function UploadPage() {
   return (
     <ProtectedRoute adminOnly>
       <HydrationSafe>
-        <div className="min-h-screen bg-cyber-dark">
-          <Head>
-            <title>CYBER THREAT ADVISORY GENERATOR - CLASSIFIED</title>
-          </Head>
+        <div className="relative min-h-screen bg-cyber-dark">
+          <AnimatedBackground opacity={0.6} />
+          <div className="relative z-10">
+            <Head>
+              <title>CYBER THREAT ADVISORY GENERATOR - CLASSIFIED</title>
+            </Head>
 
         {/* Header */}
         <div className="border-b border-cyber-blue/30 bg-cyber-dark/95 backdrop-blur-sm">
@@ -1123,6 +1126,7 @@ export default function UploadPage() {
               </div>
             </CyberCard>
           </form>
+        </div>
         </div>
       </div>
     </HydrationSafe>

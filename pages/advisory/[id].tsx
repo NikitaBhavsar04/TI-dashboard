@@ -4,6 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import { motion } from 'framer-motion';
 import { 
   formatDate 
@@ -393,11 +394,13 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
 
   return (
     <HydrationSafe>
-      <div className="min-h-screen bg-tech-gradient pt-20">
-        <Head>
-          <title>{advisory.title} - EaglEye IntelDesk Intelligence</title>
-          <meta name="description" content={advisory.description} />
-        </Head>
+      <div className="relative min-h-screen bg-tech-gradient pt-20">
+        <AnimatedBackground opacity={0.8} />
+        <div className="relative z-10">
+          <Head>
+            <title>{advisory.title} - EaglEye IntelDesk Intelligence</title>
+            <meta name="description" content={advisory.description} />
+          </Head>
 
         {/* Header with Logos */}
         <div className="glass-panel-hover mx-4 mt-4 mb-6 border border-neon-blue/30 bg-slate-900/80">
@@ -1205,6 +1208,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
             </div>
           </div>
         ))}
+        </div>
       </div>
     </HydrationSafe>
   );

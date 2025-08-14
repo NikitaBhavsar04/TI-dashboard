@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import AnimatedBackground from './AnimatedBackground';
 import { 
   Plus, 
   Edit, 
@@ -260,8 +261,10 @@ const UserManagement: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 pt-20 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="relative min-h-screen bg-slate-900">
+      <AnimatedBackground opacity={0.6} />
+      <div className="relative z-10 pt-20 p-6">
+        <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -503,6 +506,7 @@ const UserManagement: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };
