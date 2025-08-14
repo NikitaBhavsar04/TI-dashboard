@@ -56,14 +56,14 @@ export default function Login() {
   return (
     <HydrationSafe>
       <div className="relative min-h-screen bg-tech-gradient flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <AnimatedBackground opacity={0.8} />
-        <div className="relative z-10 w-full">
+        <AnimatedBackground opacity={0.25} />
+        <div className="relative z-10 w-full max-w-md mx-auto">
           <Head>
             <title>Login - EaglEye IntelDesk Intelligence Platform</title>
             <meta name="description" content="Access the EaglEye IntelDesk cybersecurity intelligence platform" />
           </Head>
 
-          <div className="max-w-md w-full space-y-8">
+          <div className="w-full space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}

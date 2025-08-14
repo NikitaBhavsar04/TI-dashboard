@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     }
 
     const decoded = verifyToken(token);
-    if (!decoded || decoded.role !== 'admin') {
+    if (!decoded || !['admin', 'super_admin'].includes(decoded.role)) {
       return res.status(403).json({ message: 'Admin access required' });
     }
 
