@@ -70,6 +70,40 @@ interface EmailFormData {
 }
 
 export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProps) {
+  // Safe advisory with defaults to prevent undefined errors
+  const safeAdvisory = {
+    _id: '',
+    title: '',
+    description: '',
+    severity: '',
+    publishedDate: '',
+    author: '',
+    category: '',
+    tags: [],
+    references: [],
+    iocs: [],
+    cveIds: [],
+    content: '',
+    summary: '',
+    threatDesignation: '',
+    threatCategory: '',
+    threatLevel: '',
+    tlpClassification: '',
+    tlp: '',
+    cves: [],
+    executiveSummary: '',
+    affectedProducts: [],
+    targetSectors: [],
+    regions: [],
+    mitreTactics: [],
+    recommendations: [],
+    patchDetails: '',
+    cvss: '',
+    threat_type: [],
+    affected_systems: [],
+    ...advisory
+  };
+
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedEmailGroups, setSelectedEmailGroups] = useState<EmailGroup[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -96,18 +130,18 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
   const [newBccEmail, setNewBccEmail] = useState('');
 
   useEffect(() => {
-    console.log('EmailModal useEffect triggered:', { isOpen, advisory: advisory?.title });
+    console.log('EmailModal useEffect triggered:', { isOpen, advisory: safeAdvisory?.title });
     if (isOpen) {
       fetchClients();
       // Set default subject
       setEmailData(prev => ({
         ...prev,
-        subject: `Threat Advisory: ${advisory?.title || 'Untitled Advisory'}`,
+        subject: `Threat Advisory: ${safeAdvisory?.title || 'Untitled Advisory'}`,
         scheduledDate: new Date().toISOString().split('T')[0],
         scheduledTime: '09:00'
       }));
     }
-  }, [isOpen, advisory?.title]);
+  }, [isOpen, safeAdvisory?.title]);
 
   const fetchClients = async () => {
     console.log('fetchClients called');
@@ -117,17 +151,17 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
       if (response.ok) {
         const data = await response.json();
         console.log('Clients data received:', data);
-        setClients(data.filter((client: Client) => client.isActive));
+        setClients(Array.isArray(data) ? data.filter((client: Client) => client.isActive) : []);
       }
     } catch (error) {
       console.error('Error fetching clients:', error);
     }
   };
 
-  const filteredClients = clients.filter(client =>
+  const filteredClients = Array.isArray(clients) ? clients.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.emails.some(email => email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+    (Array.isArray(client?.emails) && client.emails.some(email => email.toLowerCase().includes(searchTerm.toLowerCase())))
+  ) : [];
 
   const addClientGroup = (client: Client) => {
     const existingGroup = selectedEmailGroups.find(g => g.clientId === client._id);
@@ -137,7 +171,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
       id: `client-${client._id}`,
       type: 'client',
       name: client.name,
-      emails: [...client.emails],
+      emails: Array.isArray(client?.emails) ? [...client.emails] : [],
       clientId: client._id
     };
 
@@ -150,9 +184,9 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
     if (!customEmailInput.trim()) return;
     
     const emails = customEmailInput.split(',').map(e => e.trim()).filter(e => e);
-    const validEmails = emails.filter(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+    const validEmails = Array.isArray(emails) ? emails.filter(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) : [];
     
-    if (validEmails.length === 0) {
+    if ((Array.isArray(validEmails) ? validEmails.length : 0) === 0) {
       alert('Please enter valid email addresses');
       return;
     }
@@ -160,7 +194,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
     const newGroup: EmailGroup = {
       id: `custom-${Date.now()}`,
       type: 'custom',
-      name: validEmails.length === 1 ? validEmails[0] : `${validEmails.length} Custom Emails`,
+      name: (Array.isArray(validEmails) ? validEmails.length : 0) === 1 ? validEmails[0] : `${Array.isArray(validEmails) ? validEmails.length : 0} Custom Emails`,
       emails: validEmails
     };
 
@@ -170,14 +204,14 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
   };
 
   const removeEmailGroup = (groupId: string) => {
-    setSelectedEmailGroups(prev => prev.filter(g => g.id !== groupId));
+    setSelectedEmailGroups(prev => Array.isArray(prev) ? prev.filter(g => g.id !== groupId) : []);
   };
 
   const addCcEmail = () => {
     if (!newCcEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newCcEmail)) return;
     setEmailData(prev => ({
       ...prev,
-      ccEmails: [...prev.ccEmails, newCcEmail.trim()]
+      ccEmails: Array.isArray(prev.ccEmails) ? [...prev.ccEmails, newCcEmail.trim()] : [newCcEmail.trim()]
     }));
     setNewCcEmail('');
   };
@@ -185,7 +219,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
   const removeCcEmail = (index: number) => {
     setEmailData(prev => ({
       ...prev,
-      ccEmails: prev.ccEmails.filter((_, i) => i !== index)
+      ccEmails: Array.isArray(prev.ccEmails) ? prev.ccEmails.filter((_, i) => i !== index) : []
     }));
   };
 
@@ -193,7 +227,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
     if (!newBccEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newBccEmail)) return;
     setEmailData(prev => ({
       ...prev,
-      bccEmails: [...prev.bccEmails, newBccEmail.trim()]
+      bccEmails: Array.isArray(prev.bccEmails) ? [...prev.bccEmails, newBccEmail.trim()] : [newBccEmail.trim()]
     }));
     setNewBccEmail('');
   };
@@ -201,12 +235,12 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
   const removeBccEmail = (index: number) => {
     setEmailData(prev => ({
       ...prev,
-      bccEmails: prev.bccEmails.filter((_, i) => i !== index)
+      bccEmails: Array.isArray(prev.bccEmails) ? prev.bccEmails.filter((_, i) => i !== index) : []
     }));
   };
 
   const getTotalRecipients = () => {
-    return selectedEmailGroups.reduce((total, group) => total + group.emails.length, 0);
+    return Array.isArray(selectedEmailGroups) ? selectedEmailGroups.reduce((total, group) => total + (Array.isArray(group?.emails) ? group.emails.length : 0), 0) : 0;
   };
 
   const generateEmailPreview = () => {
@@ -236,41 +270,41 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
     </div>
     <div class="content">
         ${emailData.customMessage ? `<div class="section"><strong>Message:</strong><br>${emailData.customMessage}</div>` : ''}
-        <h2>${advisory.title}</h2>
-        <span class="severity ${advisory.severity?.toLowerCase()}">${advisory.severity?.toUpperCase()}</span>
-        ${advisory.threatLevel ? `<span class="severity ${advisory.threatLevel?.toLowerCase()}" style="margin-left: 10px;">Threat Level: ${advisory.threatLevel?.toUpperCase()}</span>` : ''}
+        <h2>${safeAdvisory.title}</h2>
+        <span class="severity ${safeAdvisory.severity?.toLowerCase()}">${safeAdvisory.severity?.toUpperCase()}</span>
+        ${safeAdvisory.threatLevel ? `<span class="severity ${safeAdvisory.threatLevel?.toLowerCase()}" style="margin-left: 10px;">Threat Level: ${safeAdvisory.threatLevel?.toUpperCase()}</span>` : ''}
         <div class="section">
             <div class="section-title">Description</div>
-            <p>${advisory.description || advisory.summary || 'No description available'}</p>
+            <p>${safeAdvisory.description || safeAdvisory.summary || 'No description available'}</p>
         </div>
-        ${advisory.cveIds && advisory.cveIds.length > 0 ? `
+        ${safeAdvisory?.cveIds && Array.isArray(safeAdvisory.cveIds) && safeAdvisory.cveIds.length > 0 ? `
         <div class="section">
             <div class="section-title">CVE IDs</div>
-            <ul>${advisory.cveIds.map(cve => `<li><strong>${cve}</strong></li>`).join('')}</ul>
+            <ul>${safeAdvisory.cveIds.map(cve => `<li><strong>${cve}</strong></li>`).join('')}</ul>
         </div>
         ` : ''}
-        ${advisory.targetSectors && advisory.targetSectors.length > 0 ? `
+        ${safeAdvisory?.targetSectors && Array.isArray(safeAdvisory.targetSectors) && safeAdvisory.targetSectors.length > 0 ? `
         <div class="section">
             <div class="section-title">Target Sectors</div>
-            <ul>${advisory.targetSectors.map(sector => `<li>${sector}</li>`).join('')}</ul>
+            <ul>${safeAdvisory.targetSectors.map(sector => `<li>${sector}</li>`).join('')}</ul>
         </div>
         ` : ''}
-        ${advisory.affectedProducts && advisory.affectedProducts.length > 0 ? `
+        ${safeAdvisory?.affectedProducts && Array.isArray(safeAdvisory.affectedProducts) && safeAdvisory.affectedProducts.length > 0 ? `
         <div class="section">
             <div class="section-title">Affected Products</div>
-            <ul>${advisory.affectedProducts.map(product => `<li>${product}</li>`).join('')}</ul>
+            <ul>${safeAdvisory.affectedProducts.map(product => `<li>${product}</li>`).join('')}</ul>
         </div>
         ` : ''}
-        ${advisory.recommendations ? `
+        ${safeAdvisory?.recommendations && Array.isArray(safeAdvisory.recommendations) ? `
         <div class="section">
             <div class="section-title">Recommendations</div>
-            <ul>${advisory.recommendations.map(rec => `<li>${rec}</li>`).join('')}</ul>
+            <ul>${safeAdvisory.recommendations.map(rec => `<li>${rec}</li>`).join('')}</ul>
         </div>
         ` : ''}
-        ${advisory.references ? `
+        ${safeAdvisory?.references && Array.isArray(safeAdvisory.references) ? `
         <div class="section">
             <div class="section-title">References</div>
-            <ul>${advisory.references.map(ref => `<li><a href="${ref}" target="_blank">${ref}</a></li>`).join('')}</ul>
+            <ul>${safeAdvisory.references.map(ref => `<li><a href="${ref}" target="_blank">${ref}</a></li>`).join('')}</ul>
         </div>
         ` : ''}
     </div>
@@ -284,20 +318,20 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
     console.log('selectedEmailGroups:', selectedEmailGroups);
     console.log('emailData:', emailData);
     
-    if (selectedEmailGroups.length === 0) {
+    if ((Array.isArray(selectedEmailGroups) ? selectedEmailGroups.length : 0) === 0) {
       alert('Please select at least one recipient group');
       return;
     }
 
     // Validate all email addresses
     const allEmails = [
-      ...selectedEmailGroups.flatMap(g => g.emails),
-      ...emailData.ccEmails,
-      ...emailData.bccEmails
+      ...(Array.isArray(selectedEmailGroups) ? selectedEmailGroups.flatMap(g => Array.isArray(g?.emails) ? g.emails : []) : []),
+      ...(Array.isArray(emailData?.ccEmails) ? emailData.ccEmails : []),
+      ...(Array.isArray(emailData?.bccEmails) ? emailData.bccEmails : [])
     ];
     
-    const invalidEmails = allEmails.filter(email => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
-    if (invalidEmails.length > 0) {
+    const invalidEmails = Array.isArray(allEmails) ? allEmails.filter(email => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) : [];
+    if ((Array.isArray(invalidEmails) ? invalidEmails.length : 0) > 0) {
       alert(`Invalid email addresses: ${invalidEmails.join(', ')}`);
       return;
     }
@@ -312,14 +346,14 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
 
     try {
       // Format recipients for the API
-      const recipients = selectedEmailGroups.map(group => ({
+      const recipients = Array.isArray(selectedEmailGroups) ? selectedEmailGroups.map(group => ({
         type: group.type === 'client' ? 'client' : 'individual',
         id: group.clientId,
-        emails: group.type === 'custom' ? group.emails : undefined
-      }));
+        emails: group.type === 'custom' ? (Array.isArray(group?.emails) ? group.emails : []) : undefined
+      })) : [];
 
       const payload = {
-        advisoryId: advisory?._id,
+        advisoryId: safeAdvisory?._id,
         recipients,
         subject: emailData.subject,
         customMessage: emailData.customMessage,
@@ -407,7 +441,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
                 🚀 Send Advisory Email - Full Featured
               </h2>
               <p className="text-slate-400 font-rajdhani">
-                {advisory?.title || 'Untitled Advisory'}
+                {safeAdvisory?.title || 'Untitled Advisory'}
               </p>
               <div className="mt-2 px-3 py-1 bg-green-500/20 border border-green-400/50 rounded-lg">
                 <span className="text-green-400 font-rajdhani text-sm font-bold">
@@ -471,7 +505,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
                       />
                     </div>
                     <div className="max-h-48 overflow-y-auto space-y-2">
-                      {filteredClients.map((client) => (
+                      {Array.isArray(filteredClients) && filteredClients.map((client) => (
                         <div
                           key={client._id}
                           className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 cursor-pointer transition-all duration-200"
@@ -482,13 +516,13 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
                             <div>
                               <div className="font-rajdhani font-medium text-white">{client.name}</div>
                               <div className="text-slate-400 font-rajdhani text-sm">
-                                {client.emails.length} email{client.emails.length !== 1 ? 's' : ''}
+                                {Array.isArray(client?.emails) ? client.emails.length : 0} email{(Array.isArray(client?.emails) ? client.emails.length : 0) !== 1 ? 's' : ''}
                               </div>
                             </div>
                           </div>
                           <div className="text-slate-500 font-rajdhani text-xs max-w-xs">
-                            {client.emails.slice(0, 2).join(', ')}
-                            {client.emails.length > 2 && ` +${client.emails.length - 2} more`}
+                            {Array.isArray(client?.emails) ? client.emails.slice(0, 2).join(', ') : ''}
+                            {Array.isArray(client?.emails) && client.emails.length > 2 && ` +${client.emails.length - 2} more`}
                           </div>
                         </div>
                       ))}
@@ -523,7 +557,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
 
                 {/* Selected Email Groups */}
                 <div className="space-y-2">
-                  {selectedEmailGroups.map((group) => (
+                  {Array.isArray(selectedEmailGroups) && selectedEmailGroups.map((group) => (
                     <div key={group.id} className="p-3 bg-slate-800/50 border border-slate-600/30 rounded-lg">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
@@ -535,7 +569,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
                           <div>
                             <div className="font-rajdhani font-medium text-white">{group.name}</div>
                             <div className="text-slate-400 font-rajdhani text-sm">
-                              {group.emails.length} email{group.emails.length !== 1 ? 's' : ''}: {group.emails.join(', ')}
+                              {Array.isArray(group?.emails) ? group.emails.length : 0} email{(Array.isArray(group?.emails) ? group.emails.length : 0) !== 1 ? 's' : ''}: {Array.isArray(group?.emails) ? group.emails.join(', ') : ''}
                             </div>
                           </div>
                         </div>
@@ -560,7 +594,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
                     CC (Optional)
                   </label>
                   <div className="space-y-2">
-                    {emailData.ccEmails.map((email, index) => (
+                    {Array.isArray(emailData?.ccEmails) && emailData.ccEmails.map((email, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <input
                           type="email"
@@ -602,7 +636,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
                     BCC (Optional)
                   </label>
                   <div className="space-y-2">
-                    {emailData.bccEmails.map((email, index) => (
+                    {Array.isArray(emailData?.bccEmails) && emailData.bccEmails.map((email, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <input
                           type="email"
@@ -756,7 +790,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
                     <UserCheck className="h-4 w-4" />
                     <span className="font-rajdhani font-medium">
                       Ready to send to {getTotalRecipients()} recipient{getTotalRecipients() !== 1 ? 's' : ''} 
-                      across {selectedEmailGroups.length} group{selectedEmailGroups.length !== 1 ? 's' : ''}
+                      across {Array.isArray(selectedEmailGroups) ? selectedEmailGroups.length : 0} group{(Array.isArray(selectedEmailGroups) ? selectedEmailGroups.length : 0) !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>

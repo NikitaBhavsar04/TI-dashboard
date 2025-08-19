@@ -70,7 +70,7 @@ async function handleGet(req, res, currentUser) {
 
     // Log the activity
     await logActivity(currentUser, {
-      action: 'clients_accessed',
+      action: 'client_viewed',
       resource: 'client_list',
       details: `Viewed ${clients.length} clients, emails visible: ${currentUser.role === 'super_admin'}`
     }, req);
