@@ -6,6 +6,8 @@ import ScheduledEmail from '../../../models/ScheduledEmail';
 import { verifyToken } from '../../../lib/auth';
 import nodemailer from 'nodemailer';
 import { generateCyberThreatEmailTemplate } from '../../../lib/emailTemplateGenerator';
+import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 const { agenda } = require('../../../lib/agenda');
 
@@ -30,12 +32,14 @@ export default async function handler(req, res) {
 
     const {
       advisoryId,
-      recipients, // Array of { type: 'client' | 'individual', id?: string, emails?: string[] }
+      recipients, // Array of { type: 'client' | 'individual' | 'csv_bulk', id?: string, emails?: string[] }
       subject,
       customMessage,
       scheduledDate,
       scheduledTime,
-      isScheduled = false
+      isScheduled = false,
+      trackingOptions = { enableTracking: true }, // Default to enabled for super admins
+      csvEmails = [] // For CSV bulk emails
     } = req.body;
 
     // Validation
@@ -110,6 +114,36 @@ export default async function handler(req, res) {
           };
 
           emailJobs.push(emailData);
+        } else if (recipient.type === 'csv_bulk') {
+          // CSV bulk emails - only for super_admin
+          if (decoded.role !== 'super_admin') {
+            errors.push('CSV bulk email requires super admin privileges');
+            continue;
+          }
+
+          if (!csvEmails || !csvEmails.length) {
+            errors.push('CSV bulk recipient must have email list');
+            continue;
+          }
+
+          // Validate email format for CSV emails
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const invalidEmails = csvEmails.filter(email => !emailRegex.test(email));
+          
+          if (invalidEmails.length > 0) {
+            errors.push(`Invalid email addresses in CSV: ${invalidEmails.slice(0, 5).join(', ')}${invalidEmails.length > 5 ? '...' : ''}`);
+            continue;
+          }
+
+          // For CSV bulk, create individual jobs for privacy (BCC mode)
+          csvEmails.forEach(email => {
+            emailJobs.push({
+              ...emailData,
+              to: [email], // Single email for privacy
+              isBulk: true,
+              bulkType: 'csv'
+            });
+          });
         }
       } catch (error) {
         errors.push(`Error processing recipient: ${error.message}`);
@@ -125,6 +159,53 @@ export default async function handler(req, res) {
 
     // Generate email body with the new production-ready template
     const emailBody = generateCyberThreatEmailTemplate(advisory, customMessage);
+
+    // Initialize tracking if enabled
+    let trackingRecords = [];
+    console.log(`🔍 Tracking check: enableTracking=${trackingOptions.enableTracking}, userRole=${decoded.role}`);
+    
+    if (trackingOptions.enableTracking && decoded.role === 'super_admin') {
+      console.log('📊 Initializing email tracking...');
+      try {
+        await dbConnect();
+        const db = mongoose.connection.db;
+        const trackingCollection = db.collection('emailTracking');
+
+        console.log(`🔗 Database connection state: ${mongoose.connection.readyState}`);
+        console.log(`🗄️ Database name: ${db.databaseName}`);
+
+        for (const emailJob of emailJobs) {
+          for (const email of emailJob.to) {
+            const trackingId = crypto.randomUUID();
+            const trackingRecord = {
+              emailId: advisoryId,
+              recipientEmail: email,
+              trackingId,
+              events: [],
+              openCount: 0,
+              createdAt: new Date(),
+              trackingOptions
+            };
+
+            console.log(`🔄 Attempting to insert tracking record for: ${email}`);
+            const insertResult = await trackingCollection.insertOne(trackingRecord);
+            console.log(`✅ Insert result: ${insertResult.insertedId ? 'SUCCESS' : 'FAILED'} - ID: ${insertResult.insertedId}`);
+            
+            // Verify the record was actually saved
+            const verifyRecord = await trackingCollection.findOne({ trackingId });
+            console.log(`🔍 Verification: ${verifyRecord ? 'FOUND' : 'NOT FOUND'} in database`);
+            
+            trackingRecords.push({ email, trackingId });
+            console.log(`📊 Tracking record created: ${email} -> ${trackingId}`);
+          }
+        }
+        console.log(`✅ Created ${trackingRecords.length} tracking records`);
+      } catch (error) {
+        console.error('Failed to initialize tracking:', error);
+        console.error('Error details:', error.stack);
+        // Continue without tracking rather than failing the email
+      }
+    }
 
     // Schedule or send emails
     const scheduledEmails = [];
@@ -142,11 +223,20 @@ export default async function handler(req, res) {
 
     for (const emailJob of emailJobs) {
       try {
+        // Add tracking IDs to email job if tracking is enabled
+        if (trackingRecords.length > 0) {
+          emailJob.trackingData = trackingRecords.filter(tr => 
+            emailJob.to.includes(tr.email)
+          );
+          emailJob.enableTracking = true;
+        }
+
         // Create scheduled email record
         const emailDoc = await ScheduledEmail.create({
           ...emailJob,
           scheduledDate: scheduledAt,
-          sentAt: undefined // Don't mark as sent until actually sent
+          sentAt: undefined, // Don't mark as sent until actually sent
+          trackingEnabled: trackingOptions.enableTracking || false
         });
 
         if (isScheduled) {

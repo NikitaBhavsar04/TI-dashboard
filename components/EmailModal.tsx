@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Send, Clock, Calendar, Plus, Minus, Users, Search, Mail, UserCheck } from 'lucide-react';
+import { X, Send, Clock, Calendar, Plus, Minus, Users, Search, Mail, UserCheck, Upload, FileText, Eye, TrendingUp, Shield } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EmailModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ interface Client {
 }
 
 export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProps) {
+  const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [individualEmails, setIndividualEmails] = useState<string[]>(['']);
@@ -35,11 +37,26 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
-  const [sendMethod, setSendMethod] = useState<'clients' | 'individual'>('clients');
+  const [sendMethod, setSendMethod] = useState<'clients' | 'individual' | 'csv_bulk'>('clients');
   
   // Email content
   const [subject, setSubject] = useState('');
   const [customMessage, setCustomMessage] = useState('');
+  
+  // CSV Upload states
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvEmails, setCsvEmails] = useState<string[]>([]);
+  const [csvPreview, setCsvPreview] = useState<string[]>([]);
+  const [showCsvPreview, setShowCsvPreview] = useState(false);
+  
+  // Email tracking options
+  const [enableTracking, setEnableTracking] = useState(true);
+  const [trackingOptions, setTrackingOptions] = useState({
+    trackOpens: true,
+    trackClicks: true,
+    trackLocation: false,
+    trackDevice: false
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -108,6 +125,59 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
     });
   };
 
+  // CSV Upload Functions
+  const handleCsvUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      alert('Please upload a CSV file');
+      return;
+    }
+
+    setCsvFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const emails = processCsvContent(text);
+      setCsvEmails(emails);
+      setCsvPreview(emails.slice(0, 10)); // Show first 10 for preview
+      setShowCsvPreview(true);
+    };
+    reader.readAsText(file);
+  };
+
+  const processCsvContent = (csvText: string): string[] => {
+    const lines = csvText.split('\n');
+    const emails: string[] = [];
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    lines.forEach((line, index) => {
+      if (index === 0 && line.toLowerCase().includes('email')) {
+        return; // Skip header row
+      }
+
+      const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+      
+      // Check each column for email addresses
+      columns.forEach(col => {
+        if (emailRegex.test(col)) {
+          emails.push(col);
+        }
+      });
+    });
+
+    // Remove duplicates
+    return [...new Set(emails)];
+  };
+
+  const clearCsvUpload = () => {
+    setCsvFile(null);
+    setCsvEmails([]);
+    setCsvPreview([]);
+    setShowCsvPreview(false);
+  };
+
   const getSelectedRecipientsCount = () => {
     if (sendMethod === 'clients') {
       const selectedClientObjects = clients.filter(c => selectedClients.includes(c._id));
@@ -116,9 +186,12 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
         const emailCount = Array.isArray(client.emails) ? client.emails.length : (client.emailCount || 0);
         return total + emailCount;
       }, 0);
-    } else {
+    } else if (sendMethod === 'individual') {
       return individualEmails.filter(email => email.trim()).length;
+    } else if (sendMethod === 'csv_bulk') {
+      return csvEmails.length;
     }
+    return 0;
   };
 
   const handleSendEmail = async () => {
@@ -129,6 +202,11 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
 
     if (sendMethod === 'individual' && Array.isArray(individualEmails) && individualEmails.filter(e => e.trim()).length === 0) {
       alert('Please enter at least one email address');
+      return;
+    }
+
+    if (sendMethod === 'csv_bulk' && csvEmails.length === 0) {
+      alert('Please upload a CSV file with email addresses');
       return;
     }
 
@@ -154,7 +232,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
           type: 'client',
           id: clientId
         }));
-      } else {
+      } else if (sendMethod === 'individual') {
         // Individual emails
         const validEmails = individualEmails.filter(e => e.trim());
         if (validEmails.length > 0) {
@@ -163,6 +241,13 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
             emails: validEmails
           }];
         }
+      } else if (sendMethod === 'csv_bulk') {
+        // CSV bulk emails with privacy protection (BCC mode)
+        recipients = [{
+          type: 'bulk_private',
+          emails: csvEmails,
+          bulkMode: 'bcc' // Send as BCC to protect privacy
+        }];
       }
 
       const payload = {
@@ -170,6 +255,10 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
         recipients,
         subject,
         customMessage,
+        trackingOptions: {
+          enableTracking,
+          ...trackingOptions
+        },
         ...(isScheduled && {
           scheduledDate,
           scheduledTime,
@@ -250,7 +339,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
               <label className="block text-slate-400 font-rajdhani text-sm mb-3">
                 Send Method
               </label>
-              <div className="flex space-x-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <button
                   type="button"
                   onClick={() => setSendMethod('clients')}
@@ -273,9 +362,30 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
                   }`}
                 >
                   <Mail className="h-4 w-4" />
-                  <span className="font-rajdhani font-medium">Enter Individual Emails</span>
+                  <span className="font-rajdhani font-medium">Individual Emails</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSendMethod('csv_bulk')}
+                  className={`flex items-center space-x-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
+                    sendMethod === 'csv_bulk'
+                      ? 'bg-neon-green/20 border-neon-green/50 text-neon-green'
+                      : 'bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/50'
+                  }`}
+                >
+                  <Upload className="h-4 w-4" />
+                  <span className="font-rajdhani font-medium">CSV Bulk Upload</span>
                 </button>
               </div>
+              
+              {/* Super Admin Only Notice for CSV */}
+              {sendMethod === 'csv_bulk' && (
+                <div className="mt-3 p-3 bg-green-500/10 border border-green-400/30 rounded-lg">
+                  <p className="text-green-300 font-rajdhani text-xs">
+                    🔒 Super Admin Feature: Bulk email with privacy protection. Recipients won't see each other's email addresses.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Client Selection */}
@@ -396,6 +506,207 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
                     <Plus className="h-4 w-4" />
                     <span className="font-rajdhani font-medium">Add Email</span>
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* CSV Bulk Upload */}
+            {sendMethod === 'csv_bulk' && (
+              <div>
+                <label className="block text-slate-400 font-rajdhani text-sm mb-3">
+                  CSV Bulk Email Upload
+                </label>
+                
+                {!csvFile ? (
+                  <div className="border-2 border-dashed border-slate-600/50 rounded-lg p-8 text-center hover:border-neon-green/50 transition-all duration-200">
+                    <Upload className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-white font-rajdhani font-medium mb-2">Upload CSV File</h3>
+                    <p className="text-slate-400 font-rajdhani text-sm mb-4">
+                      Upload a CSV file containing email addresses. The file can have headers and multiple columns.
+                    </p>
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleCsvUpload}
+                      className="hidden"
+                      id="csv-upload"
+                    />
+                    <label
+                      htmlFor="csv-upload"
+                      className="inline-flex items-center space-x-2 px-6 py-3 bg-neon-green/20 border border-neon-green/50 rounded-lg text-neon-green hover:bg-neon-green/30 cursor-pointer transition-all duration-200"
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span className="font-rajdhani font-medium">Choose CSV File</span>
+                    </label>
+                    
+                    <div className="mt-6 text-left bg-slate-800/30 rounded-lg p-4">
+                      <h4 className="text-white font-rajdhani font-medium mb-2">CSV Format Example:</h4>
+                      <pre className="text-slate-300 font-mono text-xs">
+{`Name,Email,Company
+John Doe,john@company.com,Company A
+Jane Smith,jane@business.org,Business B
+bob@email.com
+alice@domain.net`}
+                      </pre>
+                      <p className="text-slate-400 font-rajdhani text-xs mt-2">
+                        ✓ Supports headers and multiple columns<br/>
+                        ✓ Automatically detects email addresses<br/>
+                        ✓ Removes duplicates automatically
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-slate-800/50 border border-slate-600/50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="h-5 w-5 text-neon-green" />
+                        <div>
+                          <div className="text-white font-rajdhani font-medium">{csvFile.name}</div>
+                          <div className="text-slate-400 font-rajdhani text-sm">
+                            {csvEmails.length} email addresses found
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={clearCsvUpload}
+                        className="p-2 bg-red-500/20 border border-red-400/50 rounded-lg text-red-400 hover:bg-red-500/30 transition-all duration-200"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {showCsvPreview && (
+                      <div className="bg-slate-800/30 border border-slate-600/50 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-white font-rajdhani font-medium">Email Preview</h4>
+                          <button
+                            type="button"
+                            onClick={() => setShowCsvPreview(!showCsvPreview)}
+                            className="text-neon-blue hover:text-neon-blue/80 font-rajdhani text-sm"
+                          >
+                            {showCsvPreview ? 'Hide' : 'Show'} Preview
+                          </button>
+                        </div>
+                        <div className="max-h-40 overflow-y-auto space-y-1">
+                          {csvPreview.map((email, index) => (
+                            <div key={index} className="text-slate-300 font-rajdhani text-sm py-1 px-2 bg-slate-700/30 rounded">
+                              {email}
+                            </div>
+                          ))}
+                          {csvEmails.length > csvPreview.length && (
+                            <div className="text-slate-400 font-rajdhani text-sm py-1 px-2">
+                              ... and {csvEmails.length - csvPreview.length} more emails
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Email Tracking Options - Only for Super Admin */}
+            {user?.role === 'super_admin' && (
+              <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-400/30 rounded-lg p-4">
+                <div className="flex items-center space-x-2 mb-3">
+                  <Eye className="h-5 w-5 text-purple-400" />
+                  <h3 className="text-white font-rajdhani font-medium">Email Tracking Options</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={trackingOptions.enableTracking}
+                      onChange={(e) => setTrackingOptions(prev => ({
+                        ...prev,
+                        enableTracking: e.target.checked
+                      }))}
+                      className="w-4 h-4 text-purple-400 bg-slate-800 border-slate-600 rounded focus:ring-purple-400"
+                    />
+                    <span className="text-slate-300 font-rajdhani">Enable Email Tracking</span>
+                  </label>
+
+                  {trackingOptions.enableTracking && (
+                    <div className="ml-7 space-y-2">
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={trackingOptions.trackOpens}
+                          onChange={(e) => setTrackingOptions(prev => ({
+                            ...prev,
+                            trackOpens: e.target.checked
+                          }))}
+                          className="w-4 h-4 text-purple-400 bg-slate-800 border-slate-600 rounded focus:ring-purple-400"
+                        />
+                        <span className="text-slate-300 font-rajdhani text-sm">Track email opens</span>
+                      </label>
+
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={trackingOptions.trackClicks}
+                          onChange={(e) => setTrackingOptions(prev => ({
+                            ...prev,
+                            trackClicks: e.target.checked
+                          }))}
+                          className="w-4 h-4 text-purple-400 bg-slate-800 border-slate-600 rounded focus:ring-purple-400"
+                        />
+                        <span className="text-slate-300 font-rajdhani text-sm">Track link clicks</span>
+                      </label>
+
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={trackingOptions.trackLocation}
+                          onChange={(e) => setTrackingOptions(prev => ({
+                            ...prev,
+                            trackLocation: e.target.checked
+                          }))}
+                          className="w-4 h-4 text-purple-400 bg-slate-800 border-slate-600 rounded focus:ring-purple-400"
+                        />
+                        <span className="text-slate-300 font-rajdhani text-sm">Track location data</span>
+                      </label>
+
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={trackingOptions.trackDevice}
+                          onChange={(e) => setTrackingOptions(prev => ({
+                            ...prev,
+                            trackDevice: e.target.checked
+                          }))}
+                          className="w-4 h-4 text-purple-400 bg-slate-800 border-slate-600 rounded focus:ring-purple-400"
+                        />
+                        <span className="text-slate-300 font-rajdhani text-sm">Track device information</span>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                {trackingOptions.enableTracking && (
+                  <div className="mt-3 text-xs text-slate-400 font-rajdhani">
+                    <TrendingUp className="h-4 w-4 inline mr-1" />
+                    Analytics will be available in the admin dashboard after sending.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Privacy Notice for CSV Bulk */}
+            {sendMethod === 'csv_bulk' && user?.role === 'super_admin' && (
+              <div className="bg-green-500/10 border border-green-400/30 rounded-lg p-4">
+                <div className="flex items-start space-x-2">
+                  <Shield className="h-5 w-5 text-green-400 mt-0.5" />
+                  <div>
+                    <h4 className="text-green-400 font-rajdhani font-medium mb-1">Privacy Protection Enabled</h4>
+                    <p className="text-slate-300 font-rajdhani text-sm">
+                      Each email will be sent individually using BCC mode. Recipients will not see each other's email addresses, 
+                      ensuring complete privacy protection.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

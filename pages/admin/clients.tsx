@@ -16,7 +16,9 @@ import {
   Building,
   UserPlus,
   Eye,
-  EyeOff
+  EyeOff,
+  Upload,
+  FileText
 } from 'lucide-react';
 
 interface Client {
@@ -52,6 +54,12 @@ export default function ClientsManagement() {
     isActive: true
   });
   const [showInactive, setShowInactive] = useState(false);
+  
+  // CSV Import state
+  const [showCsvModal, setShowCsvModal] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvPreview, setCsvPreview] = useState<Array<{name: string, emails: string[]}>>([]);
+  const [csvImporting, setCsvImporting] = useState(false);
 
   useEffect(() => {
     if (!authLoading && (!user || !hasRole('admin'))) {
@@ -215,6 +223,130 @@ export default function ClientsManagement() {
     }
   };
 
+  // CSV Import Functions
+  const handleCsvUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert('Please select a CSV file');
+      return;
+    }
+
+    setCsvFile(file);
+    processCsvContent(file);
+  };
+
+  const processCsvContent = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      const clients: Array<{name: string, emails: string[]}> = [];
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      lines.forEach((line, index) => {
+        // Skip potential header row
+        if (index === 0 && (line.toLowerCase().includes('name') || line.toLowerCase().includes('email'))) {
+          return;
+        }
+
+        const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+        const emails: string[] = [];
+        let clientName = '';
+
+        // Extract emails and client name from columns
+        columns.forEach(col => {
+          if (emailRegex.test(col)) {
+            emails.push(col);
+          } else if (col && !clientName && col.length > 2) {
+            clientName = col;
+          }
+        });
+
+        if (emails.length > 0) {
+          // If no name found, use first part of first email as name
+          if (!clientName) {
+            clientName = emails[0].split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').trim();
+          }
+
+          // Check if client already exists in preview
+          const existingClient = clients.find(c => c.name.toLowerCase() === clientName.toLowerCase());
+          if (existingClient) {
+            // Merge emails and remove duplicates
+            existingClient.emails = [...new Set([...existingClient.emails, ...emails])];
+          } else {
+            clients.push({ name: clientName, emails: [...new Set(emails)] });
+          }
+        }
+      });
+
+      setCsvPreview(clients);
+    };
+
+    reader.readAsText(file);
+  };
+
+  const handleCsvImport = async () => {
+    if (csvPreview.length === 0) return;
+
+    setCsvImporting(true);
+    const errors: string[] = [];
+    let successCount = 0;
+
+    try {
+      for (const client of csvPreview) {
+        try {
+          const response = await fetch('/api/clients', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: client.name,
+              emails: client.emails,
+              description: `Imported from CSV on ${new Date().toLocaleDateString()}`,
+              isActive: true
+            })
+          });
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            const result = await response.json();
+            errors.push(`Failed to import ${client.name}: ${result.message}`);
+          }
+        } catch (error) {
+          errors.push(`Failed to import ${client.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+
+      // Show results
+      let message = `Successfully imported ${successCount} clients.`;
+      if (errors.length > 0) {
+        message += `\n\nErrors:\n${errors.join('\n')}`;
+      }
+      alert(message);
+
+      // Refresh clients list and close modal
+      fetchClients();
+      handleCloseCsvModal();
+
+    } catch (error) {
+      console.error('CSV import error:', error);
+      alert('Failed to import CSV. Please try again.');
+    } finally {
+      setCsvImporting(false);
+    }
+  };
+
+  const handleCloseCsvModal = () => {
+    setShowCsvModal(false);
+    setCsvFile(null);
+    setCsvPreview([]);
+  };
+
   if (authLoading) {
     return (
       <HydrationSafe>
@@ -253,13 +385,26 @@ export default function ClientsManagement() {
                 Manage email distribution lists for threat advisories
               </p>
             </div>
-            <button
-              onClick={() => handleOpenModal()}
-              className="flex items-center space-x-2 px-6 py-3 bg-neon-blue/20 border border-neon-blue/50 rounded-lg text-neon-blue font-rajdhani font-semibold hover:bg-neon-blue/30 transition-all duration-200"
-            >
-              <Plus className="h-5 w-5" />
-              <span>Add Client</span>
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => handleOpenModal()}
+                className="flex items-center space-x-2 px-6 py-3 bg-neon-blue/20 border border-neon-blue/50 rounded-lg text-neon-blue font-rajdhani font-semibold hover:bg-neon-blue/30 transition-all duration-200"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Add Client</span>
+              </button>
+              
+              {/* CSV Import - Only for Super Admin */}
+              {user?.role === 'super_admin' && (
+                <button
+                  onClick={() => setShowCsvModal(true)}
+                  className="flex items-center space-x-2 px-6 py-3 bg-green-500/20 border border-green-400/50 rounded-lg text-green-400 font-rajdhani font-semibold hover:bg-green-500/30 transition-all duration-200"
+                >
+                  <Upload className="h-5 w-5" />
+                  <span>Import CSV</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -537,6 +682,122 @@ export default function ClientsManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CSV Import Modal */}
+      {showCsvModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800/90 backdrop-blur-md border border-slate-600/50 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-orbitron font-bold text-xl text-white">Import Clients from CSV</h2>
+              <button
+                onClick={handleCloseCsvModal}
+                className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-slate-400" />
+              </button>
+            </div>
+
+            {!csvFile ? (
+              <div className="space-y-6">
+                <div className="border-2 border-dashed border-slate-600/50 rounded-lg p-8 text-center hover:border-green-400/50 transition-all duration-200">
+                  <Upload className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-white font-rajdhani font-medium mb-2">Upload CSV File</h3>
+                  <p className="text-slate-400 font-rajdhani text-sm mb-4">
+                    Upload a CSV file containing client information with names and email addresses.
+                  </p>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleCsvUpload}
+                    className="hidden"
+                    id="csv-client-upload"
+                  />
+                  <label
+                    htmlFor="csv-client-upload"
+                    className="inline-flex items-center space-x-2 px-6 py-3 bg-green-500/20 border border-green-400/50 rounded-lg text-green-400 hover:bg-green-500/30 cursor-pointer transition-all duration-200"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className="font-rajdhani font-medium">Choose CSV File</span>
+                  </label>
+                </div>
+
+                <div className="bg-slate-700/30 rounded-lg p-4">
+                  <h4 className="text-white font-rajdhani font-medium mb-2">CSV Format Example:</h4>
+                  <pre className="text-slate-300 font-mono text-xs overflow-x-auto">
+{`Name,Email,Email2
+Acme Corp,admin@acme.com,security@acme.com
+Tech Solutions,contact@tech.com
+John Doe,john@personal.com`}
+                  </pre>
+                  <div className="mt-3 text-slate-400 font-rajdhani text-xs space-y-1">
+                    <p>✓ First column should be client/company name</p>
+                    <p>✓ Following columns can contain email addresses</p>
+                    <p>✓ Multiple emails per client are supported</p>
+                    <p>✓ Headers are automatically detected and skipped</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-slate-700/50 border border-slate-600/50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="h-5 w-5 text-green-400" />
+                    <div>
+                      <div className="text-white font-rajdhani font-medium">{csvFile.name}</div>
+                      <div className="text-slate-400 font-rajdhani text-sm">
+                        {csvPreview.length} clients found
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCloseCsvModal}
+                    className="p-2 bg-red-500/20 border border-red-400/50 rounded-lg text-red-400 hover:bg-red-500/30 transition-all duration-200"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {csvPreview.length > 0 && (
+                  <div className="bg-slate-700/30 border border-slate-600/50 rounded-lg p-4">
+                    <h4 className="text-white font-rajdhani font-medium mb-3">Preview (First 10 clients)</h4>
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                      {csvPreview.slice(0, 10).map((client, index) => (
+                        <div key={index} className="bg-slate-800/50 rounded p-3">
+                          <div className="text-white font-rajdhani font-medium">{client.name}</div>
+                          <div className="text-slate-300 font-rajdhani text-sm">
+                            {client.emails.join(', ')}
+                          </div>
+                        </div>
+                      ))}
+                      {csvPreview.length > 10 && (
+                        <div className="text-slate-400 font-rajdhani text-sm p-2 text-center">
+                          ... and {csvPreview.length - 10} more clients
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleCloseCsvModal}
+                    className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600/50 rounded-lg text-slate-400 font-rajdhani font-medium hover:bg-slate-700/70 transition-all duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCsvImport}
+                    disabled={csvImporting || csvPreview.length === 0}
+                    className="flex-1 px-4 py-2 bg-green-500/20 border border-green-400/50 rounded-lg text-green-400 font-rajdhani font-medium hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    {csvImporting ? 'Importing...' : `Import ${csvPreview.length} Clients`}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
