@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -6,8 +6,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: Date | string): string {
-  return format(new Date(date), 'MMM dd, yyyy');
+export function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  const d = new Date(date as any);
+  if (!isValid(d)) return '';
+  return format(d, 'MMM dd, yyyy');
 }
 
 export function getSeverityColor(severity: string): string {
