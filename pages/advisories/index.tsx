@@ -53,12 +53,15 @@ interface AdvisoriesPageProps {
     low: number;
     recent: number;
   };
+  currentPage: number;
+  totalPages: number;
+  totalAdvisories: number;
 }
 
 type SortOption = 'newest' | 'oldest' | 'severity' | 'title';
 type ViewMode = 'grid' | 'list';
 
-export default function AdvisoriesPage({ advisories, categories, stats }: AdvisoriesPageProps) {
+export default function AdvisoriesPage({ advisories, categories, stats, currentPage, totalPages, totalAdvisories }: AdvisoriesPageProps) {
   const { isAdmin, isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const [filteredAdvisories, setFilteredAdvisories] = useState(advisories);
@@ -69,6 +72,7 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAutoRunning, setIsAutoRunning] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [selectedAdvisoryForEmail, setSelectedAdvisoryForEmail] = useState<IAdvisory | null>(null);
   const [showScheduledEmails, setShowScheduledEmails] = useState(false);
@@ -153,6 +157,15 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
     setSortBy('newest');
   };
 
+  const handlePageChange = (page: number) => {
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    router.push({
+      pathname: '/advisories',
+      query: { page }
+    });
+  };
+
   const handleEmailAdvisory = (advisory: IAdvisory, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -187,6 +200,53 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
       }
     } catch (error) {
       console.error('Error updating scheduled email:', error);
+    }
+  };
+
+  const handleAutoFeed = async () => {
+    setIsAutoRunning(true);
+    try {
+      const resp = await fetch('/api/auto-feed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ maxItems: 1 }) });
+      const data = await resp.json();
+      if (resp.ok) {
+        // Show success message with links
+        if (data.inserted && data.inserted.length > 0) {
+          const links = data.inserted.map((item: any) => 
+            `\n${item.advisoryId}:\n  HTML: ${window.location.origin}${item.viewUrl}\n  Database: ${window.location.origin}${item.databaseUrl}`
+          ).join('\n');
+          alert(`✓ Generated ${data.inserted.length} advisories:\n${links}`);
+        } else {
+          alert('⚠️ No new advisories generated. This usually means:\n\n1. All RSS items have been processed before (cached)\n2. No new RSS items match the criteria\n\nTry clicking "Clear Cache" button to reprocess items.');
+        }
+        // Refresh server-side props by reloading
+        router.reload();
+      } else {
+        console.error('Auto Feed failed', data);
+        alert('Auto Feed failed: ' + (data?.error || 'unknown'))
+      }
+    } catch (e) {
+      console.error('Auto Feed error', e);
+      alert('Auto Feed error. See console for details.');
+    }
+    setIsAutoRunning(false);
+  };
+
+  const handleClearCache = async () => {
+    if (!confirm('Clear advisory cache? This will allow the system to reprocess previously seen RSS items.\n\nNote: This does NOT delete existing advisories, it only clears the cache so new ones can be generated from the same sources.')) {
+      return;
+    }
+    
+    try {
+      const resp = await fetch('/api/clear-advisory-cache', { method: 'POST' });
+      const data = await resp.json();
+      if (resp.ok) {
+        alert(`✓ Cache cleared successfully!\n\nCleared ${data.clearedItems} cached items.\n\nYou can now click "Auto Advisory" to generate new advisories.`);
+      } else {
+        alert('Failed to clear cache: ' + (data?.error || 'unknown'));
+      }
+    } catch (e) {
+      console.error('Clear cache error', e);
+      alert('Failed to clear cache. See console for details.');
     }
   };
 
@@ -257,6 +317,50 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
                 </button>
                 
                 {isAdmin && (
+                  <>
+                  <button
+                    onClick={handleAutoFeed}
+                    disabled={isAutoRunning}
+                    className={`
+                      relative overflow-hidden group transition-all duration-300
+                      px-6 py-3 rounded-xl font-rajdhani font-semibold
+                      bg-gradient-to-r from-emerald-600/20 to-emerald-500/20
+                      border-2 border-emerald-500/30 backdrop-blur-md
+                      text-emerald-300 hover:text-white hover:border-emerald-400
+                      shadow-lg shadow-emerald-500/20 hover:shadow-emerald-400/30
+                      hover:scale-105 active:scale-95 flex items-center space-x-2
+                      before:absolute before:inset-0 before:bg-gradient-to-r 
+                      before:from-emerald-600/30 before:to-emerald-500/30 before:opacity-0 
+                      before:transition-opacity before:duration-300 hover:before:opacity-100
+                      ${isAutoRunning ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-xl'}
+                    `}
+                    title="Automatically generate threat advisories from RSS feeds"
+                  >
+                    <Zap className={`w-4 h-4 relative z-10 ${isAutoRunning ? 'animate-spin' : 'group-hover:scale-110'} transition-all duration-300`} />
+                    <span className="relative z-10">{isAutoRunning ? 'Generating...' : 'Auto Advisory'}</span>
+                  </button>
+
+                  <button
+                    onClick={handleClearCache}
+                    className="
+                      relative overflow-hidden group transition-all duration-300
+                      px-6 py-3 rounded-xl font-rajdhani font-semibold
+                      bg-gradient-to-r from-amber-600/20 to-amber-500/20
+                      border-2 border-amber-500/30 backdrop-blur-md
+                      text-amber-300 hover:text-white hover:border-amber-400
+                      shadow-lg shadow-amber-500/20 hover:shadow-amber-400/30
+                      hover:scale-105 active:scale-95 flex items-center space-x-2
+                      before:absolute before:inset-0 before:bg-gradient-to-r 
+                      before:from-amber-600/30 before:to-amber-500/30 before:opacity-0 
+                      before:transition-opacity before:duration-300 hover:before:opacity-100
+                      hover:shadow-xl
+                    "
+                    title="Clear cache to allow reprocessing of RSS items"
+                  >
+                    <RefreshCw className="w-4 h-4 relative z-10 group-hover:rotate-180 transition-all duration-500" />
+                    <span className="relative z-10">Clear Cache</span>
+                  </button>
+
                   <Link 
                     href="/admin/upload" 
                     className="
@@ -276,6 +380,7 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
                     <Plus className="w-4 h-4 relative z-10 group-hover:scale-110 group-hover:rotate-90 transition-all duration-300" />
                     <span className="relative z-10">New Advisory</span>
                   </Link>
+                  </>
                 )}
 
                 {isAdmin && (
@@ -539,8 +644,8 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
             className="flex items-center justify-between mb-6"
           >
             <div className="font-rajdhani text-slate-400">
-              Showing <span className="text-neon-blue font-semibold">{filteredAdvisories.length}</span> of{' '}
-              <span className="text-slate-200 font-semibold">{advisories.length}</span> advisories
+              Showing <span className="text-neon-blue font-semibold">{filteredAdvisories.length}</span> advisories on page {currentPage} of {totalPages}{' '}
+              <span className="text-slate-400">({totalAdvisories} total)</span>
             </div>
           </motion.div>
 
@@ -606,6 +711,92 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
               </motion.div>
             )}
           </motion.div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1 }}
+              className="flex items-center justify-center space-x-2 mt-8"
+            >
+              {/* Previous Button */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`
+                  relative overflow-hidden group transition-all duration-300
+                  px-4 py-2 rounded-lg font-rajdhani font-semibold
+                  ${currentPage === 1
+                    ? 'bg-slate-800/50 text-slate-600 cursor-not-allowed border-2 border-slate-700/30'
+                    : 'bg-gradient-to-r from-cyan-600/20 to-cyan-500/20 border-2 border-cyan-500/30 text-cyan-300 hover:text-white hover:border-cyan-400 hover:scale-105'
+                  }
+                  backdrop-blur-md shadow-lg
+                `}
+              >
+                <ChevronDown className="w-4 h-4 rotate-90" />
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center space-x-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  // Show first page, last page, current page, and 2 pages around current
+                  const showPage = page === 1 || 
+                                   page === totalPages || 
+                                   (page >= currentPage - 2 && page <= currentPage + 2);
+                  
+                  // Show ellipsis
+                  const showEllipsisBefore = page === currentPage - 3 && currentPage > 4;
+                  const showEllipsisAfter = page === currentPage + 3 && currentPage < totalPages - 3;
+
+                  if (showEllipsisBefore || showEllipsisAfter) {
+                    return (
+                      <span key={page} className="text-slate-500 font-rajdhani px-2">
+                        ...
+                      </span>
+                    );
+                  }
+
+                  if (!showPage) return null;
+
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`
+                        relative overflow-hidden group transition-all duration-300
+                        w-10 h-10 rounded-lg font-rajdhani font-semibold flex items-center justify-center
+                        ${page === currentPage
+                          ? 'bg-gradient-to-r from-neon-blue/30 to-neon-cyan/30 border-2 border-neon-blue/50 text-white shadow-lg shadow-neon-blue/30 scale-110'
+                          : 'bg-slate-800/50 border-2 border-slate-700/30 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/30 hover:scale-105'
+                        }
+                        backdrop-blur-md
+                      `}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`
+                  relative overflow-hidden group transition-all duration-300
+                  px-4 py-2 rounded-lg font-rajdhani font-semibold
+                  ${currentPage === totalPages
+                    ? 'bg-slate-800/50 text-slate-600 cursor-not-allowed border-2 border-slate-700/30'
+                    : 'bg-gradient-to-r from-cyan-600/20 to-cyan-500/20 border-2 border-cyan-500/30 text-cyan-300 hover:text-white hover:border-cyan-400 hover:scale-105'
+                  }
+                  backdrop-blur-md shadow-lg
+                `}
+              >
+                <ChevronDown className="w-4 h-4 -rotate-90" />
+              </button>
+            </motion.div>
+          )}
         </div>
       </div>
 
@@ -657,7 +848,7 @@ export default function AdvisoriesPage({ advisories, categories, stats }: Adviso
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ req }) => {
+export const getServerSideProps: GetServerSideProps = async ({ req, query }) => {
   // Check authentication first
   const token = req.cookies.token;
   
@@ -694,20 +885,56 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   await dbConnect();
 
   try {
-    // Fetch all advisories
-    const advisories = await Advisory.find({}).sort({ publishedDate: -1 }).lean();
+    // Pagination settings
+    const ITEMS_PER_PAGE = 20;
+    const page = parseInt(query.page as string) || 1;
+    const skip = (page - 1) * ITEMS_PER_PAGE;
+
+    // Get total count for pagination
+    const totalAdvisories = await Advisory.countDocuments({});
+    const totalPages = Math.ceil(totalAdvisories / ITEMS_PER_PAGE);
+
+    // Fetch paginated advisories
+    const advisories = await Advisory.find({})
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(ITEMS_PER_PAGE)
+      .lean();
     
-    // Get unique categories
-    const categories = Array.from(new Set(advisories.map(a => a.category))).filter(Boolean);
+    console.log('[SSR] Fetched', advisories.length, 'advisories from MongoDB (page', page, 'of', totalPages, ')');
+    if (advisories.length > 0) {
+      const latestAdvisory = advisories[0];
+      console.log('[SSR] Latest advisory sample:', {
+        id: latestAdvisory._id,
+        advisoryId: latestAdvisory.advisoryId,
+        title: latestAdvisory.title,
+        createdAt: latestAdvisory.createdAt,
+        publishedDate: latestAdvisory.publishedDate,
+        threatType: latestAdvisory.threatType,
+        criticality: latestAdvisory.criticality,
+        tlp: latestAdvisory.tlp,
+        affectedProduct: latestAdvisory.affectedProduct,
+        hasAffectedProducts: !!latestAdvisory.affectedProducts,
+        hasSectors: !!latestAdvisory.targetSectors,
+        hasRegions: !!latestAdvisory.regions,
+        hasCVEs: !!latestAdvisory.cveIds,
+        hasMITRE: !!latestAdvisory.mitreTactics,
+      });
+    }
     
-    // Calculate stats
+    // Get unique categories from all advisories (not just current page)
+    const allAdvisories = await Advisory.find({}).select('category').lean();
+    const categories = Array.from(new Set(allAdvisories.map(a => a.category))).filter(Boolean);
+    
+    // Calculate stats from all advisories
+    const allAdvisoriesWithSeverity = await Advisory.find({}).select('severity publishedDate').lean();
     const stats = {
-      total: advisories.length,
-      critical: advisories.filter(a => a.severity === 'Critical').length,
-      high: advisories.filter(a => a.severity === 'High').length,
-      medium: advisories.filter(a => a.severity === 'Medium').length,
-      low: advisories.filter(a => a.severity === 'Low').length,
-      recent: advisories.filter(a => {
+      total: totalAdvisories,
+      critical: allAdvisoriesWithSeverity.filter(a => a.severity === 'Critical').length,
+      high: allAdvisoriesWithSeverity.filter(a => a.severity === 'High').length,
+      medium: allAdvisoriesWithSeverity.filter(a => a.severity === 'Medium').length,
+      low: allAdvisoriesWithSeverity.filter(a => a.severity === 'Low').length,
+      recent: allAdvisoriesWithSeverity.filter(a => {
         const publishedDate = new Date(a.publishedDate);
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -719,7 +946,10 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
       props: {
         advisories: JSON.parse(JSON.stringify(advisories)),
         categories,
-        stats
+        stats,
+        currentPage: page,
+        totalPages,
+        totalAdvisories
       }
     };
   } catch (error) {
@@ -728,7 +958,10 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
       props: {
         advisories: [],
         categories: [],
-        stats: { total: 0, critical: 0, high: 0, medium: 0, low: 0, recent: 0 }
+        stats: { total: 0, critical: 0, high: 0, medium: 0, low: 0, recent: 0 },
+        currentPage: 1,
+        totalPages: 0,
+        totalAdvisories: 0
       }
     };
   }

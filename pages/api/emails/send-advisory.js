@@ -5,9 +5,39 @@ import Advisory from '../../../models/Advisory';
 import ScheduledEmail from '../../../models/ScheduledEmail';
 import { verifyToken } from '../../../lib/auth';
 import nodemailer from 'nodemailer';
-import { generateCyberThreatEmailTemplate } from '../../../lib/emailTemplateGenerator';
+import { generateDashboardStyleEmailTemplate } from '../../../lib/emailTemplateGenerator';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+
+// Helper function to read workspace HTML file
+function readWorkspaceHTML(htmlFileName) {
+  try {
+    if (!htmlFileName) return null;
+    
+    const workspacePath = path.resolve(process.cwd(), 'backend', 'workspace', htmlFileName);
+    const workspaceRoot = path.resolve(process.cwd(), 'backend', 'workspace');
+    
+    // Security check
+    if (!workspacePath.startsWith(workspaceRoot)) {
+      console.error('Security violation: Path outside workspace');
+      return null;
+    }
+    
+    if (!fs.existsSync(workspacePath)) {
+      console.error(`HTML file not found: ${workspacePath}`);
+      return null;
+    }
+    
+    const htmlContent = fs.readFileSync(workspacePath, 'utf8');
+    console.log(`✅ Successfully read workspace HTML file: ${htmlFileName}`);
+    return htmlContent;
+  } catch (error) {
+    console.error(`Error reading workspace HTML file:`, error);
+    return null;
+  }
+}
 
 const { agenda } = require('../../../lib/agenda');
 
@@ -157,8 +187,39 @@ export default async function handler(req, res) {
       });
     }
 
-    // Generate email body with the new production-ready template
-    const emailBody = generateCyberThreatEmailTemplate(advisory, customMessage);
+    // Generate email body - prioritize workspace HTML file if available
+    let emailBody;
+    
+    if (advisory.htmlFileName) {
+      console.log(`📧 Attempting to use workspace HTML file: ${advisory.htmlFileName}`);
+      const workspaceHTML = readWorkspaceHTML(advisory.htmlFileName);
+      
+      if (workspaceHTML) {
+        // If custom message is provided, inject it into the HTML
+        if (customMessage) {
+          // Insert custom message after the header section
+          const customMessageHTML = `
+            <tr>
+              <td style="padding: 20px 30px; background-color: rgba(5, 150, 105, 0.8);">
+                <h3 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 700; color: #ffffff;">📢 Message from Security Team</h3>
+                <p style="margin: 0; font-size: 14px; color: #ecfdf5; line-height: 1.5;">${customMessage.replace(/\n/g, '<br>')}</p>
+              </td>
+            </tr>
+          `;
+          // Try to inject after the first closing </tr> tag or at the beginning of body
+          emailBody = workspaceHTML.replace(/(<\/tr>)/, `$1${customMessageHTML}`);
+        } else {
+          emailBody = workspaceHTML;
+        }
+        console.log(`✅ Using workspace HTML file for email body`);
+      } else {
+        console.log(`⚠️ Workspace HTML file not found, falling back to generated template`);
+        emailBody = generateDashboardStyleEmailTemplate(advisory, customMessage);
+      }
+    } else {
+      console.log(`📧 No workspace HTML file specified, using generated template`);
+      emailBody = generateDashboardStyleEmailTemplate(advisory, customMessage);
+    }
 
     // Initialize tracking if enabled
     let trackingRecords = [];

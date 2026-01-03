@@ -33,7 +33,6 @@ import {
   Lock,
   Clock,
   Star,
-  Share2,
   Edit,
   Trash2,
   Tag,
@@ -106,6 +105,7 @@ interface ExtendedAdvisory {
   recommendations?: string[];
   patchDetails?: string;
   cvss?: string;
+  htmlFileName?: string;
 }
 
 interface AdvisoryDetailProps {
@@ -400,6 +400,45 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
           <Head>
             <title>{advisory.title} - EaglEye IntelDesk Intelligence</title>
             <meta name="description" content={advisory.description} />
+            <style>{`
+              /* Styles for embedded HTML content from auto-generated advisories */
+              .advisory-html-content {
+                font-family: 'Roboto', Arial, sans-serif;
+              }
+              .advisory-html-content table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1rem 0;
+              }
+              .advisory-html-content th,
+              .advisory-html-content td {
+                padding: 8px;
+                text-align: left;
+                border: 1px solid #ddd;
+              }
+              .advisory-html-content th {
+                background-color: #f2f2f2;
+                font-weight: 600;
+              }
+              .advisory-html-content h1,
+              .advisory-html-content h2,
+              .advisory-html-content h3 {
+                margin-top: 1.5rem;
+                margin-bottom: 0.75rem;
+              }
+              .advisory-html-content ul,
+              .advisory-html-content ol {
+                margin: 0.5rem 0;
+                padding-left: 2rem;
+              }
+              .advisory-html-content a {
+                color: #0066cc;
+                text-decoration: none;
+              }
+              .advisory-html-content a:hover {
+                text-decoration: underline;
+              }
+            `}</style>
           </Head>
 
         {/* Header with Logos */}
@@ -495,13 +534,17 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                   </>
                 )}
                 
-                <button 
-                  onClick={() => copyToClipboard(window.location.href, 'url')}
-                  className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105"
-                >
-                  <Share2 className="h-4 w-4 text-neon-purple" />
-                  <span className="hidden sm:inline text-white font-rajdhani font-medium">Share</span>
-                </button>
+                {advisory.htmlFileName && (
+                  <a 
+                    href={`/api/workspace/${advisory.htmlFileName}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105"
+                  >
+                    <FileText className="h-4 w-4 text-neon-orange" />
+                    <span className="hidden sm:inline text-white font-rajdhani font-medium">View HTML Email</span>
+                  </a>
+                )}
                 
                 <button 
                   onClick={generatePDF}
@@ -588,7 +631,8 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                 </div>
               </motion.div>
 
-              {/* 🚨 BASIC THREAT PARAMETERS */}
+
+              {/* �🚨 BASIC THREAT PARAMETERS */}
               {(advisory.threatDesignation || advisory.threatCategory || advisory.threatLevel || advisory.tlpClassification || advisory.tlp || advisory.cveIds?.length || advisory.cves?.length) && (
                 <motion.div 
                   className="glass-panel-hover p-8"

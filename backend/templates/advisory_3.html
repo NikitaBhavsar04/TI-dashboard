@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#F5F7FA;font-family:Arial,Helvetica,sans-serif;color:#0B2233;line-height:1.6;">
+
+<!-- OUTER WRAPPER -->
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#F5F7FA;">
+ <tr>
+   <td align="center" style="padding:30px 20px;">
+
+     <!-- MAIN CONTAINER -->
+     <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:900px;background-color:#FFFFFF;border-radius:16px;overflow:hidden;border:1px solid #D7DEE8;box-shadow:0 10px 30px rgba(0,0,0,0.1);">
+
+      <!-- HERO SECTION: Background Image + Logos + Title + Criticality/Threat -->
+      <tr>
+        <td style="background-image:url('https://eagleyesoc-logos.s3.us-east-1.amazonaws.com/clients/head_bg.png');background-size:cover;background-position:center;padding:30px 25px;color:#FFFFFF;position:relative;">
+          <!-- Overlay for text readability -->
+          <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(11,31,51,0.85);"></div>
+          <div style="position:relative;z-index:1;">
+            <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+              <!-- LOGOS + TITLE ROW -->
+              <tr>
+                <td align="left" width="22%" style="background:transparent;">
+  <table cellpadding="0" cellspacing="0" role="presentation">
+    <tr>
+      <td style="background:transparent;">
+        <img src="https://eagleyesoc-logos.s3.us-east-1.amazonaws.com/clients/FCTlogo.webp"
+             alt="CyberTech"
+             width="140"
+             style="
+               display:block;
+               border:0;
+               outline:none;
+               text-decoration:none;
+               background:transparent;
+             ">
+      </td>
+    </tr>
+  </table>
+</td>
+
+                <td align="center" width="56%" style="padding:0 20px;">
+                  <h1 style="margin:0;font-size:28px;line-height:1.2;font-weight:800;color:#FFFFFF;letter-spacing:-0.5px;text-shadow:0 2px 4px rgba(0,0,0,0.3);">{{ title or 'Threat Advisory' }}</h1>
+                </td>
+                <td align="right" width="22%">
+                  <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiCL2GuXkm4vnkAnNz1yA4Kxlg-jjKIOdohivr_s_uCRQ5z1gYjlSJX139c7I-iR-2i3sCVQK3kmP3_ZRvvBezy_m5eB-sX9N3cn42lJbi5PveE90jfqPt4Luc52J6nU1MTIWZGkdBzT76fTVru6Wk8RafSOcgNzPumjNLay5fUxQ_YIihCHQ7Us1_-wVMV/s400/Eagleye-S.png" alt="Eagleye" style="max-width:120px;height:auto;display:block;border-radius:8px;">
+                </td>
+              </tr>
+              <!-- CRITICALITY (LEFT) + THREAT TYPE (RIGHT) -->
+              <tr>
+                <td align="left" style="padding:20px 0;">
+                  <table cellpadding="0" cellspacing="0" role="presentation">
+                    <tr>
+                      <td style="padding:16px 20px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:12px;">
+                        <div style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.9);">CRITICALITY</div>
+                        <div style="font-size:22px;font-weight:800;color:#FFD700;">{{ criticality or 'HIGH' }}</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td></td>
+                <td align="right" style="padding:20px 0;">
+                  <table cellpadding="0" cellspacing="0" role="presentation">
+                    <tr>
+                      <td style="padding:16px 20px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:12px;">
+                        <div style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.9);">THREAT TYPE</div>
+                        <div style="font-size:22px;font-weight:800;color:#FFFFFF;">{{ threat_type|join(', ') or 'Vulnerability' }}</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </td>
+      </tr>
+
+      <!-- TLP SECTION - Dark Blue Box with Internal Legend -->
+      <tr>
+        <td style="padding:25px;background:#0B1F33;border-bottom:1px solid #D7DEE8;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="200">
+                <div style="display:inline-flex;align-items:center;padding:12px 20px;background:#1F3A5F;color:#FFFFFF;font-weight:800;font-size:16px;border-radius:10px;gap:12px;">
+                  <span>TLP:</span>
+                  <span style="font-size:14px;">{{ tlp or 'AMBER' }}</span>
+                  <div style="display:flex;gap:6px;">
+                    <span style="width:12px;height:12px;border-radius:50%;border:1px solid #94A3B8;background:#FFFFFF;"></span>
+                    <span style="width:12px;height:12px;border-radius:50%;border:1px solid #94A3B8;background:#22C55E;"></span>
+                    <span style="width:12px;height:12px;border-radius:50%;border:1px solid #94A3B8;background:#F59E0B;"></span>
+                    <span style="width:12px;height:12px;border-radius:50%;border:1px solid #94A3B8;background:#EF4444;"></span>
+                  </div>
+                </div>
+              </td>
+              <td></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- EXECUTIVE SUMMARY - Uniform Heading -->
+      <tr>
+        <td style="padding:30px;">
+          <h2 style="margin:0 0 20px 0;font-size:24px;color:#0B1F33;font-weight:800;letter-spacing:-0.02em;">Executive Summary</h2>
+          <div style="font-size:16px;line-height:1.7;color:#334155;text-align:justify;">{{ exec_summary or 'No summary available.' }}</div>
+        </td>
+      </tr>
+
+      <!-- KPI: Affected/Sector/Region - MORE SPACING -->
+      <tr>
+        <td style="padding:40px 30px 40px 30px;">
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td width="33%" style="padding:25px 15px;background:linear-gradient(135deg,#0B1F33,#1F3A5F);color:#FFFFFF;border-radius:12px;vertical-align:top;margin:0 10px 0 0;">
+                <div style="font-size:14px;font-weight:700;letter-spacing:0.5px;margin-bottom:12px;color:rgba(255,255,255,0.9);">AFFECTED PRODUCT</div>
+                <div style="font-size:18px;font-weight:700;">{{ product or 'N/A' }}</div>
+              </td>
+              <td width="33%" style="padding:25px 15px;background:linear-gradient(135deg,#0B1F33,#1F3A5F);color:#FFFFFF;border-radius:12px;vertical-align:top;margin:0 10px 0 10px;">
+                <div style="font-size:14px;font-weight:700;letter-spacing:0.5px;margin-bottom:12px;color:rgba(255,255,255,0.9);">TARGET SECTOR</div>
+                <div style="font-size:18px;font-weight:700;">{{ sectors|join(', ') or 'General' }}</div>
+              </td>
+              <td width="33%" style="padding:25px 15px;background:linear-gradient(135deg,#0B1F33,#1F3A5F);color:#FFFFFF;border-radius:12px;vertical-align:top;margin:0 0 0 10px;">
+                <div style="font-size:14px;font-weight:700;letter-spacing:0.5px;margin-bottom:12px;color:rgba(255,255,255,0.9);">REGION</div>
+                <div style="font-size:18px;font-weight:700;">{{ regions|join(', ') or 'Global' }}</div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- TECHNICAL DETAILS - Uniform Heading -->
+      <tr>
+        <td style="padding:30px;background:rgba(248,250,252,0.5);">
+          <h2 style="margin:0 0 20px 0;font-size:24px;color:#0B1F33;font-weight:800;letter-spacing:-0.02em;">Technical Details</h2>
+          
+          {% if cves %}
+          <div style="background:#E2E8F0;padding:20px;border-radius:12px;border-left:5px solid #3B82F6;margin-bottom:25px;">
+            <strong style="color:#1E293B;font-size:17px;">CVE ID:</strong> 
+            <span style="color:#475569;font-size:17px;font-weight:600;">{{ cves|join(', ') }}</span>
+          </div>
+          {% endif %}
+
+          <h3 style="margin:0 0 20px 0;font-size:22px;color:#1E293B;font-weight:700;letter-spacing:-0.01em;">Threat Profile (MITRE ATT&CK)</h3>
+          
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;border:1px solid #CBD5E1;border-radius:12px;overflow:hidden;">
+            <tr style="background:linear-gradient(135deg,#1F2070,#0D0F5A);">
+              <th width="35%" style="padding:18px 16px;color:#FFFFFF;font-weight:800;font-size:15px;border-bottom:2px solid #1E40AF;">TACTIC</th>
+              <th width="25%" style="padding:18px 16px;color:#FFFFFF;font-weight:800;font-size:15px;border-bottom:2px solid #1E40AF;">TECHNIQUE ID</th>
+              <th width="40%" style="padding:18px 16px;color:#FFFFFF;font-weight:800;font-size:15px;border-bottom:2px solid #1E40AF;">TECHNIQUE</th>
+            </tr>
+            <tbody>
+              {% if mitre %}
+                {% for row in mitre %}
+                <tr style="background:#F8FAFC;">
+                  <td style="padding:16px;border-bottom:1px solid #E2E8F0;color:#1E293B;font-weight:600;">{{ row.tactic or 'N/A' }}</td>
+                  <td style="padding:16px;border-bottom:1px solid #E2E8F0;color:#475569;font-family:'Courier New',monospace;font-weight:600;">{{ row.techniqueId or row.technique_id or 'N/A' }}</td>
+                  <td style="padding:16px;border-bottom:1px solid #E2E8F0;color:#334155;">{{ row.technique or 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="3" style="padding:30px;text-align:center;color:#94A3B8;font-style:italic;">No MITRE ATT&CK mapping available</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+
+      <!-- RECOMMENDATIONS SECTION - White text, No dots, Spaced box -->
+      <tr>
+        <td style="padding:30px 30px 20px 30px;background:linear-gradient(135deg,#0B1F33,#1F3A5F);margin-bottom:20px;">
+          <h3 style="margin:0 0 25px 0;color:#FFFFFF;font-size:24px;font-weight:800;letter-spacing:-0.02em;">Recommendations</h3>
+          {% if recommendations %}
+            <ul style="margin:0;padding-left:20px;color:#E0E7FF;font-size:16px;line-height:1.6;">
+              {% for rec in recommendations %}
+              <li style="margin-bottom:12px;color:#E0E7FF;font-size:16px;list-style-type:none;padding-left:0;background:none;">
+                {{ rec }}
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p style="color:#94A3B8;font-style:italic;">No recommendations available.</p>
+          {% endif %}
+        </td>
+      </tr>
+
+      <!-- REFERENCES SECTION - White text, Spaced box -->
+      <tr>
+        <td style="padding:30px 30px 20px 30px;background:linear-gradient(135deg,#0B1F33,#1F3A5F);margin-bottom:20px;">
+          <h3 style="margin:0 0 25px 0;color:#FFFFFF;font-size:24px;font-weight:800;letter-spacing:-0.02em;">References</h3>
+          {% if references %}
+            <ul style="margin:0;padding-left:20px;color:#E0E7FF;font-size:15px;line-height:1.6;">
+              {% for ref in references %}
+              <li style="margin-bottom:12px;color:#E0E7FF;font-size:15px;list-style-type:none;padding-left:0;background:none;">
+                <a href="{{ ref }}" style="color:#93C5FD;text-decoration:none;font-weight:600;" target="_blank">{{ ref }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          <div style="height:4px;background:linear-gradient(90deg,#FFD700,#F59E0B);border-radius:2px;margin:30px 0;"></div>
+        </td>
+      </tr>
+
+      <!-- PATCH DETAILS SECTION - White text, Final spaced box -->
+      <tr>
+        <td style="padding:30px 30px 20px 30px;background:linear-gradient(135deg,#0B1F33,#1F3A5F);">
+          <h3 style="margin:0 0 25px 0;color:#FFFFFF;font-size:24px;font-weight:800;letter-spacing:-0.02em;">Patch Details</h3>
+          {% if patch_details %}
+            <ul style="margin:0;padding-left:20px;color:#E0E7FF;font-size:16px;line-height:1.6;">
+              {% for patch in patch_details %}
+              <li style="margin-bottom:12px;color:#E0E7FF;font-size:16px;list-style-type:none;padding-left:0;background:none;">
+                {{ patch }}
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p style="color:#94A3B8;font-style:italic;">No patch information available.</p>
+          {% endif %}
+        </td>
+      </tr>
+
+      <!-- FOOTER -->
+      <tr>
+        <td style="padding:25px;text-align:center;font-size:13px;color:#64748B;border-top:1px solid #E2E8F0;background:rgba(248,250,252,0.5);">
+          <strong>© Forensic Cyber Tech</strong> – Threat Advisory Report<br>
+          <span style="font-size:12px;">{{ advisory_id or 'FCT-2025-00' }}</span>
+        </td>
+      </tr>
+
+      </table>
+    </td>
+ </tr>
+</table>
+
+</body>
+</html>

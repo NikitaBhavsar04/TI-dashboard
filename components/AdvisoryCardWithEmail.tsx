@@ -71,6 +71,9 @@ export default function AdvisoryCardWithEmail({ advisory, onEmailClick }: Adviso
     }
   };
 
+  // Use createdAt for display (when advisory was added to database)
+  const displayDate = (advisory as any).createdAt || advisory.publishedDate;
+
   return (
     <div className="relative">
       <Link href={`/advisory/${advisory._id}`} className="block group">
@@ -105,7 +108,7 @@ export default function AdvisoryCardWithEmail({ advisory, onEmailClick }: Adviso
           {/* Content */}
           <div className="mb-4">
             <p className="font-rajdhani text-slate-300 text-sm line-clamp-3 leading-relaxed">
-              {advisory.summary || advisory.description}
+              {advisory.executiveSummary || advisory.summary || advisory.description}
             </p>
           </div>
 
@@ -113,13 +116,110 @@ export default function AdvisoryCardWithEmail({ advisory, onEmailClick }: Adviso
           <div className="flex items-center justify-between text-xs font-rajdhani text-slate-400 mb-4">
             <div className="flex items-center space-x-1">
               <Calendar className="w-3 h-3" />
-              <span>{formatDate(advisory.publishedDate)}</span>
+              <span>{formatDate(displayDate)}</span>
             </div>
             
             <div className="flex items-center space-x-1">
               <span>By {advisory.author}</span>
             </div>
           </div>
+
+          {/* Affected Products */}
+          {advisory.affectedProducts && advisory.affectedProducts.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center space-x-2 mb-2">
+                <Server className="w-3 h-3 text-red-400" />
+                <span className="text-xs font-rajdhani font-semibold text-slate-400 uppercase tracking-wider">
+                  Affected Products
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {advisory.affectedProducts.slice(0, 2).map((product, index) => (
+                  <div key={index} className="px-2 py-1 rounded-md bg-red-500/10 border border-red-400/30 text-xs font-rajdhani text-red-300">
+                    {product}
+                  </div>
+                ))}
+                {advisory.affectedProducts.length > 2 && (
+                  <div className="px-2 py-1 rounded-md bg-red-500/10 border border-red-400/30 text-xs font-rajdhani text-red-400">
+                    +{advisory.affectedProducts.length - 2} more
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Target Sectors & Regions */}
+          {(advisory.targetSectors?.length || advisory.regions?.length) && (
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              {advisory.targetSectors && advisory.targetSectors.length > 0 && (
+                <div>
+                  <div className="flex items-center space-x-1 mb-1">
+                    <Globe className="w-3 h-3 text-blue-400" />
+                    <span className="text-xs font-rajdhani font-medium text-slate-400">Sectors</span>
+                  </div>
+                  <div className="text-xs font-rajdhani text-slate-300 line-clamp-1">
+                    {advisory.targetSectors.slice(0, 2).join(', ')}
+                    {advisory.targetSectors.length > 2 && ` +${advisory.targetSectors.length - 2}`}
+                  </div>
+                </div>
+              )}
+              {advisory.regions && advisory.regions.length > 0 && (
+                <div>
+                  <div className="flex items-center space-x-1 mb-1">
+                    <Globe className="w-3 h-3 text-cyan-400" />
+                    <span className="text-xs font-rajdhani font-medium text-slate-400">Regions</span>
+                  </div>
+                  <div className="text-xs font-rajdhani text-slate-300 line-clamp-1">
+                    {advisory.regions.slice(0, 2).join(', ')}
+                    {advisory.regions.length > 2 && ` +${advisory.regions.length - 2}`}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* CVEs */}
+          {advisory.cveIds && advisory.cveIds.length > 0 && (
+            <div className="mb-3">
+              <div className="flex flex-wrap gap-1">
+                {advisory.cveIds.slice(0, 3).map((cve, index) => (
+                  <div key={index} className="flex items-center space-x-1 px-2 py-1 rounded-md bg-orange-500/10 border border-orange-400/30">
+                    <Hash className="w-3 h-3 text-orange-400" />
+                    <span className="text-xs font-jetbrains text-orange-300">{cve}</span>
+                  </div>
+                ))}
+                {advisory.cveIds.length > 3 && (
+                  <div className="flex items-center space-x-1 px-2 py-1 rounded-md bg-orange-500/10 border border-orange-400/30">
+                    <span className="text-xs font-jetbrains text-orange-400">+{advisory.cveIds.length - 3}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* MITRE ATT&CK Tactics */}
+          {advisory.mitreTactics && advisory.mitreTactics.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center space-x-2 mb-2">
+                <Shield className="w-3 h-3 text-purple-400" />
+                <span className="text-xs font-rajdhani font-semibold text-slate-400 uppercase tracking-wider">
+                  MITRE ATT&CK ({advisory.mitreTactics.length})
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {advisory.mitreTactics.slice(0, 2).map((tactic, index) => (
+                  <div key={index} className="px-2 py-1 rounded-md bg-purple-500/10 border border-purple-400/30 text-xs font-rajdhani text-purple-300">
+                    {tactic.techniqueId || tactic.tacticName}
+                  </div>
+                ))}
+                {advisory.mitreTactics.length > 2 && (
+                  <div className="px-2 py-1 rounded-md bg-purple-500/10 border border-purple-400/30 text-xs font-rajdhani text-purple-400">
+                    +{advisory.mitreTactics.length - 2} more
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* IOCs Preview */}
           {advisory.iocs && advisory.iocs.length > 0 && (

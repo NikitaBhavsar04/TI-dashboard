@@ -20,14 +20,24 @@ export interface IAdvisory extends Document {
   references: string[];
   cvss?: number;
   cveIds: string[];
-  // New fields
-  affectedProducts?: string[];
-  targetSectors?: string[];
-  regions?: string[];
-  tlp?: string;
-  recommendations?: string[];
-  patchDetails?: string[];
-  mitreTactics?: any[];
+  // Fields from HTML template
+  advisoryId?: string;          // advisory_id
+  affectedProducts?: string[];  // affected_product (array form)
+  affectedProduct?: string;     // affected_product (single string from HTML)
+  targetSectors?: string[];     // sectors
+  regions?: string[];           // regions
+  tlp?: string;                 // TLP classification
+  recommendations?: string[];   // recommendations
+  patchDetails?: string[];      // patch_details
+  mitreTactics?: any[];        // MITRE ATT&CK tactics
+  htmlFileName?: string;        // HTML file reference
+  threatType?: string;          // threat_type
+  criticality?: string;         // criticality (same as severity)
+  vendor?: string;              // vendor
+  fullTitle?: string;           // full_title from RSS
+  // Mongoose timestamps
+  createdAt?: Date;             // When advisory was created in database
+  updatedAt?: Date;             // When advisory was last updated
 }
 
 const IOCSchema = new Schema({
@@ -82,14 +92,21 @@ const AdvisorySchema = new Schema({
   references: [String],
   cvss: Number,
   cveIds: [String],
-  // New fields
-  affectedProducts: [String],
-  targetSectors: [String],
-  regions: [String],
-  tlp: String,
-  recommendations: [String],
-  patchDetails: [String],
-  mitreTactics: [Schema.Types.Mixed]
+  // Fields from HTML template
+  advisoryId: String,           // advisory_id
+  affectedProducts: [String],   // affected_product (array)
+  affectedProduct: String,      // affected_product (single string)
+  targetSectors: [String],      // sectors
+  regions: [String],            // regions
+  tlp: String,                  // TLP classification
+  recommendations: [String],    // recommendations
+  patchDetails: [String],       // patch_details
+  mitreTactics: [Schema.Types.Mixed], // MITRE tactics
+  htmlFileName: String,         // HTML file reference
+  threatType: String,           // threat_type
+  criticality: String,          // criticality
+  vendor: String,               // vendor
+  fullTitle: String             // full_title from RSS
 }, {
   timestamps: true
 });
