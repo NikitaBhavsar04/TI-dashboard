@@ -22,7 +22,6 @@ Invalid login: 535-5.7.8 Username and Password not accepted
    - Select app: "Mail"
    - Select device: "Other (custom name)"
    - Enter name: "Threat Advisory System"
-   - Click "Generate"
 
 3. **Copy the Generated Password**:
    - Google will show a 16-character password like: `abcd efgh ijkl mnop`
