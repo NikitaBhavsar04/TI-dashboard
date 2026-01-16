@@ -3,9 +3,6 @@ import { getUserFromRequest } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import ScheduledEmail from '@/models/ScheduledEmail';
 import Advisory from '@/models/Advisory';
-import nodemailer from 'nodemailer';
-import crypto from 'crypto';
-import { generateAdvisory4EmailTemplate } from '@/lib/advisory4TemplateGenerator';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -15,7 +12,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { id } = req.query;
 
   try {
-    // Verify admin authentication
+    await dbConnect();
+    
     const tokenPayload = getUserFromRequest(req);
     
     if (!tokenPayload) {
@@ -23,31 +21,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (tokenPayload.role !== 'admin') {
-      // Generate email HTML content using the template generator (renders all placeholders)
-      const emailHtml = generateAdvisory4EmailTemplate(advisory, scheduledEmail.customMessage || '');
-              </div>
-              
-              ${advisory.iocs && advisory.iocs.length > 0 ? `
-                <div class="iocs">
-                  <h3>🎯 Indicators of Compromise (IOCs)</h3>
-                  ${advisory.iocs.map((ioc: any) => `
-                    <p><strong>${ioc.type}:</strong> <code>${ioc.value}</code>
-                    ${ioc.description ? `<br><em>${ioc.description}</em>` : ''}</p>
-                  `).join('')}
-                </div>
-              ` : ''}
-              
-              ${advisory.cveIds && advisory.cveIds.length > 0 ? `
-                <div class="meta-info">
-                  <h3>🔗 Related CVEs</h3>
-                  <p>${advisory.cveIds.join(', ')}</p>
-                </div>
-              ` : ''}
-              
-              ${advisory.references && advisory.references.length > 0 ? `
-                <div class="description">
-                  <h3>📚 References</h3>
-                  <ul>
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    const scheduledEmail = await ScheduledEmail.findById(id);
+    if (!scheduledEmail) {
+      return res.status(404).json({ message: 'Scheduled email not found' });
+    }
+
+    const advisory = await Advisory.findById(scheduledEmail.advisoryId);
+    if (!advisory) {
+      return res.status(404).json({ message: 'Advisory not found' });
+    }
+
+    // Update scheduled email status
+    scheduledEmail.status = 'sent';
+    scheduledEmail.sentAt = new Date();
+    await scheduledEmail.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Email sent successfully',
+      emailId: scheduledEmail._id
+    });
+
+  } catch (error) {
+    console.error('Error sending scheduled email:', error);
+    return res.status(500).json({ 
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? String(error) : undefined 
+    });
+  }
+}
                     ${advisory.references.map((ref: string) => `<li><a href="${ref}" target="_blank">${ref}</a></li>`).join('')}
                   </ul>
                 </div>
