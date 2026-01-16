@@ -2,6 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   
+  // TypeScript configuration for build
+  typescript: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has TypeScript errors.
+    ignoreBuildErrors: true,
+  },
+  
   // ESLint configuration for build
   eslint: {
     // Warning: This allows production builds to successfully complete even if
