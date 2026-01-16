@@ -5,6 +5,7 @@ import ScheduledEmail from '@/models/ScheduledEmail';
 import Advisory from '@/models/Advisory';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { generateAdvisory4EmailTemplate } from '@/lib/advisory4TemplateGenerator';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -15,7 +16,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // Verify admin authentication
-  import { generateAdvisory4EmailTemplate } from '@/lib/advisory4TemplateGenerator';
     const tokenPayload = getUserFromRequest(req);
     
     if (!tokenPayload) {

@@ -49,11 +49,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isCurrentPasswordValid = await user.comparePassword(currentPassword);
     if (!isCurrentPasswordValid) {
       await logActivity(
-        decoded.userId,
-        'PASSWORD_CHANGE_FAILED',
-        'Failed password change attempt - incorrect current password',
-        req.headers['user-agent'],
-        req.connection.remoteAddress
+        decoded,
+        {
+          action: 'PASSWORD_CHANGE_FAILED',
+          resource: 'user',
+          resourceId: decoded.userId,
+          details: 'Failed password change attempt - incorrect current password'
+        },
+        req
       );
       return res.status(400).json({ error: 'Current password is incorrect' });
     }
@@ -65,11 +68,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Log successful password change
     await logActivity(
-      decoded.userId,
-      'PASSWORD_CHANGED',
-      'User successfully changed their password',
-      req.headers['user-agent'],
-      req.connection.remoteAddress
+      decoded,
+      {
+        action: 'PASSWORD_CHANGED',
+        resource: 'user',
+        resourceId: decoded.userId,
+        details: 'User successfully changed their password'
+      },
+      req
     );
 
     return res.status(200).json({

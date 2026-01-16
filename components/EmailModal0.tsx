@@ -442,9 +442,6 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
     outerDiv: 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50',
     innerDiv: 'bg-slate-900/95 border border-neon-blue/30 rounded-xl'
   });
-  
-  // Force a visual indicator
-  window.ADVANCED_EMAIL_MODAL_ACTIVE = true;
 
   return (
     <div 

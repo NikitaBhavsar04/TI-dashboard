@@ -88,13 +88,6 @@ function Navbar() {
 
             {isAuthenticated && isAdmin && (
               <>
-                <div className="flex items-center gap-3 p-3 bg-green-900/50 border border-green-500/50 rounded-lg">
-                  <Clock className="h-5 w-5 text-green-400" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-green-400">LIVE</span>
-                    <span className="text-xs text-white">{formatTime(currentTime)}</span>
-                  </div>
-                </div>
                 <Link href="/admin" className="flex items-center gap-3 p-3 text-white" onClick={() => setIsMenuOpen(false)}>
                   <Settings className="h-5 w-5 text-purple-400" />
                   <span>ADMIN PANEL</span>

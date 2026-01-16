@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       // Extract JSON from stdout (may have log messages before it)
-      const jsonMatch = stdout.match(/\{.*"generated".*\}/s)
+      const jsonMatch = stdout.match(/\{[\s\S]*"generated"[\s\S]*\}/)
       const jsonStr = jsonMatch ? jsonMatch[0] : stdout
       
       console.log('[auto-feed] Extracted JSON:', jsonStr.substring(0, 200))

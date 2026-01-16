@@ -8,13 +8,13 @@ interface EmailModalProps {
   advisory: {
     _id: string;
     title: string;
-    severity: string;
-    description: string;
-    author: string;
+    severity?: string;
+    description?: string;
+    author?: string;
     publishedDate: string;
     threat_type?: string[];
     affected_systems?: string[];
-    recommendations?: string;
+    recommendations?: string | string[];
   };
 }
 
@@ -619,17 +619,14 @@ alice@domain.net`}
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={trackingOptions.enableTracking}
-                      onChange={(e) => setTrackingOptions(prev => ({
-                        ...prev,
-                        enableTracking: e.target.checked
-                      }))}
+                      checked={enableTracking}
+                      onChange={(e) => setEnableTracking(e.target.checked)}
                       className="w-4 h-4 text-purple-400 bg-slate-800 border-slate-600 rounded focus:ring-purple-400"
                     />
                     <span className="text-slate-300 font-rajdhani">Enable Email Tracking</span>
                   </label>
 
-                  {trackingOptions.enableTracking && (
+                  {enableTracking && (
                     <div className="ml-7 space-y-2">
                       <label className="flex items-center space-x-3 cursor-pointer">
                         <input
@@ -686,7 +683,7 @@ alice@domain.net`}
                   )}
                 </div>
 
-                {trackingOptions.enableTracking && (
+                {enableTracking && (
                   <div className="mt-3 text-xs text-slate-400 font-rajdhani">
                     <TrendingUp className="h-4 w-4 inline mr-1" />
                     Analytics will be available in the admin dashboard after sending.
