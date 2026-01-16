@@ -33,7 +33,7 @@ export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
     severity: advisory.severity || 'Medium',
     category: advisory.category || '',
     author: advisory.author || '',
-    cvss: advisory.cvss || '',
+    cvss: advisory.cvss?.toString() || '',
     tlp: advisory.tlp || '',
     affectedProduct: advisory.affectedProducts?.join(', ') || '',
     tags: advisory.tags || [],
@@ -43,6 +43,7 @@ export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
     recommendations: advisory.recommendations || [],
     patchDetails: advisory.patchDetails || [],
     mitreTactics: advisory.mitreTactics || [],
+    mbc: advisory.mbc || [],
     iocs: advisory.iocs || [],
     references: advisory.references || []
   });
@@ -56,7 +57,8 @@ export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
   const [newPatchDetail, setNewPatchDetail] = useState('');
   const [newReference, setNewReference] = useState('');
   const [newIoc, setNewIoc] = useState({ type: 'IP', value: '', description: '' });
-  const [newTactic, setNewTactic] = useState({ id: '', name: '', technique: '' });
+  const [newTactic, setNewTactic] = useState({ tactic: '', techniqueId: '', technique: '' });
+  const [newMbc, setNewMbc] = useState({ behavior: '', objective: '', confidence: '', evidence: '' });
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
@@ -67,7 +69,8 @@ export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
 
   const addArrayItem = (field: string, item: any, setState: any) => {
     if (field === 'iocs' && (!item.type || !item.value)) return;
-    if (field === 'mitreTactics' && (!item.id || !item.name)) return;
+    if (field === 'mitreTactics' && (!item.tactic || !item.technique)) return;
+    if (field === 'mbc' && (!item.behavior || !item.objective)) return;
     if (typeof item === 'string' && !item.trim()) return;
 
     setFormData(prev => ({
@@ -75,7 +78,8 @@ export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
       [field]: [...prev[field], item]
     }));
     setState(field === 'iocs' ? { type: 'IP', value: '', description: '' } : 
-              field === 'mitreTactics' ? { id: '', name: '', technique: '' } : '');
+              field === 'mitreTactics' ? { tactic: '', techniqueId: '', technique: '' } :
+              field === 'mbc' ? { behavior: '', objective: '', confidence: '', evidence: '' } : '');
   };
 
   const removeArrayItem = (field: string, index: number) => {
@@ -90,12 +94,18 @@ export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
     setLoading(true);
 
     try {
+      // Prepare data with proper type conversions
+      const submitData = {
+        ...formData,
+        cvss: formData.cvss ? parseFloat(formData.cvss) : undefined
+      };
+
       const response = await fetch(`/api/advisories/${advisory._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(submitData)
       });
 
       if (response.ok) {
@@ -235,7 +245,10 @@ export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
                           CVSS SCORE
                         </label>
                         <input
-                          type="text"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="10"
                           value={formData.cvss}
                           onChange={(e) => handleInputChange('cvss', e.target.value)}
                           placeholder="e.g., 9.8"
@@ -395,6 +408,143 @@ export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
                   </TerminalWindow>
                 </CyberCard>
               </div>
+
+              {/* MITRE ATT&CK Tactics */}
+              <CyberCard variant="holographic" className="p-8">
+                <TerminalWindow title="MITRE ATT&CK FRAMEWORK">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <input
+                        type="text"
+                        value={newTactic.tactic}
+                        onChange={(e) => setNewTactic({...newTactic, tactic: e.target.value})}
+                        placeholder="Tactic (e.g., Initial Access)"
+                        className="bg-cyber-dark/50 border border-cyber-blue/30 rounded px-3 py-2 text-cyber-green font-mono focus:border-cyber-blue focus:outline-none"
+                      />
+                      <input
+                        type="text"
+                        value={newTactic.techniqueId}
+                        onChange={(e) => setNewTactic({...newTactic, techniqueId: e.target.value})}
+                        placeholder="Technique ID (e.g., T1190)"
+                        className="bg-cyber-dark/50 border border-cyber-blue/30 rounded px-3 py-2 text-cyber-green font-mono focus:border-cyber-blue focus:outline-none"
+                      />
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={newTactic.technique}
+                          onChange={(e) => setNewTactic({...newTactic, technique: e.target.value})}
+                          placeholder="Technique name"
+                          className="flex-1 bg-cyber-dark/50 border border-cyber-blue/30 rounded px-3 py-2 text-cyber-green font-mono focus:border-cyber-blue focus:outline-none"
+                        />
+                        <CyberButton
+                          type="button"
+                          variant="ghost"
+                          glowColor="purple"
+                          onClick={() => addArrayItem('mitreTactics', newTactic, setNewTactic)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </CyberButton>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {formData.mitreTactics.map((tactic: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between bg-cyber-dark/30 border border-purple-500/20 rounded px-4 py-3">
+                          <div className="flex-1 grid grid-cols-3 gap-4">
+                            <span className="text-purple-400 font-mono text-sm">{tactic.tactic}</span>
+                            <span className="text-cyber-blue font-mono text-sm">{tactic.techniqueId}</span>
+                            <span className="text-cyber-green font-mono text-sm">{tactic.technique}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeArrayItem('mitreTactics', index)}
+                            className="ml-4 text-cyber-red hover:text-cyber-red/70"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TerminalWindow>
+              </CyberCard>
+
+              {/* Malware Behavior Catalog (MBC) */}
+              <CyberCard variant="holographic" className="p-8">
+                <TerminalWindow title="MALWARE BEHAVIOR CATALOG (MBC)">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        value={newMbc.behavior}
+                        onChange={(e) => setNewMbc({...newMbc, behavior: e.target.value})}
+                        placeholder="Behavior (e.g., Command Execution)"
+                        className="bg-cyber-dark/50 border border-cyber-blue/30 rounded px-3 py-2 text-cyber-green font-mono focus:border-cyber-blue focus:outline-none"
+                      />
+                      <input
+                        type="text"
+                        value={newMbc.objective}
+                        onChange={(e) => setNewMbc({...newMbc, objective: e.target.value})}
+                        placeholder="Objective"
+                        className="bg-cyber-dark/50 border border-cyber-blue/30 rounded px-3 py-2 text-cyber-green font-mono focus:border-cyber-blue focus:outline-none"
+                      />
+                      <select
+                        value={newMbc.confidence}
+                        onChange={(e) => setNewMbc({...newMbc, confidence: e.target.value})}
+                        className="bg-cyber-dark/50 border border-cyber-blue/30 rounded px-3 py-2 text-cyber-green font-mono focus:border-cyber-blue focus:outline-none"
+                      >
+                        <option value="">Select Confidence</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                      </select>
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={newMbc.evidence}
+                          onChange={(e) => setNewMbc({...newMbc, evidence: e.target.value})}
+                          placeholder="Evidence/Description"
+                          className="flex-1 bg-cyber-dark/50 border border-cyber-blue/30 rounded px-3 py-2 text-cyber-green font-mono focus:border-cyber-blue focus:outline-none"
+                        />
+                        <CyberButton
+                          type="button"
+                          variant="ghost"
+                          glowColor="orange"
+                          onClick={() => addArrayItem('mbc', newMbc, setNewMbc)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </CyberButton>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {formData.mbc.map((item: any, index: number) => (
+                        <div key={index} className="bg-cyber-dark/30 border border-warning-orange/20 rounded px-4 py-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-center space-x-4">
+                                <span className="text-warning-orange font-mono text-sm font-bold">{item.behavior}</span>
+                                <span className="text-cyber-blue text-xs px-2 py-1 bg-cyber-blue/10 rounded">{item.confidence}</span>
+                              </div>
+                              <p className="text-cyber-green font-mono text-xs">{item.objective}</p>
+                              {item.evidence && (
+                                <p className="text-gray-400 text-xs mt-1">{item.evidence}</p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeArrayItem('mbc', index)}
+                              className="ml-4 text-cyber-red hover:text-cyber-red/70"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TerminalWindow>
+              </CyberCard>
 
               {/* Submit Button */}
               <div className="flex justify-end space-x-4">

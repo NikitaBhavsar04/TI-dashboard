@@ -41,12 +41,6 @@ export default function Home() {
       color: "neon-blue"
     },
     {
-      icon: <Activity className="h-8 w-8" />,
-      title: "Live Security Monitoring",
-      description: "24/7 continuous monitoring with instant alerts and comprehensive threat classification.",
-      color: "neon-purple"
-    },
-    {
       icon: <Database className="h-8 w-8" />,
       title: "IOC Intelligence Hub",
       description: "Comprehensive indicators of compromise database with automated correlation and analysis.",

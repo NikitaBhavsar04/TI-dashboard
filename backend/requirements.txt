@@ -6,10 +6,11 @@ beautifulsoup4==4.12.3
 jinja2==3.1.4
 markdown==3.6
 weasyprint==62.3
-pydantic==1.10.13
+pydantic==2.8.2
 python-dateutil==2.9.0.post0
 PyYAML==6.0.2
 tqdm==4.66.5
-openai==0.28.0
-fastapi==0.95.2
-uvicorn[standard]==0.22.0
+openai
+googlesearch-python
+readability-lxml
+opensearch-py

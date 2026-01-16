@@ -1,163 +1,285 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# -- coding: utf-8 --
+
 """
-Lightweight runner for integration: generates advisories, saves HTML,
-and emits a JSON summary to stdout for consumption by external callers.
+SOC Advisory API Runner (FINAL)
+--------------------------------
+• Frontend-triggered
+• JSON-first (HTML is just a view)
+• CVSS-authoritative severity
+• MITRE + MBC + Recommendations
+• SOC-compliant & production-safe
 """
+
 import os
 import sys
 import json
-from datetime import datetime
+import datetime
+from typing import Dict, List, Set
 
-# Force UTF-8 encoding for stdout on Windows to handle Unicode characters
-if sys.platform == 'win32':
+# ------------------------------------------------------------
+# WINDOWS UTF-8 SAFETY
+# ------------------------------------------------------------
+if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-# Load environment variables from .env file
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # python-dotenv not installed, will use system env vars
+# ------------------------------------------------------------
+# INTERNAL IMPORTS
+# ------------------------------------------------------------
+from utils.common import logger, read_yaml, ensure_dir, sanitize_filename
 
-from utils.common import ensure_dir, read_yaml, sanitize_filename, logger
+from collectors.feeds import fetch_rss
+from collectors.page import fetch_page_text
+from collectors.mitre import map_to_tactics
 
-try:
-    from collectors.feeds import fetch_rss
-    from collectors.cache import load_seen_items, save_seen_items
-    from collectors.page import fetch_page_text
-    from collectors.mitre import map_to_tactics
-    from llm.summarize import summarize_item
-    from renderer.render import render_html
-except Exception as e:
-    # Safely encode error message to avoid Unicode issues
-    error_msg = str(e).encode('ascii', errors='replace').decode('ascii')
-    print(json.dumps({"error": f"Missing dependency or import error: {error_msg}"}, ensure_ascii=True))
-    sys.exit(1)
+from llm.opensummarize import summarize_item
+from llm.mbc import extract_mbc
 
+from enrichment.cvss import fetch_cvss
+from enrichment.recommender import get_recommendations
 
-def run(max_advisories: int = 3):
+from renderer.render import render_html
+
+# ------------------------------------------------------------
+# CONSTANTS
+# ------------------------------------------------------------
+SEEN_FILE = "seen_ids.json"
+
+# ------------------------------------------------------------
+# DEDUP HELPERS
+# ------------------------------------------------------------
+def load_seen_ids(path: str) -> Set[str]:
+    if not os.path.exists(path):
+        return set()
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return set(json.load(f))
+    except Exception:
+        return set()
+
+def save_seen_ids(path: str, seen: Set[str]) -> None:
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(sorted(seen), f, indent=2)
+    os.replace(tmp, path)
+
+# ------------------------------------------------------------
+# ADVISORY ID
+# ------------------------------------------------------------
+def generate_advisory_id(prefix: str, idx: int) -> str:
+    ts = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M")
+    return f"{prefix}-{ts}-{idx:02d}"
+
+# ------------------------------------------------------------
+# MAIN RUNNER
+# ------------------------------------------------------------
+def run(max_advisories: int = 3) -> None:
     cfg = read_yaml("config.yaml")
+
     workspace = cfg.get("workspace", "./workspace")
     ensure_dir(workspace)
 
-    seen = load_seen_items(workspace)
+    report_cfg = cfg.get("report", {})
+    advisory_prefix = report_cfg.get("advisory_id_prefix", "SOC-TA")
+    tlp_default = report_cfg.get("tlp", "AMBER")
+
+    seen_path = os.path.join(workspace, SEEN_FILE)
+    seen_ids = load_seen_ids(seen_path)
+
     rss_urls = cfg.get("sources", {}).get("rss", [])
     if not rss_urls:
-        print(json.dumps({"error": "no_rss_sources"}, ensure_ascii=True))
+        print(json.dumps({"error": "no_rss_sources"}))
         sys.exit(1)
 
-    items = fetch_rss(rss_urls, seen, per_feed=12)
+    # --------------------------------------------------------
+    # FETCH ARTICLES
+    # --------------------------------------------------------
+    items = fetch_rss(
+        urls=rss_urls,
+        seen_ids=seen_ids,
+        per_feed=10,
+        days_back=14,
+    )
+
     if not items:
-        print(json.dumps({"error": "no_new_items"}, ensure_ascii=True))
+        print(json.dumps({"generated": []}))
         sys.exit(0)
 
-    items = items[:max_advisories]
-    results = []
+    results: List[Dict] = []
+    processed_this_run = set()
+    idx = 0
 
-    for idx, item in enumerate(items, 1):
-        title = item.get('title', 'Unknown')
-        logger.info(f"[{idx}/{len(items)}] Processing: {title[:80]}")
-        
-        # Fetch page text
-        source_text = ""
-        if item.get('link'):
-            try:
-                source_text = fetch_page_text(item['link'], max_chars=20000)
-            except Exception as e:
-                logger.warning(f"[PAGE] Failed to fetch {item['link']}: {e}")
-                source_text = ""
+    # --------------------------------------------------------
+    # PROCESS ITEMS
+    # --------------------------------------------------------
+    for item in items:
+        if len(results) >= max_advisories:
+            break
 
-        if not source_text or len(source_text) < 500:
-            logger.warning(f"[SKIP] Content too short for: {title}")
+        item_id = item.get("id")
+        if not item_id or item_id in seen_ids or item_id in processed_this_run:
             continue
 
-        # Use summarize_item for LLM analysis
+        idx += 1
+
+        # ----------------------------------------------------
+        # FETCH ARTICLE CONTENT
+        # ----------------------------------------------------
         try:
-            context = summarize_item(item, source_text)
-        except Exception as e:
-            logger.error(f"[LLM] Failed to analyze: {e}")
+            text = fetch_page_text(item["link"], max_chars=25000)
+            if not text or len(text) < 500:
+                continue
+        except Exception:
             continue
 
-        # MITRE ATT&CK mapping
+        # ----------------------------------------------------
+        # LLM ANALYSIS
+        # ----------------------------------------------------
+        try:
+            advisory = summarize_item(item, text)
+        except Exception:
+            continue
+
+        # ----------------------------------------------------
+        # MITRE ATT&CK
+        # ----------------------------------------------------
         mitre = map_to_tactics(
-            context.get("attack_keywords", []),
-            " ".join([
-                context.get("title", ""),
-                context.get("exec_summary", ""),
-                item.get("summary", ""),
-            ])
+            advisory.get("attack_keywords", []),
+            f"{advisory.get('title','')} {advisory.get('exec_summary','')}",
         )
 
-        advisory_id = f"SOC-TA-{datetime.utcnow().strftime('%Y%m%d-%H%M')}-{idx:02d}"
-        filename = f"{advisory_id}_{sanitize_filename(context['title'][:60])}.html"
-        html_path = os.path.join(workspace, filename)
+        # ----------------------------------------------------
+        # MBC (KEYWORD-ONLY CALL)
+        # ----------------------------------------------------
+        mbc = extract_mbc(
+            title=advisory.get("title", ""),
+            threat_type=advisory.get("threat_type", ""),
+            exec_summary=advisory.get("exec_summary", ""),
+            mitre=mitre,
+        )
 
-        # Prepare exec_summary_parts for template
+        # ----------------------------------------------------
+        # CVSS (AUTHORITATIVE)
+        # ----------------------------------------------------
+        cvss_data = {}
+        highest_cvss = None
+
+        for cve in advisory.get("cves", []):
+            cvss = fetch_cvss(cve)
+            if not cvss:
+                continue
+            cvss_data[cve] = cvss
+            if highest_cvss is None or cvss["score"] > highest_cvss["score"]:
+                highest_cvss = cvss
+
+        # ----------------------------------------------------
+        # FINAL CRITICALITY (SOC RULE)
+        # ----------------------------------------------------
+        if highest_cvss:
+            final_criticality = highest_cvss["criticality"]
+        else:
+            final_criticality = advisory.get("criticality", "MEDIUM")
+            if final_criticality in ("HIGH", "CRITICAL"):
+                final_criticality = "MEDIUM"
+
+        # ----------------------------------------------------
+        # RECOMMENDATIONS
+        # ----------------------------------------------------
+        try:
+            rec = get_recommendations(advisory.get("exec_summary", ""))
+            if rec:
+                advisory["recommendations"] = rec.get("recommendations", [])
+                advisory["patch_details"] = rec.get("patch_details")
+        except Exception:
+            pass
+
+        # ----------------------------------------------------
+        # FINAL CONTEXT (SOURCE OF TRUTH)
+        # ----------------------------------------------------
+        advisory_id = generate_advisory_id(advisory_prefix, idx)
+
+        exec_summary = advisory.get("exec_summary", "").strip()
+
         exec_summary_parts = [
             p.strip()
-            for p in context.get("exec_summary", "").split("\n\n")
+            for p in exec_summary.split("\n\n")
             if p.strip()
         ]
 
-        final_context = {
+        context = {
+            # Identity
             "advisory_id": advisory_id,
-            "title": context.get("title"),
-            "full_title": title,
-            "affected_product": context.get("affected_product"),
-            "criticality": context.get("criticality"),
-            "threat_type": context.get("threat_type"),
-            "exec_summary": context.get("exec_summary"),
-            "exec_summary_parts": exec_summary_parts,
-            "tlp": context.get("tlp"),
-            "sectors": context.get("sectors"),
-            "regions": context.get("regions"),
-            "cves": context.get("cves"),
-            "recommendations": context.get("recommendations"),
-            "patch_details": context.get("patch_details"),
-            "references": [item.get('link')] if item.get('link') else [],
+            "title": advisory.get("title"),
+            "full_title": item.get("title"),
+            "published": item.get("published"),
+
+            # Classification
+            "criticality": final_criticality,
+            "threat_type": advisory.get("threat_type"),
+            "tlp": advisory.get("tlp", tlp_default),
+
+            # Executive Summary (🔥 THIS IS THE FIX)
+            "exec_summary": exec_summary,                 # raw text (API, DB)
+            "exec_summary_parts": exec_summary_parts,     # UI / HTML
+
+            # Business impact
+            "affected_product": advisory.get("affected_product"),
+            "vendor": advisory.get("vendor"),
+            "sectors": advisory.get("sectors", ["General"]),
+            "regions": advisory.get("regions", ["Global"]),
+
+            # Intelligence
+            "cves": advisory.get("cves", []),
+            "cvss": cvss_data,
             "mitre": mitre,
-            "published": item.get('published', ''),
-            "vendor": context.get('vendor'),
+            "mbc": mbc,
+
+            # Response
+            "recommendations": advisory.get("recommendations", []),
+            "patch_details": advisory.get("patch_details"),
+
+            # References
+            "references": [item.get("link")] if item.get("link") else [],
         }
 
-        try:
-            render_html("templates", final_context, html_path)
 
-            # Return ALL fields for database insertion
+        # ----------------------------------------------------
+        # RENDER HTML
+        # ----------------------------------------------------
+        html_path = os.path.join(
+            workspace,
+            f"{sanitize_filename(advisory_id)}.html",
+        )
+
+        try:
+            render_html("templates", context, html_path)
+
+            # ------------------------------------------------
+            # JSON RESPONSE OBJECT (FRONTEND)
+            # ------------------------------------------------
             results.append({
-                "advisory_id": advisory_id,
-                "title": final_context["title"],
-                "full_title": final_context.get("full_title"),
+                **context,
                 "html_path": os.path.abspath(html_path),
-                "criticality": final_context["criticality"],
-                "threat_type": final_context.get("threat_type"),
-                "affected_product": final_context.get("affected_product"),
-                "exec_summary": final_context.get("exec_summary"),
-                "tlp": final_context.get("tlp"),
-                "sectors": final_context.get("sectors", []),
-                "regions": final_context.get("regions", []),
-                "cves": final_context.get("cves", []),
-                "recommendations": final_context.get("recommendations", []),
-                "patch_details": final_context.get("patch_details", []),
-                "references": final_context.get("references", []),
-                "mitre": mitre,
-                "published": final_context.get("published"),
-                "vendor": final_context.get("vendor"),
             })
-            seen.add(item["id"]) if item.get("id") else None
-        except Exception as e:
-            logger.error(f"[Render] Failed to render {filename}: {e}")
+
+            seen_ids.add(item_id)
+            processed_this_run.add(item_id)
+            save_seen_ids(seen_path, seen_ids)
+
+        except Exception:
             continue
 
-    save_seen_items(workspace, seen)
-
-    # Use ensure_ascii=True to avoid Windows encoding issues
+    # --------------------------------------------------------
+    # FINAL JSON OUTPUT (API CONTRACT)
+    # --------------------------------------------------------
     print(json.dumps({"generated": results}, ensure_ascii=True))
 
 
+# ------------------------------------------------------------
+# ENTRY POINT
+# ------------------------------------------------------------
 if __name__ == "__main__":
     max_items = 3
     if len(sys.argv) > 1:
@@ -165,4 +287,5 @@ if __name__ == "__main__":
             max_items = int(sys.argv[1])
         except Exception:
             pass
+
     run(max_items)

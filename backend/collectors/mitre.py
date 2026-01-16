@@ -1,336 +1,562 @@
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple
 from pathlib import Path
 from utils.common import logger
 
-# Try importing the connector, handle failure gracefully
+# ============================================================
+# TAXII (ENRICHMENT ONLY)
+# ============================================================
+
 try:
     from collectors.taxii_connector import MITRETAXIIConnector
     from collectors.mitre_config import (
-        TAXII_DISCOVERY_URL, 
-        TAXII_API_ROOT, 
-        CACHE_DIR, 
-        COLLECTIONS
+        TAXII_DISCOVERY_URL,
+        TAXII_API_ROOT,
+        CACHE_DIR,
+        COLLECTIONS,
     )
     MITRE_AVAILABLE = True
-except ImportError:
-    logger.warning("MITRE TAXII modules not found. Using static fallback only.")
+except Exception:
+    logger.warning("[MITRE] TAXII unavailable – static logic only")
     MITRE_AVAILABLE = False
     CACHE_DIR = Path("./data/cache")
 
 
-# --------------------------------------------------------------------------
-# 1. STATIC BACKUP DATA (Restored from your original file)
-# Used if the MITRE server is unreachable
-# --------------------------------------------------------------------------
-STATIC_TTP_DETAILS = {
-    # Initial Access
+# ============================================================
+# 1. STATIC ANALYST-CURATED TECHNIQUES (SOURCE OF TRUTH)
+#    Only IDs listed here can ever be returned.
+# ============================================================
+
+STATIC_TTP_DETAILS: Dict[str, Tuple[str, str]] = {
+    # -------------------------
+    # INITIAL ACCESS (TA0001)
+    # -------------------------
     "T1190": ("Initial Access", "Exploit Public-Facing Application"),
-    "T1195": ("Initial Access", "Supply Chain Compromise"),
+    "T1189": ("Initial Access", "Drive-by Compromise"),
+    "T1133": ("Initial Access", "External Remote Services"),
+    "T1078": ("Initial Access", "Valid Accounts"),
+    "T1078.001": ("Initial Access", "Local Accounts"),
+    "T1078.002": ("Initial Access", "Domain Accounts"),
+    "T1078.003": ("Initial Access", "Cloud Accounts"),
     "T1566": ("Initial Access", "Phishing"),
     "T1566.001": ("Initial Access", "Spearphishing Attachment"),
     "T1566.002": ("Initial Access", "Spearphishing Link"),
-    "T1189": ("Initial Access", "Drive-by Compromise"),
-    "T1092": ("Initial Access", "Replication Through Removable Media"),
+    "T1566.003": ("Initial Access", "Spearphishing via Service"),
+    "T1195": ("Initial Access", "Supply Chain Compromise"),
+    "T1195.002": ("Initial Access", "Compromise Software Supply Chain"),
+    "T1195.003": ("Initial Access", "Compromise Hardware Supply Chain"),
 
-    # Execution
+    # -------------------------
+    # EXECUTION (TA0002)
+    # -------------------------
+    "T1204": ("Execution", "User Execution"),
+    "T1204.002": ("Execution", "Malicious File"),
     "T1059": ("Execution", "Command and Scripting Interpreter"),
     "T1059.001": ("Execution", "PowerShell"),
     "T1059.003": ("Execution", "Windows Command Shell"),
     "T1059.004": ("Execution", "Unix Shell"),
-    "T1059.005": ("Execution", "Visual Basic"),
     "T1059.006": ("Execution", "Python"),
+    "T1053": ("Execution", "Scheduled Task/Job"),
+    "T1053.005": ("Execution", "Scheduled Task"),
+    "T1053.003": ("Execution", "Cron"),
+    "T1047": ("Execution", "Windows Management Instrumentation"),
+    "T1055": ("Execution", "Process Injection"),
 
-    # Persistence
+    # -------------------------
+    # PERSISTENCE (TA0003)
+    # -------------------------
     "T1547": ("Persistence", "Boot or Logon Autostart Execution"),
     "T1547.001": ("Persistence", "Registry Run Keys / Startup Folder"),
+    "T1547.004": ("Persistence", "Winlogon Helper DLL"),
+    "T1547.009": ("Persistence", "Shortcut Modification"),
     "T1053": ("Persistence", "Scheduled Task/Job"),
+    "T1053.005": ("Persistence", "Scheduled Task"),
     "T1053.003": ("Persistence", "Cron"),
-    "T1543": ("Persistence", "Create or Modify System Process"),
+    "T1136": ("Persistence", "Create Account"),
+    "T1136.001": ("Persistence", "Local Account"),
+    "T1136.002": ("Persistence", "Domain Account"),
 
-    # Privilege Escalation
+    # -------------------------
+    # PRIVILEGE ESCALATION (TA0004)
+    # -------------------------
     "T1068": ("Privilege Escalation", "Exploitation for Privilege Escalation"),
+    "T1548": ("Privilege Escalation", "Abuse Elevation Control Mechanism"),
     "T1548.002": ("Privilege Escalation", "Bypass User Account Control"),
-    "T1548.003": ("Privilege Escalation", "Sudo and Sudo Caching"),
+    "T1055": ("Privilege Escalation", "Process Injection"),
+    "T1078": ("Privilege Escalation", "Valid Accounts"),
 
-    # Defense Evasion
-    "T1027": ("Defense Evasion", "Obfuscated/Compressed Files"),
-    "T1562": ("Defense Evasion", "Impair Defenses"),
-    "T1562.001": ("Defense Evasion", "Disable or Modify Tools"),
-    "T1562.004": ("Defense Evasion", "Disable Firewall"),
+    # -------------------------
+    # DEFENSE EVASION (TA0005)
+    # -------------------------
+    "T1027": ("Defense Evasion", "Obfuscated/Encrypted Files or Information"),
+    "T1036": ("Defense Evasion", "Masquerading"),
+    "T1036.005": ("Defense Evasion", "Match Legitimate Name or Location"),
     "T1070": ("Defense Evasion", "Indicator Removal on Host"),
     "T1070.001": ("Defense Evasion", "Clear Windows Event Logs"),
-    "T1070.002": ("Defense Evasion", "Clear Linux Logs"),
+    "T1070.004": ("Defense Evasion", "File Deletion"),
+    "T1562": ("Defense Evasion", "Impair Defenses"),
+    "T1562.001": ("Defense Evasion", "Disable or Modify Tools"),
+    "T1562.004": ("Defense Evasion", "Disable or Modify System Firewall"),
 
-    # Credential Access
-    "T1555": ("Credential Access", "Credentials from Password Stores"),
-    "T1555.003": ("Credential Access", "Credentials from Web Browsers"),
+    # -------------------------
+    # CREDENTIAL ACCESS (TA0006)
+    # -------------------------
     "T1003": ("Credential Access", "OS Credential Dumping"),
     "T1003.001": ("Credential Access", "LSASS Memory"),
+    "T1003.002": ("Credential Access", "Security Account Manager"),
     "T1003.003": ("Credential Access", "NTDS"),
-    "T1056": ("Credential Access", "Input Capture"),
+    "T1555": ("Credential Access", "Credentials from Password Stores"),
+    "T1555.003": ("Credential Access", "Credentials from Web Browsers"),
+    "T1110": ("Credential Access", "Brute Force"),
+    "T1110.001": ("Credential Access", "Password Guessing"),
+    "T1110.003": ("Credential Access", "Password Spraying"),
 
-    # Discovery
-    "T1046": ("Discovery", "Network Service Discovery"),
-    "T1087": ("Discovery", "Account Discovery"),
-    "T1057": ("Discovery", "Process Discovery"),
+    # -------------------------
+    # DISCOVERY (TA0007)
+    # -------------------------
     "T1082": ("Discovery", "System Information Discovery"),
+    "T1046": ("Discovery", "Network Service Discovery"),
     "T1018": ("Discovery", "Remote System Discovery"),
+    "T1049": ("Discovery", "System Network Connections Discovery"),
 
-    # Lateral Movement
+    # -------------------------
+    # LATERAL MOVEMENT (TA0008)
+    # -------------------------
     "T1021": ("Lateral Movement", "Remote Services"),
     "T1021.001": ("Lateral Movement", "Remote Desktop Protocol"),
     "T1021.002": ("Lateral Movement", "SMB/Windows Admin Shares"),
     "T1021.004": ("Lateral Movement", "SSH"),
-    "T1550.002": ("Lateral Movement", "Pass the Hash"),
-    "T1550.003": ("Lateral Movement", "Pass the Ticket"),
+    "T1021.006": ("Lateral Movement", "Windows Remote Management"),
+    "T1078": ("Lateral Movement", "Valid Accounts"),
 
-    # Command and Control
+    # -------------------------
+    # COMMAND AND CONTROL (TA0011)
+    # -------------------------
     "T1071": ("Command and Control", "Application Layer Protocol"),
     "T1071.001": ("Command and Control", "Web Protocols"),
-    "T1071.004": ("Command and Control", "DNS"),
+    "T1071.002": ("Command and Control", "File Transfer Protocols"),
+    "T1095": ("Command and Control", "Non-Application Layer Protocol"),
+    "T1105": ("Command and Control", "Ingress Tool Transfer"),
 
-    # Exfiltration
-    "T1041": ("Exfiltration", "Exfiltration Over C2 Channel"),
-    "T1567": ("Exfiltration", "Exfiltration Over Web Services"),
-    "T1048.003": ("Exfiltration", "Exfiltration Over FTP"),
-
-    # Impact
+    # -------------------------
+    # IMPACT (TA0040)
+    # -------------------------
     "T1486": ("Impact", "Data Encrypted for Impact"),
-    "T1485": ("Impact", "Data Destruction"),
     "T1499": ("Impact", "Endpoint Denial of Service"),
-    "T1499.004": ("Impact", "Resource Exhaustion"),
+    "T1490": ("Impact", "Inhibit System Recovery"),
+    "T1489": ("Impact", "Service Stop"),
 }
 
-# --------------------------------------------------------------------------
-# 2. DETECTION LOGIC (Expanded for better coverage)
-# --------------------------------------------------------------------------
-CWE_TO_TTP = {
-    # Expanded Initial Access
-    "public-facing application": ["T1190"],
-    "web application": ["T1190"],
-    "api": ["T1190"],  # Added
-    "exploit": ["T1190"], # Added generic
-    "supply chain": ["T1195"],
-    "phishing": ["T1566"],
-    "spearphishing": ["T1566.001"],
-    "attachment": ["T1566.001"],
-    "malicious link": ["T1566.002"],
-    "drive by": ["T1189"],
-    
-    # Expanded Execution
-    "code execution": ["T1059"],
-    "rce": ["T1059"],
-    "command execution": ["T1059"],
-    "arbitrary code": ["T1059"], # Added
-    "powershell": ["T1059.001"],
-    "python": ["T1059.006"],
-    "bash": ["T1059.004"],
-    "script": ["T1059"], # Added
-    
-    # Persistence
-    "persistence": ["T1547"],
-    "scheduled task": ["T1053"],
-    "cron": ["T1053.003"],
-    
+
+# ============================================================
+# 2. ATTACK VECTOR INFERENCE (CRITICAL)
+#    Initial access routing: network / file / user / unknown
+# ============================================================
+
+def _infer_attack_vector(text: str) -> str:
+    """
+    Determine how initial access likely occurs.
+    Prevents incorrect T1190 usage by differentiating
+    network-facing exploits vs file/user-driven execution.
+    """
+    text = text.lower()
+
+    if any(k in text for k in [
+        "http", "https", "api", "web", "endpoint",
+        "unauthenticated", "exposed", "public-facing",
+        "vpn", "rdp", "proxy", "reverse shell"
+    ]):
+        return "network"
+
+    if any(k in text for k in [
+        "email", "phishing", "attachment",
+        "document", "office", "macro", "vbscript",
+        "pdf", "image", "jpg", "png", "xlm"
+    ]):
+        return "file"
+
+    if any(k in text for k in [
+        "user opens", "user clicked", "double click",
+        "manual execution", "user executed"
+    ]):
+        return "user"
+
+    return "unknown"
+
+
+# ============================================================
+# 3. CONTEXT-AWARE HEURISTIC RULES
+#    Mapping from keywords -> {vector|any -> [technique IDs]}
+#    All IDs must exist in STATIC_TTP_DETAILS.
+# ============================================================
+
+HEURISTIC_RULES: Dict[str, Dict[str, List[str]]] = {
+    # -------------------------
+    # Remote Code Execution
+    # -------------------------
+    "rce": {
+        "network": ["T1190", "T1059"],
+        "file": ["T1204", "T1059"],
+        "user": ["T1204", "T1059"],
+    },
+    "remote code execution": {
+        "network": ["T1190", "T1059"],
+        "file": ["T1204", "T1059"],
+        "user": ["T1204", "T1059"],
+    },
+    "exploit": {
+        "network": ["T1190", "T1068"],
+        "file": ["T1204.002", "T1068"],
+    },
+
+    # -------------------------
+    # Phishing / Email
+    # -------------------------
+    "phishing": {
+        "any": ["T1566"],
+    },
+    "spearphishing": {
+        "any": ["T1566.001", "T1566.002"],
+    },
+    "email attachment": {
+        "any": ["T1566.001", "T1204.002"],
+    },
+    "email link": {
+        "any": ["T1566.002"],
+    },
+
+    # -------------------------
+    # Credentials
+    # -------------------------
+    "credential": {
+        "any": ["T1555", "T1003"],
+    },
+    "password": {
+        "any": ["T1555", "T1110"],
+    },
+    "brute force": {
+        "any": ["T1110.001"],
+    },
+    "password spray": {
+        "any": ["T1110.003"],
+    },
+    "lsass": {
+        "any": ["T1003.001"],
+    },
+    "sam hive": {
+        "any": ["T1003.002"],
+    },
+    "ntds.dit": {
+        "any": ["T1003.003"],
+    },
+    "browser credential": {
+        "any": ["T1555.003"],
+    },
+
+    # -------------------------
     # Privilege Escalation
-    "privilege escalation": ["T1068"],
-    "root": ["T1068"], # Added
-    "admin": ["T1068"], # Added
-    "sudo": ["T1548.003"],
-    "uac": ["T1548.002"],
-    "bypass": ["T1548.002"], # Added generic bypass often maps here
-    
-    # Defense Evasion
-    "obfuscation": ["T1027"],
-    "disable security": ["T1562"],
-    "log deletion": ["T1070"],
-    "inject": ["T1055"], # Added Process Injection
-    
-    # Credential Access
-    "credential": ["T1555"],
-    "password": ["T1555"],
-    "dumping": ["T1003"],
-    "lsass": ["T1003.001"],
-    
+    # -------------------------
+    "privilege escalation": {
+        "any": ["T1068"],
+    },
+    "uac bypass": {
+        "any": ["T1548.002"],
+    },
+    "elevation": {
+        "any": ["T1068", "T1548"],
+    },
+
+    # -------------------------
+    # Persistence
+    # -------------------------
+    "persistence": {
+        "any": ["T1547"],
+    },
+    "run key": {
+        "any": ["T1547.001"],
+    },
+    "startup folder": {
+        "any": ["T1547.001"],
+    },
+    "winlogon": {
+        "any": ["T1547.004"],
+    },
+    "shortcut": {
+        "any": ["T1547.009"],
+    },
+    "scheduled task": {
+        "any": ["T1053", "T1053.005"],
+    },
+    "cron": {
+        "any": ["T1053.003"],
+    },
+    "create account": {
+        "any": ["T1136"],
+    },
+
+    # -------------------------
     # Discovery
-    "discovery": ["T1082"],
-    "reconnaissance": ["T1046"],
-    "scan": ["T1046"],
-    
-    # Lateral Movement
-    "lateral movement": ["T1021"],
-    "rdp": ["T1021.001"],
-    "smb": ["T1021.002"],
-    "ssh": ["T1021.004"],
-    
+    # -------------------------
+    "network scan": {
+        "any": ["T1046"],
+    },
+    "port scan": {
+        "any": ["T1046"],
+    },
+    "systeminfo": {
+        "any": ["T1082"],
+    },
+    "ipconfig": {
+        "any": ["T1049"],
+    },
+
+    # -------------------------
+    # Lateral Movement / Remote Services
+    # -------------------------
+    "lateral movement": {
+        "any": ["T1021"],
+    },
+    "rdp": {
+        "any": ["T1021.001"],
+    },
+    "smb": {
+        "any": ["T1021.002"],
+    },
+    "ssh": {
+        "any": ["T1021.004"],
+    },
+    "winrm": {
+        "any": ["T1021.006"],
+    },
+
+    # -------------------------
+    # Execution specifics
+    # -------------------------
+    "powershell": {
+        "any": ["T1059.001"],
+    },
+    "cmd.exe": {
+        "any": ["T1059.003"],
+    },
+    "bash": {
+        "any": ["T1059.004"],
+    },
+    "python": {
+        "any": ["T1059.006"],
+    },
+    "wmi": {
+        "any": ["T1047"],
+    },
+    "process injection": {
+        "any": ["T1055"],
+    },
+
+    # -------------------------
+    # Defense Evasion
+    # -------------------------
+    "obfuscate": {
+        "any": ["T1027"],
+    },
+    "packed": {
+        "any": ["T1027"],
+    },
+    "masquerade": {
+        "any": ["T1036"],
+    },
+    "svchost.exe": {
+        "any": ["T1036.005"],
+    },
+    "clear logs": {
+        "any": ["T1070.001"],
+    },
+    "delete log": {
+        "any": ["T1070.001"],
+    },
+    "log deletion": {
+        "any": ["T1070.001"],
+    },
+    "file deletion": {
+        "any": ["T1070.004"],
+    },
+    "disable av": {
+        "any": ["T1562.001"],
+    },
+    "disable edr": {
+        "any": ["T1562.001"],
+    },
+    "disable firewall": {
+        "any": ["T1562.004"],
+    },
+
+    # -------------------------
+    # Command and Control
+    # -------------------------
+    "c2": {
+        "any": ["T1071", "T1105"],
+    },
+    "command and control": {
+        "any": ["T1071"],
+    },
+    "http beacon": {
+        "any": ["T1071.001"],
+    },
+    "https beacon": {
+        "any": ["T1071.001"],
+    },
+    "ftp exfil": {
+        "any": ["T1071.002"],
+    },
+    "reverse shell": {
+        "any": ["T1095"],
+    },
+    "tool transfer": {
+        "any": ["T1105"],
+    },
+
+    # -------------------------
     # Impact
-    "ransomware": ["T1486"],
-    "encrypt": ["T1486"],
-    "denial of service": ["T1499"],
-    "dos": ["T1499"],
-    "crash": ["T1499"], # Added
+    # -------------------------
+    "ransomware": {
+        "any": ["T1486", "T1490"],
+    },
+    "encrypt": {
+        "any": ["T1486"],
+    },
+    "inhibit recovery": {
+        "any": ["T1490"],
+    },
+    "service stop": {
+        "any": ["T1489"],
+    },
+    "denial of service": {
+        "any": ["T1499"],
+    },
+    "dos": {
+        "any": ["T1499"],
+    },
 }
 
-# --------------------------------------------------------------------------
-# 3. HYBRID KNOWLEDGE BASE (Dynamic + Static)
-# --------------------------------------------------------------------------
-class MitreKnowledgeBase:
-    _instance = None
-    _technique_cache = {}
+
+# ============================================================
+# 4. MITRE TAXII CACHE (METADATA ONLY)
+#    Enrich static IDs with live name/URL when available.
+# ============================================================
+
+class _MitreCache:
     _initialized = False
-    _technique_list = []
+    _techniques: Dict[str, Dict] = {}
 
     @classmethod
-    def get_instance(cls):
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
-
-    def initialize(self):
-        """Try to fetch data from MITRE TAXII. If fails, we just don't populate the cache."""
-        if self._initialized or not MITRE_AVAILABLE:
+    def initialize(cls) -> None:
+        if cls._initialized or not MITRE_AVAILABLE:
             return
 
-        logger.info("Initializing MITRE Knowledge Base from TAXII...")
         try:
             connector = MITRETAXIIConnector(
                 discovery_url=TAXII_DISCOVERY_URL,
                 api_root=TAXII_API_ROOT,
-                cache_dir=CACHE_DIR
+                cache_dir=CACHE_DIR,
             )
-            # Enterprise ATT&CK Collection
-            ent_config = COLLECTIONS.get("enterprise", {})
-            collection_id = ent_config.get("id")
 
-            if collection_id:
-                data = connector.fetch_collection(collection_id=collection_id)
-                techniques = connector.get_techniques(data)
+            ent = COLLECTIONS.get("enterprise", {})
+            cid = ent.get("id")
+            if not cid:
+                return
 
-                # Keep both a list and an id->object cache for flexible access
-                self._technique_list = techniques or []
-                for t in self._technique_list:
-                    t_id = t.get("id")
-                    if t_id:
-                        self._technique_cache[t_id] = t
+            data = connector.fetch_collection(cid)
+            techniques = connector.get_techniques(data)
 
-                logger.info(f"✓ MITRE Live Data Loaded: {len(self._technique_cache)} techniques.")
-            else:
-                logger.warning("Enterprise Collection ID missing.")
+            for t in techniques or []:
+                tid = t.get("id")
+                if tid:
+                    cls._techniques[tid] = t
+
+            logger.info(
+                f"[MITRE] Loaded {len(cls._techniques)} techniques (enrichment only)"
+            )
 
         except Exception as e:
-            logger.error(f"⚠ MITRE Live Fetch Failed: {e}. Using static fallback.")
-        
-        self._initialized = True
+            logger.warning(f"[MITRE] TAXII enrichment failed: {e}")
 
-    def get_details(self, technique_id: str) -> Tuple[str, str, str]:
-        """
-        Lookup Priority:
-        1. Live TAXII Cache
-        2. Static Fallback Dictionary
-        3. Generic "Unknown"
-        """
-        # 1. Try Live Cache
-        if self._technique_cache and technique_id in self._technique_cache:
-            data = self._technique_cache[technique_id]
-            name = data.get("name", "Unknown Technique")
-            url = data.get("url", "")
-            tactics = " / ".join(data.get("tactics", ["Unknown"]))
-            return tactics, name, url
-            
-        # 2. Try Static Fallback
-        if technique_id in STATIC_TTP_DETAILS:
-            tactic, name = STATIC_TTP_DETAILS[technique_id]
-            url = f"https://attack.mitre.org/techniques/{technique_id}/"
-            return tactic, name, url
-            
-        # 3. Give up
-        return "Unknown Tactic", "Unknown Technique", ""
+        cls._initialized = True
 
-    def get_all_techniques(self) -> List[Dict]:
-        """Return all known techniques as a list (live data preferred)."""
-        if self._technique_list:
-            return list(self._technique_list)
-        return list(self._technique_cache.values())
-
-    def get_sub_techniques(self, parent_id: str) -> List[Dict]:
-        """Return sub-techniques for a given parent technique id (e.g. T1566 -> T1566.001)."""
-        prefix = parent_id + "."
-        subs = [t for t in self.get_all_techniques() if t.get("id", "").startswith(prefix)]
-        return sorted(subs, key=lambda x: x.get("id", ""))
+    @classmethod
+    def get(cls, tid: str) -> Dict:
+        return cls._techniques.get(tid, {})
 
 
-# --------------------------------------------------------------------------
-# 4. MAPPING FUNCTION (With Limits)
-# --------------------------------------------------------------------------
-def map_to_tactics(weaknesses: List[str], text_hint: str = "") -> List[Dict]:
+# ============================================================
+# 5. FINAL SOC-SAFE MAPPING FUNCTION
+#    - Static logic decides techniques
+#    - Context-aware Initial Access
+#    - TAXII enriches name & URL only
+#    - Deterministic & audit-safe
+# ============================================================
+
+def map_to_tactics(
+    weaknesses: List[str],
+    text_hint: str = "",
+    max_techniques: int = 5,
+) -> List[Dict]:
     """
-    Maps text/keywords to TTPs using hybrid lookup.
-    Enforces a max limit of 5 techniques.
+    SOC-GRADE MITRE MAPPING
+
+    - Static logic decides techniques
+    - Context-aware Initial Access routing
+    - TAXII enriches name & URL only
+    - Deterministic & audit-safe (no ML / LLM)
     """
-    # Ensure KB is ready (lazy loading)
-    MitreKnowledgeBase.get_instance().initialize()
-    kb = MitreKnowledgeBase.get_instance()
-    
-    found_ids = set()
+
+    # Initialize enrichment cache (no impact on logic)
+    _MitreCache.initialize()
+
+    # Build analysis blob and infer attack vector
     blob = " ".join(weaknesses + [text_hint]).lower()
-    
-    # Keyword Matching
-    for keyword, ttp_ids in CWE_TO_TTP.items():
-        if keyword in blob:
-            found_ids.update(ttp_ids)
-            
-    # Heuristics for complex concepts
-    if "rce" in blob or "remote code" in blob:
-        found_ids.add("T1190") 
-        found_ids.add("T1059")
-    if "privilege" in blob:
-        found_ids.add("T1068")
-    
-    # Sort and Limit to top 5
-    sorted_ids = sorted(list(found_ids))
-    
-    # Only take the first 5 to prevent UI clutter
-    # (Note: "At least 4" depends on the input having enough keywords)
-    final_ids = sorted_ids[:5]
-    
-    out = []
-    for tid in final_ids:
-        tactic_str, tech_name, tech_url = kb.get_details(tid)
-        out.append({
-            "techniqueId": tid,
-            "tactic": tactic_str,
-            "technique": tech_name,
-            "url": tech_url
-        })
-        
-    return out
+    vector = _infer_attack_vector(blob)
 
+    selected: Dict[str, str] = {}
+    confidence: Dict[str, int] = {}
 
-def find_relevant_techniques(advisory_text: str, top_n: int = 5) -> List[Dict]:
-    """Return top matching techniques for an advisory text using simple keyword scoring.
+    # Apply keyword-based heuristic rules
+    for keyword, rules in HEURISTIC_RULES.items():
+        if keyword not in blob:
+            continue
 
-    Each returned item is a dict: {'score': int, 'data': technique_dict}
-    """
-    MitreKnowledgeBase.get_instance().initialize()
-    all_techniques = MitreKnowledgeBase.get_instance().get_all_techniques()
+        tids = rules.get(vector) or rules.get("any") or []
+        for tid in tids:
+            # Enforce static allow-list
+            if tid not in STATIC_TTP_DETAILS:
+                continue
 
-    keywords = advisory_text.lower().split()
-    scored = []
+            # Classification: primary for directly matched rules
+            selected.setdefault(tid, "primary")
+            confidence[tid] = confidence.get(tid, 0) + 1
 
-    for tech in all_techniques:
-        score = 0
-        tech_content = (tech.get('name', '') + ' ' + tech.get('description', '')).lower()
-        for word in keywords:
-            if len(word) > 3 and word in tech_content:
-                score += 1
-        if score > 0:
-            scored.append({'score': score, 'data': tech})
+    # Rank techniques by confidence (deterministic sort)
+    ranked = sorted(
+        confidence.keys(),
+        key=lambda t: (confidence[t], t),  # secondary sort by ID for stability
+        reverse=True,
+    )[:max_techniques]
 
-    scored.sort(key=lambda x: x['score'], reverse=True)
-    return scored[:top_n]
+    results: List[Dict] = []
+    for tid in ranked:
+        tactic, default_name = STATIC_TTP_DETAILS[tid]
+        default_url = f"https://attack.mitre.org/techniques/{tid}/"
 
+        # TAXII enrichment (metadata only)
+        live = _MitreCache.get(tid)
+        name = live.get("name", default_name) if live else default_name
+        url = live.get("url", default_url) if live else default_url
 
-def get_sub_techniques_for_parent(parent_id: str) -> List[Dict]:
-    """Convenience wrapper to return sub-techniques for a parent technique id."""
-    MitreKnowledgeBase.get_instance().initialize()
-    return MitreKnowledgeBase.get_instance().get_sub_techniques(parent_id)
+        results.append(
+            {
+                "techniqueId": tid,
+                "tactic": tactic,
+                "technique": name,
+                "confidence": confidence.get(tid, 1),
+                "classification": selected.get(tid, "conditional"),
+                "url": url,
+            }
+        )
+
+    return results

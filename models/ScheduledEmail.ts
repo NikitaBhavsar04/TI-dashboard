@@ -14,6 +14,14 @@ export interface IScheduledEmail extends Document {
   sentAt?: Date;
   errorMessage?: string;
   retryCount: number;
+  trackingId?: string;
+  opens: Array<{
+    timestamp: Date;
+    ipAddress?: string;
+    userAgent?: string;
+  }>;
+  openedAt?: Date;
+  isOpened: boolean;
 }
 
 const ScheduledEmailSchema = new Schema({
@@ -71,6 +79,26 @@ const ScheduledEmailSchema = new Schema({
   retryCount: {
     type: Number,
     default: 0
+  },
+  trackingId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  opens: [{
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    ipAddress: String,
+    userAgent: String
+  }],
+  openedAt: {
+    type: Date
+  },
+  isOpened: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

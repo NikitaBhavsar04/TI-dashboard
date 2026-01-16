@@ -207,6 +207,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const fetchedAdvisory = await Advisory.findById(savedAdvisory._id);
         console.log('Advisory fetched from DB:', JSON.stringify(fetchedAdvisory?.toObject(), null, 2));
         
+        // Generate HTML file for the advisory
+        console.log('Generating HTML file for advisory:', savedAdvisory.advisoryId);
+        const htmlResult = await generateAdvisoryHTML(savedAdvisory.toObject());
+        
+        if (htmlResult.success && htmlResult.htmlPath) {
+          console.log('✅ HTML file generated successfully:', htmlResult.htmlPath);
+          
+          // Update the advisory with the HTML file name
+          savedAdvisory.htmlFileName = htmlResult.htmlPath;
+          await savedAdvisory.save();
+          console.log('✅ Updated advisory with htmlFileName:', htmlResult.htmlPath);
+        } else {
+          console.error('⚠️ Failed to generate HTML file:', htmlResult.error);
+          // Continue anyway - advisory is saved in DB
+        }
+        
         res.status(201).json(savedAdvisory);
       } catch (error: any) {
         if (error.message === 'Authentication required' || error.message === 'Insufficient permissions') {

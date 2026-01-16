@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Shield, 
   User, 
@@ -13,32 +13,13 @@ import {
   Database,
   Upload,
   Activity,
-  Users,
-  Clock
+  Users
 } from 'lucide-react';
 
 export default function Navbar() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
 
   const handleLogout = async () => {
     await logout();
@@ -104,21 +85,7 @@ export default function Navbar() {
                   UPLOAD
                 </Link>
 
-                {/* Live Timestamp - Near Admin button */}
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-md bg-green-900/50 border-2 border-green-400/70 shadow-lg shadow-green-500/30">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
-                    <Clock className="h-5 w-5 text-green-400" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-orbitron font-bold text-green-400">
-                      LIVE
-                    </span>
-                    <span className="text-sm font-rajdhani text-white font-bold">
-                      {formatTime(currentTime)}
-                    </span>
-                  </div>
-                </div>
+
               </>
             )}
           </div>

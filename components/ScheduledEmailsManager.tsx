@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Edit3, Trash2, Send, Calendar, Mail, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, Edit3, Trash2, Send, Calendar, Mail, AlertCircle, CheckCircle, XCircle, Check, CheckCheck, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ScheduledEmail {
@@ -15,6 +15,14 @@ interface ScheduledEmail {
   createdAt: string;
   sentAt?: string;
   errorMessage?: string;
+  trackingId?: string;
+  isOpened?: boolean;
+  openedAt?: string;
+  opens?: Array<{
+    timestamp: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }>;
   advisory?: {
     title: string;
     severity: string;
@@ -38,8 +46,12 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
     fetchScheduledEmails();
   }, []);
 
-  const fetchScheduledEmails = async () => {
+  const fetchScheduledEmails = async (showLoadingState = true) => {
     try {
+      if (showLoadingState) {
+        setLoading(true);
+      }
+      
       const token = localStorage.getItem('token');
       const headers: HeadersInit = {
         'Content-Type': 'application/json'
@@ -57,13 +69,13 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
       if (response.ok) {
         const data = await response.json();
         setScheduledEmails(data.scheduledEmails || []);
-      } else {
-        console.error('Failed to fetch scheduled emails');
       }
     } catch (error) {
-      console.error('Error fetching scheduled emails:', error);
+      // Silently handle fetch errors (like server not running) on auto-refresh
     } finally {
-      setLoading(false);
+      if (showLoadingState) {
+        setLoading(false);
+      }
     }
   };
 
@@ -96,7 +108,6 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
         alert(`Failed to delete: ${result.message}`);
       }
     } catch (error) {
-      console.error('Error deleting scheduled email:', error);
       alert('Failed to delete scheduled email');
     }
   };
@@ -133,7 +144,6 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
         alert(`Failed to process emails: ${result.message}`);
       }
     } catch (error) {
-      console.error('Error processing emails:', error);
       alert('Failed to process emails');
     } finally {
       setProcessing(false);
@@ -169,7 +179,6 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
         alert(`Failed to send: ${result.message}`);
       }
     } catch (error) {
-      console.error('Error sending email:', error);
       alert('Failed to send email');
     }
   };
@@ -279,6 +288,30 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                       {getStatusIcon(email.status)}
                       {email.status.charAt(0).toUpperCase() + email.status.slice(1)}
                     </span>
+                    {/* Read Status Indicator */}
+                    {email.status === 'sent' && (
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                        email.isOpened 
+                          ? 'text-blue-400 bg-blue-400/10' 
+                          : 'text-gray-400 bg-gray-400/10'
+                      }`} title={
+                        email.isOpened 
+                          ? `Opened ${email.opens?.length || 1} time${(email.opens?.length || 1) > 1 ? 's' : ''} • First: ${email.openedAt ? new Date(email.openedAt).toLocaleString() : 'N/A'}`
+                          : 'Not opened yet'
+                      }>
+                        {email.isOpened ? (
+                          <>
+                            <CheckCheck className="h-3 w-3" />
+                            Read
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-3 w-3" />
+                            Delivered
+                          </>
+                        )}
+                      </span>
+                    )}
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4 text-sm text-slate-300 mb-3">
@@ -296,6 +329,16 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                     {email.sentAt && (
                       <div>
                         <span className="text-slate-500">Sent:</span> {new Date(email.sentAt).toLocaleString()}
+                      </div>
+                    )}
+                    {email.isOpened && email.openedAt && (
+                      <div>
+                        <span className="text-slate-500">First Opened:</span> {new Date(email.openedAt).toLocaleString()}
+                      </div>
+                    )}
+                    {email.opens && email.opens.length > 0 && (
+                      <div>
+                        <span className="text-slate-500">Total Opens:</span> {email.opens.length}
                       </div>
                     )}
                   </div>

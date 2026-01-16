@@ -92,7 +92,7 @@ export default function Home() {
         </Head>
 
         {/* Hero Section */}
-        <div className="relative overflow-hidden pt-20">
+        <div className="relative overflow-hidden pt-8">
           {/* Background Effects */}
           <div className="absolute inset-0">
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-neon-blue/10 rounded-full blur-3xl animate-pulse"></div>

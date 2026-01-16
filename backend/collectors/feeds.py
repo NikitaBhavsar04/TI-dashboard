@@ -34,75 +34,50 @@ TRACKING_PARAMS = {
 
 
 # ============================================================
-# KEYWORD FILTERING (AUTHORITATIVE)
+# KEYWORDS (CONTENT-BASED TRIAGE)
 # ============================================================
 
-POSITIVE_KEYWORDS = {
-    # Vulnerabilities / exploits
-    "vulnerability", "security flaw", "weakness",
-    "exploit", "exploitation", "zero-day", "0day", "n-day",
-    "patch", "hotfix", "mitigation", "workaround", "update",
-
-    # Malware
-    "malware", "ransomware", "trojan", "worm", "spyware",
-    "backdoor", "botnet", "loader", "dropper",
-
-    # Incidents
-    "breach", "data breach", "intrusion", "compromise",
-    "incident", "attack", "campaign", "apt",
-
-    # Web / app
-    "rce", "remote code execution", "sql injection",
-    "command injection", "xss", "csrf", "ssrf",
-    "path traversal", "deserialization",
-
-    # Auth / identity
-    "authentication", "authorization", "oauth",
-    "sso", "jwt", "session fixation",
-
-    # Cloud / infra
-    "kubernetes", "docker", "container escape",
-    "cloud misconfiguration", "iam", "privilege",
-
-    # Supply chain
-    "supply chain", "dependency", "third-party",
-}
-
-NEGATIVE_KEYWORDS = {
-    # Opinion / prediction
-    "prediction", "forecast", "outlook", "trends",
-    "opinion", "thought leadership", "stories", "productreview"
-
-    # Education fluff
+# 🚫 HARD DROP — never allowed
+HARD_NEGATIVE_KEYWORDS = {
     "best practice", "best practices",
-    "guide", "tutorial", "how to",
-    "tips", "checklist", "cheat sheet",
-    "training", "course", "certification", "features", "touchscreen",
-
-    # Career / HR
-    "career", "jobs", "salary", "interview",
-    "resume", "skills", "skill", "hiring",
-
-    # Events / marketing
-    "webinar", "workshop", "conference", "summit",
-    "podcast", "livestream",
-
-    # Vendor marketing
+    "how to", "guide", "tutorial",
+    "training", "course", "certification",
+    "career", "jobs", "salary", "resume",
+    "webinar", "conference", "summit",
     "press release", "product launch",
     "new feature", "feature update",
-    "announcement", "roadmap",
-    "award", "ranking", "leader",
-    "gartner", "forrester",
+    "marketing", "announcement",
+    "whitepaper", "ebook", "brochure",
+}
 
-    # Business fluff
-    "case study", "customer story",
-    "success story", "whitepaper",
-    "ebook", "brochure",
+# ⚠️ SOFT NEGATIVE — allowed but penalized
+SOFT_NEGATIVE_KEYWORDS = {
+    "opinion", "thought leadership",
+    "forecast", "prediction", "outlook",
+    "trends", "case study", "customer story",
+}
 
-    # Non-security tech
-    "performance improvement",
-    "scalability", "latency",
-    "architecture overview",
+# 🔥 STRONG POSITIVE — high priority
+STRONG_POSITIVE_KEYWORDS = {
+    "cve", "zero-day", "0day",
+    "exploited in the wild",
+    "remote code execution", "rce",
+    "authentication bypass",
+    "privilege escalation",
+    "arbitrary code execution",
+    "patch released", "fixed in",
+    "security update", "hotfix",
+    "proof of concept", "poc",
+    "exploit available",
+}
+
+# ➕ WEAK POSITIVE — still valuable
+WEAK_POSITIVE_KEYWORDS = {
+    "malware", "ransomware", "trojan",
+    "botnet", "backdoor", "loader",
+    "dropper", "campaign", "apt",
+    "threat actor", "intrusion",
+    "breach", "compromise",
 }
 
 
@@ -156,29 +131,45 @@ def is_recent(dt: datetime, days: int) -> bool:
 
 
 # ============================================================
-# FILTERING LOGIC (SIMPLE + CORRECT)
+# CONTENT SCORING (THIS IS THE FIX)
 # ============================================================
 
-def passes_keyword_filter(blob: str, cves: List[str]) -> bool:
+def score_item(blob: str, cves: List[str]) -> int:
     """
-    Decision table:
-    - NEGATIVE keyword → DROP
-    - CVE present → ACCEPT
-    - POSITIVE keyword → ACCEPT
-    - Else → DROP
+    Score content quality.
+    Higher = more important to show to client.
     """
+    score = 0
 
-    if any(k in blob for k in NEGATIVE_KEYWORDS):
-        return False
+    # 🚫 Hard drop
+    for kw in HARD_NEGATIVE_KEYWORDS:
+        if kw in blob:
+            return -999
 
+    # 🔥 CVE = instant boost
     if cves:
-        return True
+        score += 100
 
-    return any(k in blob for k in POSITIVE_KEYWORDS)
+    # 🔥 Strong signals
+    for kw in STRONG_POSITIVE_KEYWORDS:
+        if kw in blob:
+            score += 30
+
+    # ➕ Weak signals
+    for kw in WEAK_POSITIVE_KEYWORDS:
+        if kw in blob:
+            score += 15
+
+    # ⚠️ Soft negatives
+    for kw in SOFT_NEGATIVE_KEYWORDS:
+        if kw in blob:
+            score -= 20
+
+    return score
 
 
 # ============================================================
-# 🔑 SINGLE TOPIC-LEVEL DEDUP HASH
+# DEDUP HASH
 # ============================================================
 
 def build_item_id(title: str, summary: str, cves: List[str]) -> str:
@@ -232,7 +223,8 @@ def _fetch_feed(
             blob = f"{title} {summary}".lower()
             cves = find_cves(f"{blob} {canonical_link}")
 
-            if not passes_keyword_filter(blob, cves):
+            score = score_item(blob, cves)
+            if score < 0:
                 continue
 
             item_id = build_item_id(title, summary, cves)
@@ -248,6 +240,7 @@ def _fetch_feed(
                 "published": published_raw,
                 "published_dt": published_dt,
                 "cves": cves,
+                "score": score,
             })
 
     except Exception as e:
@@ -282,10 +275,14 @@ def fetch_rss(
             except Exception as e:
                 logger.warning(f"[RSS] Worker error: {e}")
 
+    # 🔥 MOST IMPORTANT CHANGE
     collected.sort(
-        key=lambda x: x.get("published_dt") or datetime.min,
+        key=lambda x: (
+            x.get("score", 0),
+            x.get("published_dt") or datetime.min,
+        ),
         reverse=True,
     )
 
-    logger.info(f"[RSS] Collected {len(collected)} high-signal CTI articles")
+    logger.info(f"[RSS] Collected {len(collected)} prioritized CTI articles")
     return collected

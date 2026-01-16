@@ -4,7 +4,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
-import AnimatedBackground from '@/components/AnimatedBackground';
 import { motion } from 'framer-motion';
 import { 
   Search, 
@@ -13,17 +12,7 @@ import {
   AlertTriangle, 
   Shield, 
   Activity,
-  Eye,
-  Download,
-  Calendar,
-  User,
-  Hash,
-  Globe,
-  Mail,
-  Server,
   RefreshCw,
-  SortAsc,
-  SortDesc,
   Grid,
   List,
   Zap,
@@ -69,7 +58,7 @@ export default function AdvisoriesPage({ advisories, categories, stats, currentP
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSeverity, setSelectedSeverity] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isAutoRunning, setIsAutoRunning] = useState(false);
@@ -79,6 +68,8 @@ export default function AdvisoriesPage({ advisories, categories, stats, currentP
   const [editEmailModalOpen, setEditEmailModalOpen] = useState(false);
   const [editingEmailData, setEditingEmailData] = useState<any>(null);
   const [selectedScheduledEmail, setSelectedScheduledEmail] = useState<any>(null);
+  const [expandedAdvisoryId, setExpandedAdvisoryId] = useState<string | null>(null);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
 
   // Client-side authentication check
   useEffect(() => {
@@ -87,19 +78,43 @@ export default function AdvisoriesPage({ advisories, categories, stats, currentP
     }
   }, [isAuthenticated, loading, router]);
 
+  // Listen for scheduled emails toggle event from sidebar
+  useEffect(() => {
+    const handleToggle = () => {
+      setShowScheduledEmails(prev => !prev);
+    };
+    
+    window.addEventListener('toggleScheduledEmails', handleToggle);
+    return () => window.removeEventListener('toggleScheduledEmails', handleToggle);
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showActionsMenu && !target.closest('.actions-dropdown')) {
+        setShowActionsMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showActionsMenu]);
+
   const severityLevels = ['Critical', 'High', 'Medium', 'Low'];
 
   const severityStats = [
-    { level: 'Total', count: stats.total, color: 'cyan-400', borderColor: 'border-cyan-400', bgColor: 'from-cyan-400/20 to-cyan-400/10', glowColor: 'shadow-cyan-400/20', icon: TrendingUp },
+    { level: 'Total', count: stats.total, color: 'cyan-800', borderColor: 'border-cyan-400', bgColor: 'from-cyan-400/20 to-cyan-400/10', glowColor: 'shadow-cyan-400/20', icon: TrendingUp },
     { level: 'Critical', count: stats.critical, color: 'red-500', borderColor: 'border-red-500', bgColor: 'from-red-500/20 to-red-500/10', glowColor: 'shadow-red-500/20', icon: Zap },
     { level: 'High', count: stats.high, color: 'orange-500', borderColor: 'border-orange-500', bgColor: 'from-orange-500/20 to-orange-500/10', glowColor: 'shadow-orange-500/20', icon: AlertTriangle },
     { level: 'Medium', count: stats.medium, color: 'yellow-500', borderColor: 'border-yellow-500', bgColor: 'from-yellow-500/20 to-yellow-500/10', glowColor: 'shadow-yellow-500/20', icon: Activity },
     { level: 'Low', count: stats.low, color: 'blue-500', borderColor: 'border-blue-500', bgColor: 'from-blue-500/20 to-blue-500/10', glowColor: 'shadow-blue-500/20', icon: Shield },
   ];
 
+  // Apply filters and sorting whenever advisories or filter settings change
   useEffect(() => {
     filterAndSortAdvisories();
-  }, [searchTerm, selectedCategory, selectedSeverity, sortBy]);
+  }, [advisories, searchTerm, selectedCategory, selectedSeverity, sortBy]);
 
   const filterAndSortAdvisories = () => {
     let filtered = [...advisories];
@@ -265,15 +280,14 @@ export default function AdvisoriesPage({ advisories, categories, stats, currentP
       {/* Show content only if authenticated */}
       {!loading && isAuthenticated && (
         <>
-        <div className="relative min-h-screen bg-tech-gradient pt-20 pb-12">
-        <AnimatedBackground opacity={0.8} />
-        <div className="relative z-10">
+        <div className="relative min-h-screen bg-tech-gradient pt-8 pb-12 w-full overflow-x-hidden">
+        <div className="relative z-10 w-full">
         <Head>
           <title>Threat Advisories - EaglEye IntelDesk Intelligence Platform</title>
           <meta name="description" content="Browse comprehensive cybersecurity threat advisories and intelligence reports" />
         </Head>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -282,127 +296,104 @@ export default function AdvisoriesPage({ advisories, categories, stats, currentP
             className="mb-8"
           >
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-              <div className="mb-6 lg:mb-0">
-                <h1 className="font-orbitron font-bold text-4xl md:text-5xl text-gradient-blue mb-4">
+              <div className="mb-6 lg:mb-0 flex-1 text-center lg:text-left">
+                <h1 className="font-orbitron font-bold text-5xl md:text-6xl mb-4 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(6,182,212,0.5)]">
                   IntelDesk
                 </h1>
-                <p className="font-rajdhani text-lg text-slate-400 max-w-2xl">
+                <p className="font-rajdhani text-lg text-slate-300 max-w-3xl mx-auto lg:mx-0">
                   Comprehensive cybersecurity advisories with real-time threat analysis and IOC intelligence.
                 </p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              {/* Action Buttons - Dropdown - Top Right */}
+              <div className="relative actions-dropdown">
                 <button
-                  onClick={handleRefresh}
-                  className={`
-                    relative overflow-hidden group transition-all duration-300
-                    px-6 py-3 rounded-xl font-rajdhani font-semibold
-                    bg-gradient-to-r from-purple-600/20 to-purple-500/20
-                    border-2 border-purple-500/30 backdrop-blur-md
-                    text-purple-300 hover:text-white hover:border-purple-400
-                    shadow-lg shadow-purple-500/20 hover:shadow-purple-400/30
-                    hover:scale-105 active:scale-95 flex items-center space-x-2
-                    before:absolute before:inset-0 before:bg-gradient-to-r 
-                    before:from-purple-600/30 before:to-purple-500/30 before:opacity-0 
-                    before:transition-opacity before:duration-300 hover:before:opacity-100
-                    ${isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-xl'}
-                  `}
-                  disabled={isLoading}
+                  onClick={() => setShowActionsMenu(!showActionsMenu)}
+                  className="
+                    px-5 py-2.5 rounded-lg font-rajdhani font-medium text-sm
+                    bg-slate-800 backdrop-blur-sm
+                    border-2 border-cyan-500/60
+                    text-cyan-400 hover:text-cyan-300 hover:border-cyan-400 hover:bg-slate-700
+                    transition-all duration-200 flex items-center space-x-2
+                  "
                 >
-                  <RefreshCw className={`w-4 h-4 relative z-10 ${isLoading ? 'animate-spin' : 'group-hover:rotate-180'} transition-transform duration-500`} />
-                  <span className="relative z-10">
-                    {isLoading ? 'Refreshing...' : 'Refresh Data'}
-                  </span>
+                  <span>Actions</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showActionsMenu ? 'rotate-180' : ''}`} />
                 </button>
-                
-                {isAdmin && (
-                  <>
-                  <button
-                    onClick={handleAutoFeed}
-                    disabled={isAutoRunning}
-                    className={`
-                      relative overflow-hidden group transition-all duration-300
-                      px-6 py-3 rounded-xl font-rajdhani font-semibold
-                      bg-gradient-to-r from-emerald-600/20 to-emerald-500/20
-                      border-2 border-emerald-500/30 backdrop-blur-md
-                      text-emerald-300 hover:text-white hover:border-emerald-400
-                      shadow-lg shadow-emerald-500/20 hover:shadow-emerald-400/30
-                      hover:scale-105 active:scale-95 flex items-center space-x-2
-                      before:absolute before:inset-0 before:bg-gradient-to-r 
-                      before:from-emerald-600/30 before:to-emerald-500/30 before:opacity-0 
-                      before:transition-opacity before:duration-300 hover:before:opacity-100
-                      ${isAutoRunning ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-xl'}
-                    `}
-                    title="Automatically generate threat advisories from RSS feeds"
-                  >
-                    <Zap className={`w-4 h-4 relative z-10 ${isAutoRunning ? 'animate-spin' : 'group-hover:scale-110'} transition-all duration-300`} />
-                    <span className="relative z-10">{isAutoRunning ? 'Generating...' : 'Auto Advisory'}</span>
-                  </button>
 
-                  <button
-                    onClick={handleClearCache}
-                    className="
-                      relative overflow-hidden group transition-all duration-300
-                      px-6 py-3 rounded-xl font-rajdhani font-semibold
-                      bg-gradient-to-r from-amber-600/20 to-amber-500/20
-                      border-2 border-amber-500/30 backdrop-blur-md
-                      text-amber-300 hover:text-white hover:border-amber-400
-                      shadow-lg shadow-amber-500/20 hover:shadow-amber-400/30
-                      hover:scale-105 active:scale-95 flex items-center space-x-2
-                      before:absolute before:inset-0 before:bg-gradient-to-r 
-                      before:from-amber-600/30 before:to-amber-500/30 before:opacity-0 
-                      before:transition-opacity before:duration-300 hover:before:opacity-100
-                      hover:shadow-xl
-                    "
-                    title="Clear cache to allow reprocessing of RSS items"
-                  >
-                    <RefreshCw className="w-4 h-4 relative z-10 group-hover:rotate-180 transition-all duration-500" />
-                    <span className="relative z-10">Clear Cache</span>
-                  </button>
+                {/* Dropdown Menu */}
+                {showActionsMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border-2 border-cyan-500/50 rounded-lg shadow-2xl shadow-cyan-500/20 py-1 z-50">
+                    <button
+                      onClick={() => {
+                        handleRefresh();
+                        setShowActionsMenu(false);
+                      }}
+                      disabled={isLoading}
+                      className={`
+                        w-full px-4 py-2.5 text-left flex items-center space-x-3
+                        text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10
+                        transition-all duration-150 font-rajdhani text-sm
+                        border-b border-slate-800/50 hover:border-cyan-500/30
+                        ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                      `}
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                      <span>{isLoading ? 'Refreshing...' : 'Refresh Data'}</span>
+                    </button>
 
-                  <Link 
-                    href="/admin/upload" 
-                    className="
-                      relative overflow-hidden group transition-all duration-300
-                      px-6 py-3 rounded-xl font-rajdhani font-semibold
-                      bg-gradient-to-r from-cyan-600/20 to-cyan-500/20
-                      border-2 border-cyan-500/30 backdrop-blur-md
-                      text-cyan-300 hover:text-white hover:border-cyan-400
-                      shadow-lg shadow-cyan-500/20 hover:shadow-cyan-400/30
-                      hover:scale-105 active:scale-95 flex items-center space-x-2
-                      before:absolute before:inset-0 before:bg-gradient-to-r 
-                      before:from-cyan-600/30 before:to-cyan-500/30 before:opacity-0 
-                      before:transition-opacity before:duration-300 hover:before:opacity-100
-                      hover:shadow-xl
-                    "
-                  >
-                    <Plus className="w-4 h-4 relative z-10 group-hover:scale-110 group-hover:rotate-90 transition-all duration-300" />
-                    <span className="relative z-10">New Advisory</span>
-                  </Link>
-                  </>
-                )}
+                    {isAdmin && (
+                      <>
+                        <button
+                          onClick={() => {
+                            handleAutoFeed();
+                            setShowActionsMenu(false);
+                          }}
+                          disabled={isAutoRunning}
+                          className={`
+                            w-full px-4 py-2.5 text-left flex items-center space-x-3
+                            text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10
+                            transition-all duration-150 font-rajdhani text-sm
+                            border-b border-slate-800/50 hover:border-cyan-500/30
+                            ${isAutoRunning ? 'opacity-50 cursor-not-allowed' : ''}
+                          `}
+                        >
+                          <Zap className={`w-4 h-4 ${isAutoRunning ? 'animate-spin' : ''}`} />
+                          <span>{isAutoRunning ? 'Generating...' : 'Auto Advisory'}</span>
+                        </button>
 
-                {isAdmin && (
-                  <button
-                    onClick={() => setShowScheduledEmails(!showScheduledEmails)}
-                    className={`
-                      relative overflow-hidden group transition-all duration-300
-                      px-6 py-3 rounded-xl font-rajdhani font-semibold
-                      border-2 backdrop-blur-md
-                      shadow-lg hover:scale-105 active:scale-95 flex items-center space-x-2
-                      before:absolute before:inset-0 before:bg-gradient-to-r 
-                      before:transition-opacity before:duration-300 hover:before:opacity-100
-                      hover:shadow-xl
-                      ${showScheduledEmails 
-                        ? 'bg-gradient-to-r from-orange-600/20 to-orange-500/20 border-orange-500/30 text-orange-300 hover:text-white hover:border-orange-400 shadow-orange-500/20 hover:shadow-orange-400/30 before:from-orange-600/30 before:to-orange-500/30' 
-                        : 'bg-gradient-to-r from-violet-600/20 to-violet-500/20 border-violet-500/30 text-violet-300 hover:text-white hover:border-violet-400 shadow-violet-500/20 hover:shadow-violet-400/30 before:from-violet-600/30 before:to-violet-500/30'
-                      }
-                    `}
-                  >
-                    <Calendar className="w-4 h-4 relative z-10 group-hover:scale-110 transition-all duration-300" />
-                    <span className="relative z-10">{showScheduledEmails ? 'Hide Scheduled' : 'Scheduled Emails'}</span>
-                  </button>
+                        <button
+                          onClick={() => {
+                            handleClearCache();
+                            setShowActionsMenu(false);
+                          }}
+                          className="
+                            w-full px-4 py-2.5 text-left flex items-center space-x-3
+                            text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10
+                            transition-all duration-150 font-rajdhani text-sm
+                            border-b border-slate-800/50 hover:border-cyan-500/30
+                          "
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          <span>Clear Cache</span>
+                        </button>
+
+                        <Link
+                          href="/admin/upload"
+                          onClick={() => setShowActionsMenu(false)}
+                          className="
+                            w-full px-4 py-2.5 text-left flex items-center space-x-3
+                            text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10
+                            transition-all duration-150 font-rajdhani text-sm
+                            hover:border-cyan-500/30
+                          "
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>New Advisory</span>
+                        </Link>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -478,13 +469,13 @@ export default function AdvisoriesPage({ advisories, categories, stats, currentP
                   className="
                     relative overflow-hidden group transition-all duration-300
                     px-6 py-3 rounded-xl font-rajdhani font-semibold w-fit
-                    bg-gradient-to-r from-purple-600/20 to-purple-500/20
-                    border-2 border-purple-500/30 backdrop-blur-md
-                    text-purple-300 hover:text-white hover:border-purple-400
-                    shadow-lg shadow-purple-500/20 hover:shadow-purple-400/30
+                    bg-gradient-to-r from-cyan-600/15 to-blue-600/15
+                    border-2 border-cyan-500/40 backdrop-blur-md
+                    text-cyan-300 hover:text-white hover:border-cyan-400
+                    shadow-lg shadow-cyan-500/15 hover:shadow-cyan-400/25
                     hover:scale-105 active:scale-95 flex items-center space-x-2
                     before:absolute before:inset-0 before:bg-gradient-to-r 
-                    before:from-purple-600/30 before:to-purple-500/30 before:opacity-0 
+                    before:from-cyan-600/25 before:to-blue-600/25 before:opacity-0 
                     before:transition-opacity before:duration-300 hover:before:opacity-100
                     hover:shadow-xl
                   "
@@ -495,34 +486,6 @@ export default function AdvisoriesPage({ advisories, categories, stats, currentP
                 </button>
 
                 <div className="flex items-center space-x-4">
-                  {/* View Mode Toggle */}
-                  <div className="flex items-center space-x-2 bg-slate-800/50 backdrop-blur-md rounded-lg p-1 border border-slate-700/50">
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`
-                        p-2 rounded-lg transition-all duration-300 relative
-                        ${viewMode === 'grid' 
-                          ? 'bg-cyan-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20' 
-                          : 'text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10'
-                        }
-                      `}
-                    >
-                      <Grid className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`
-                        p-2 rounded-lg transition-all duration-300 relative
-                        ${viewMode === 'list' 
-                          ? 'bg-cyan-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20' 
-                          : 'text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10'
-                        }
-                      `}
-                    >
-                      <List className="w-4 h-4" />
-                    </button>
-                  </div>
-
                   {/* Sort Dropdown */}
                   <div className="relative">
                     <select
@@ -647,6 +610,36 @@ export default function AdvisoriesPage({ advisories, categories, stats, currentP
               Showing <span className="text-neon-blue font-semibold">{filteredAdvisories.length}</span> advisories on page {currentPage} of {totalPages}{' '}
               <span className="text-slate-400">({totalAdvisories} total)</span>
             </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center space-x-2 bg-slate-800/50 backdrop-blur-md rounded-lg p-1 border border-slate-700/50">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`
+                  p-2 rounded-lg transition-all duration-300 relative
+                  ${viewMode === 'list' 
+                    ? 'bg-cyan-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20' 
+                    : 'text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10'
+                  }
+                `}
+                title="List View"
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`
+                  p-2 rounded-lg transition-all duration-300 relative
+                  ${viewMode === 'grid' 
+                    ? 'bg-cyan-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20' 
+                    : 'text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10'
+                  }
+                `}
+                title="Grid View"
+              >
+                <Grid className="w-4 h-4" />
+              </button>
+            </div>
           </motion.div>
 
           {/* Advisories Grid/List */}
@@ -668,6 +661,10 @@ export default function AdvisoriesPage({ advisories, categories, stats, currentP
                   <AdvisoryCardWithEmail 
                     advisory={advisory} 
                     onEmailClick={isAdmin ? handleEmailAdvisory : undefined}
+                    expanded={expandedAdvisoryId === advisory._id}
+                    onToggleExpand={() => setExpandedAdvisoryId(
+                      expandedAdvisoryId === advisory._id ? null : advisory._id
+                    )}
                   />
                 </motion.div>
               ))
@@ -900,27 +897,6 @@ export const getServerSideProps: GetServerSideProps = async ({ req, query }) => 
       .skip(skip)
       .limit(ITEMS_PER_PAGE)
       .lean();
-    
-    console.log('[SSR] Fetched', advisories.length, 'advisories from MongoDB (page', page, 'of', totalPages, ')');
-    if (advisories.length > 0) {
-      const latestAdvisory = advisories[0];
-      console.log('[SSR] Latest advisory sample:', {
-        id: latestAdvisory._id,
-        advisoryId: latestAdvisory.advisoryId,
-        title: latestAdvisory.title,
-        createdAt: latestAdvisory.createdAt,
-        publishedDate: latestAdvisory.publishedDate,
-        threatType: latestAdvisory.threatType,
-        criticality: latestAdvisory.criticality,
-        tlp: latestAdvisory.tlp,
-        affectedProduct: latestAdvisory.affectedProduct,
-        hasAffectedProducts: !!latestAdvisory.affectedProducts,
-        hasSectors: !!latestAdvisory.targetSectors,
-        hasRegions: !!latestAdvisory.regions,
-        hasCVEs: !!latestAdvisory.cveIds,
-        hasMITRE: !!latestAdvisory.mitreTactics,
-      });
-    }
     
     // Get unique categories from all advisories (not just current page)
     const allAdvisories = await Advisory.find({}).select('category').lean();

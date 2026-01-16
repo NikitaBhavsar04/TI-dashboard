@@ -23,17 +23,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Get all scheduled emails for admin
       const scheduledEmails = await ScheduledEmail.find()
         .sort({ createdAt: -1 })
-        .populate('advisoryId', 'title severity')
         .lean();
 
-      // Transform the data to include advisory info
-      const transformedEmails = scheduledEmails.map(email => ({
-        ...email,
-        advisory: email.advisoryId ? {
-          title: (email.advisoryId as any)?.title,
-          severity: (email.advisoryId as any)?.severity
-        } : null
+      console.log(`📧 Found ${scheduledEmails.length} scheduled emails in database`);
+
+      // Try to populate advisory info for each email
+      const transformedEmails = await Promise.all(scheduledEmails.map(async (email) => {
+        let advisory = null;
+        
+        // Try to fetch advisory info if advisoryId exists
+        if (email.advisoryId) {
+          try {
+            // Check if it's a valid MongoDB ObjectId format (24 hex characters)
+            const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(email.advisoryId.toString());
+            
+            if (isValidObjectId) {
+              const advisoryDoc = await Advisory.findById(email.advisoryId).select('title severity').lean();
+              if (advisoryDoc) {
+                advisory = {
+                  title: advisoryDoc.title,
+                  severity: advisoryDoc.severity
+                };
+              }
+            } else {
+              // This is likely an Eagle Nest advisory with custom ID format
+              // Try to load from JSON file
+              const fs = require('fs');
+              const path = require('path');
+              const eagleNestPath = path.resolve(process.cwd(), 'backend', 'workspace', 'eagle_nest', `${email.advisoryId}.json`);
+              
+              if (fs.existsSync(eagleNestPath)) {
+                const eagleNestData = JSON.parse(fs.readFileSync(eagleNestPath, 'utf8'));
+                advisory = {
+                  title: eagleNestData.title || 'Eagle Nest Advisory',
+                  severity: eagleNestData.severity || 'Unknown'
+                };
+              }
+            }
+          } catch (err) {
+            console.log(`⚠️ Could not find advisory ${email.advisoryId} for email ${email._id}: ${err.message}`);
+          }
+        }
+
+        return {
+          ...email,
+          _id: email._id.toString(),
+          advisoryId: email.advisoryId?.toString() || email.advisoryId,
+          advisory
+        };
       }));
+
+      console.log(`✅ Returning ${transformedEmails.length} scheduled emails`);
 
       return res.status(200).json({
         scheduledEmails: transformedEmails

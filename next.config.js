@@ -19,9 +19,13 @@ const nextConfig = {
     unoptimized: false,
   },
   
-  // Rewrites to handle /backend/workspace/ paths
+  // Rewrites to handle /workspace/ paths
   async rewrites() {
     return [
+      {
+        source: '/workspace/:path*',
+        destination: '/api/workspace/:path*',
+      },
       {
         source: '/backend/workspace/:path*',
         destination: '/api/workspace/:path*',

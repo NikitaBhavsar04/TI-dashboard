@@ -1,3 +1,7 @@
+/* Primary Font System - ESPlatform Style */
+@import url("https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+/* Legacy fonts for compatibility */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
@@ -5,33 +9,66 @@
 
 /* Futuristic Cyberpunk Color System */
 :root {
-  /* Primary Neon Colors */
-  --neon-blue: #00d4ff;
-  --neon-purple: #a855f7;
-  --neon-pink: #ec4899;
-  --neon-cyan: #06b6d4;
-  --neon-green: #10b981;
+  /* Font Families - ESPlatform Style */
+  --font-primary: "Hanken Grotesk", Helvetica, Arial, sans-serif;
+  --font-secondary: 'Roboto', sans-serif;
+  --font-display: 'Hanken Grotesk', 'Orbitron', sans-serif;
+  --font-body: 'Hanken Grotesk', 'Rajdhani', sans-serif;
+  --font-mono: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', 'JetBrains Mono', monospace;
+  --font-system: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   
-  /* Tech Colors */
-  --tech-blue: #3b82f6;
-  --tech-purple: #8b5cf6;
-  --tech-navy: #0f172a;
-  --tech-dark: #020617;
-  --cyber-green: #22c55e;
+  /* Bootstrap Font Variables */
+  --bs-font-sans-serif: var(--font-primary);
+  --bs-font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --bs-body-font-family: var(--font-primary);
+  --bs-body-font-size: 1rem;
+  --bs-body-font-weight: 400;
+  --bs-body-line-height: 1.5;
   
-  /* Glass Morphism */
-  --glass-bg: rgba(15, 23, 42, 0.7);
-  --glass-border: rgba(148, 163, 184, 0.2);
-  --glass-hover: rgba(148, 163, 184, 0.1);
+  /* Primary Neon Colors - Based on Screenshot (No Purple) */
+  --neon-blue: #4169E1;
+  --neon-purple: #4169E1;
+  --neon-pink: #EC4899;
+  --neon-cyan: #06B6D4;
+  --neon-green: #0ec185;
   
-  /* Gradients */
-  --bg-gradient: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-  --card-gradient: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6));
+  /* Tech Colors - Deep Navy Theme */
+  --tech-blue: #3B4FE8;
+  --tech-purple: #3B4FE8;
+  --tech-navy: #1a1f35;
+  --tech-dark: #0f1219;
+  --cyber-green: #22C55E;
   
-  /* Shadows & Glows */
+  /* Glass Morphism - Dark Navy */
+  --glass-bg: rgba(26, 31, 53, 0.9);
+  --glass-border: rgba(59, 79, 232, 0.2);
+  --glass-hover: rgba(59, 79, 232, 0.1);
+  
+  /* Gradients - Deep Navy with Blue */
+  --bg-gradient: linear-gradient(135deg, #000000 0%, #0a0e16 50%, #0f141f 100%);
+  --card-gradient: linear-gradient(145deg, rgba(35, 48, 75, 0.95), rgba(45, 60, 95, 0.9));
+  
+  /* Shadows & Glows - Blue Tinted */
   --neon-glow: 0 0 20px;
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --card-shadow: 0 4px 16px rgba(59, 79, 232, 0.15);
+  
+  /* Color Scheme Variables */
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --muted: #3f3f46;
+  --muted-foreground: #a1a1aa;
+  --bs-code-color: #06B6D4;
+}
+
+/* Sidebar Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
 }
 
 /* Base Styles */
@@ -42,12 +79,14 @@
   
   body {
     background: var(--bg-gradient);
-    color: #f8fafc;
-    font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--foreground);
+    font-family: var(--font-primary);
     font-weight: 400;
-    line-height: 1.6;
+    line-height: var(--bs-body-line-height);
     overflow-x: hidden;
     position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
   }
 
@@ -60,21 +99,113 @@
     width: 100%;
     height: 100%;
     background: 
-      radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 40% 80%, rgba(236, 72, 153, 0.03) 0%, transparent 50%);
+      radial-gradient(circle at 20% 50%, rgba(59, 79, 232, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(59, 79, 232, 0.04) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, rgba(59, 79, 232, 0.03) 0%, transparent 50%);
     pointer-events: none;
     z-index: -1;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Orbitron', monospace;
+    font-family: 'Hanken Grotesk', 'Orbitron', var(--font-primary), monospace;
     font-weight: 600;
     letter-spacing: 0.05em;
   }
   
+  /* Typography Scale - ESPlatform Style */
+  h1, .text-h1 {
+    font-size: 26px;
+    font-weight: bold;
+  }
+
+  h2, .text-h2 {
+    font-size: 22px;
+  }
+
+  h3, .text-h3 {
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  h4, .text-h4 {
+    font-size: 18px;
+  }
+
+  h5, .text-h5 {
+    font-size: 16px;
+  }
+
+  h6, .text-h6 {
+    font-size: 14px;
+  }
+
+  .text-body {
+    font-size: 14px;
+  }
+
+  .text-small {
+    font-size: 12px;
+  }
+  
+  /* Code Typography */
   code {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    color: var(--bs-code-color);
+    word-wrap: break-word;
+  }
+  
+  pre {
+    display: block;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    overflow: auto;
+    font-size: 0.875em;
+    font-family: var(--font-mono);
+  }
+
+  pre code {
+    font-size: inherit;
+    color: inherit;
+    word-break: normal;
+  }
+  
+  /* Documentation/Admin sections */
+  .documentation, .admin-section {
+    font-family: var(--font-secondary);
+    --bs-body-font-size: 0.9rem;
+  }
+  
+  .terminal, .console {
+    font-family: var(--bs-font-monospace);
+  }
+  
+  .font-monospace {
+    font-family: var(--font-mono) !important;
+  }
+  
+  .system-font {
+    font-family: var(--font-system);
+  }
+  
+  /* Scrollbar Styling - ESPlatform Style */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 10px;
+    border-radius: 20px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted);
+    border-radius: 20px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
   }
 }
 
@@ -82,20 +213,25 @@
 @layer components {
   /* Glass Morphism Cards */
   .glass-card {
-    background: var(--glass-bg);
+    background: rgba(5, 203, 237, 0.08);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
+    border: 2px solid rgba(39, 197, 225, 0.25);
     border-radius: 1rem;
-    box-shadow: var(--glass-shadow);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.5),
+      0 0 20px rgba(6, 182, 212, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .glass-card:hover {
-    border-color: rgba(148, 163, 184, 0.3);
+    background: rgba(6, 182, 212, 0.12);
+    border-color: rgba(6, 182, 212, 0.4);
     box-shadow: 
-      var(--glass-shadow),
-      0 0 40px rgba(0, 212, 255, 0.1);
+      0 12px 40px rgba(0, 0, 0, 0.6),
+      0 0 40px rgba(6, 182, 212, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
     transform: translateY(-2px);
   }
   
@@ -254,17 +390,17 @@
 
 /* Utility Classes */
 @layer utilities {
-  /* Font Families */
+  /* Font Families - Updated to use Hanken Grotesk first */
   .font-orbitron {
-    font-family: 'Orbitron', monospace;
+    font-family: 'Hanken Grotesk', 'Orbitron', sans-serif;
   }
   
   .font-rajdhani {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Hanken Grotesk', 'Rajdhani', sans-serif;
   }
   
   .font-jetbrains {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', 'Hanken Grotesk', monospace;
   }
   
   /* Animations */

@@ -30,6 +30,7 @@ export interface IAdvisory extends Document {
   recommendations?: string[];   // recommendations
   patchDetails?: string[];      // patch_details
   mitreTactics?: any[];        // MITRE ATT&CK tactics
+  mbc?: any[];                 // Malware Behavior Catalog
   htmlFileName?: string;        // HTML file reference
   threatType?: string;          // threat_type
   criticality?: string;         // criticality (same as severity)
@@ -102,6 +103,7 @@ const AdvisorySchema = new Schema({
   recommendations: [String],    // recommendations
   patchDetails: [String],       // patch_details
   mitreTactics: [Schema.Types.Mixed], // MITRE tactics
+  mbc: [Schema.Types.Mixed],    // Malware Behavior Catalog
   htmlFileName: String,         // HTML file reference
   threatType: String,           // threat_type
   criticality: String,          // criticality

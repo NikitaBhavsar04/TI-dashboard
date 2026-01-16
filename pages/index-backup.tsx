@@ -36,12 +36,6 @@ export default function Home() {
       gradient: "from-neon-blue/20 to-transparent"
     },
     {
-      icon: <Activity className="h-8 w-8 text-neon-purple" />,
-      title: "Live Security Monitoring",
-      description: "24/7 monitoring with automated incident response and threat classification.",
-      gradient: "from-neon-purple/20 to-transparent"
-    },
-    {
       icon: <Database className="h-8 w-8 text-neon-cyan" />,
       title: "Comprehensive IOC Database",
       description: "Extensive indicators of compromise database with automated correlation.",

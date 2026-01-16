@@ -2,28 +2,11 @@ import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import { Shield, User, Settings, LogOut, Menu, X, Activity, Clock, Home } from 'lucide-react';
+import { Shield, User, Settings, LogOut, Menu, X, Activity, Home } from 'lucide-react';
 
 function Navbar() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTime = (date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
 
   const handleLogout = () => {
     logout();
@@ -58,14 +41,7 @@ function Navbar() {
                   <span>ADMIN</span>
                 </Link>
 
-                {/* Live Timestamp */}
-                <div className="flex items-center gap-2 px-4 py-2 bg-green-900/50 border border-green-400/70 rounded-lg">
-                  <Clock className="h-5 w-5 text-green-400" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-green-400">LIVE</span>
-                    <span className="text-sm text-white">{formatTime(currentTime)}</span>
-                  </div>
-                </div>
+
               </>
             )}
 

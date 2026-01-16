@@ -17,10 +17,11 @@ from utils.common import (
 from collectors.feeds import fetch_rss
 from collectors.page import fetch_page_text
 from collectors.mitre import map_to_tactics
-
-from llm.summarize import summarize_item
+from enrichment.cvss import fetch_cvss
+from llm.opensummarize import summarize_item
 from renderer.render import render_html
 from enrichment.recommender import get_recommendations
+from llm.mbc import extract_mbc
 
 
 # ============================================================
@@ -102,7 +103,7 @@ def main():
         urls=rss_urls,
         seen_ids=seen_ids,  # 🔴 CRITICAL: persistent dedup
         per_feed=8,
-        days_back=14,
+        days_back=20,
     )
 
     if not items:
@@ -178,13 +179,10 @@ def main():
                     rec_data.get("patch_details")
                     or advisory.get("patch_details")
                 )
-            else:
-                advisory["recommendations"] = [
-                    "Review official vendor advisory for remediation guidance.",
-                    "Apply vendor patches as soon as available.",
-                    "Monitor logs for exploitation indicators.",
-                    "Restrict exposure of affected services.",
-                ]
+            if "recommendations" not in advisory and "patch_details" not in advisory:
+                advisory.pop("recommendations", None)
+                advisory.pop("patch_details", None)
+
 
         except Exception:
             logger.error("[Recs] Recommendation lookup failed", exc_info=True)
@@ -204,12 +202,52 @@ def main():
                 item.get("summary", ""),
             ]),
         )
+        # ----------------------------------------------------
+        # MBC (Malware Behavior Catalog)
+        # ----------------------------------------------------
+        mbc = extract_mbc(
+            title=advisory.get("title", ""),
+            threat_type=advisory.get("threat_type", ""),
+            exec_summary=advisory.get("exec_summary", ""),
+            mitre=mitre,
+        )
+
 
         exec_summary_parts = [
             p.strip()
             for p in advisory.get("exec_summary", "").split("\n\n")
             if p.strip()
         ]
+       # ----------------------------------------------------
+        # CVSS ENRICHMENT (AUTHORITATIVE – HIGHEST WINS)
+        # ----------------------------------------------------
+        cvss_results = {}
+        highest_cvss = None
+
+        for cve in advisory.get("cves", []):
+            cvss = fetch_cvss(cve)
+            if not cvss:
+                continue
+
+            cvss_results[cve] = cvss
+
+            if (
+                highest_cvss is None
+                or cvss["score"] > highest_cvss["score"]
+            ):
+                highest_cvss = cvss
+
+        # ----------------------------------------------------
+        # FINAL CRITICALITY (SOC RULE)
+        # ----------------------------------------------------
+        if highest_cvss:
+            final_criticality = highest_cvss["criticality"]
+        else:
+            # ❗ No CVSS → cap severity
+            final_criticality = advisory.get("criticality", "MEDIUM")
+            if final_criticality in ("HIGH", "CRITICAL"):
+                logger.info("[SEVERITY] No CVE found, downgrading criticality to MEDIUM")
+                final_criticality = "MEDIUM"
 
         # ----------------------------------------------------
         # FINAL CONTEXT
@@ -219,19 +257,21 @@ def main():
         context = {
             "advisory_id": advisory_uid,
             "title": advisory.get("title", "Threat Advisory"),
-            "criticality": advisory.get("criticality", "MEDIUM"),
+            "criticality": final_criticality or advisory.get("criticality"),
             "threat_type": advisory.get("threat_type", "Vulnerability"),
             "exec_summary_parts": exec_summary_parts,
             "affected_product": advisory.get("affected_product", "Not specified"),
             "vendor": advisory.get("vendor", "Unknown"),
             "cves": advisory.get("cves", []),
+            "cvss": cvss_results,
             "sectors": advisory.get("sectors", ["General"]),
             "regions": advisory.get("regions", ["Global"]),
             "recommendations": advisory.get("recommendations", []),
             "patch_details": advisory.get("patch_details"),
-            "references": advisory.get("references") or [item.get("link")],
+            "references": [item.get("link")],
             "tlp": advisory.get("tlp", tlp_default),
             "mitre": mitre,
+            "mbc": mbc,
             "published": item.get("published", ""),
             "source": item.get("source", ""),
         }
@@ -246,7 +286,6 @@ def main():
 
         try:
             render_html("templates", context, out_html)
-            
             generated.append(out_html)
 
             # 🔒 Mark as seen ONLY after success

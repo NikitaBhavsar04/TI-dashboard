@@ -517,6 +517,13 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                       <span className="hidden sm:inline text-white font-rajdhani font-medium">Send Email</span>
                     </button>
                     
+                    <Link href="/admin/raw-articles">
+                      <button className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105">
+                        <Database className="h-4 w-4 text-cyan-400" />
+                        <span className="hidden sm:inline text-white font-rajdhani font-medium">Raw Articles</span>
+                      </button>
+                    </Link>
+                    
                     <Link href={`/admin/edit/${advisory._id}`}>
                       <button className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105">
                         <Edit className="h-4 w-4 text-neon-green" />

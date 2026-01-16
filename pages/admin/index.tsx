@@ -344,7 +344,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
             <div className="glass-panel-hover p-6">
               <h3 className="text-xl font-orbitron font-bold text-white mb-6 flex items-center">
                 <FileText className="h-5 w-5 text-neon-blue mr-3" />
@@ -365,6 +365,42 @@ export default function AdminDashboard() {
                     <div className="flex items-center space-x-3">
                       <Eye className="h-5 w-5" />
                       <span className="font-rajdhani font-medium">View All Advisories</span>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            <div className="glass-panel-hover p-6">
+              <h3 className="text-xl font-orbitron font-bold text-white mb-6 flex items-center">
+                <Database className="h-5 w-5 text-cyan-400 mr-3" />
+                Threat Intelligence
+              </h3>
+              <div className="space-y-4">
+                <Link href="/admin/raw-articles">
+                  <button className="w-full flex items-center justify-between p-4 bg-cyan-500/10 border border-cyan-400/30 rounded-lg text-cyan-400 hover:bg-cyan-500/20 transition-all duration-200 group">
+                    <div className="flex items-center space-x-3">
+                      <Database className="h-5 w-5" />
+                      <span className="font-rajdhani font-medium">Raw Articles Feed</span>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
+                  </button>
+                </Link>
+                <Link href="/admin/eagle-nest">
+                  <button className="w-full flex items-center justify-between p-4 bg-amber-500/10 border border-amber-400/30 rounded-lg text-amber-400 hover:bg-amber-500/20 transition-all duration-200 group">
+                    <div className="flex items-center space-x-3">
+                      <Shield className="h-5 w-5" />
+                      <span className="font-rajdhani font-medium">Eagle Nest</span>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
+                  </button>
+                </Link>
+                <Link href="/scheduled-emails">
+                  <button className="w-full flex items-center justify-between p-4 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200 group">
+                    <div className="flex items-center space-x-3">
+                      <Clock className="h-5 w-5" />
+                      <span className="font-rajdhani font-medium">Scheduled Emails</span>
                     </div>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
                   </button>

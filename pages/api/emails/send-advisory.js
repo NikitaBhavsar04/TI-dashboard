@@ -5,11 +5,12 @@ import Advisory from '../../../models/Advisory';
 import ScheduledEmail from '../../../models/ScheduledEmail';
 import { verifyToken } from '../../../lib/auth';
 import nodemailer from 'nodemailer';
-import { generateDashboardStyleEmailTemplate } from '../../../lib/emailTemplateGenerator';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+
+const { generateAdvisory4EmailTemplate } = require('../../../lib/advisory4TemplateGenerator');
 
 // Helper function to read workspace HTML file
 function readWorkspaceHTML(htmlFileName) {
@@ -40,6 +41,7 @@ function readWorkspaceHTML(htmlFileName) {
 }
 
 const { agenda } = require('../../../lib/agenda');
+const appsScriptScheduler = require('../../../lib/appsScriptScheduler');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -77,10 +79,59 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Verify advisory exists
-    const advisory = await Advisory.findById(advisoryId);
-    if (!advisory) {
-      return res.status(404).json({ message: 'Advisory not found' });
+    // Detect if this is an Eagle Nest advisory (custom ID format) or Intel Feed (MongoDB ObjectId)
+    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(advisoryId);
+    let advisory;
+    
+    if (isValidObjectId) {
+      // Intel Feed advisory - load from MongoDB
+      advisory = await Advisory.findById(advisoryId);
+      if (!advisory) {
+        return res.status(404).json({ message: 'Advisory not found' });
+      }
+    } else {
+      // Eagle Nest advisory - load from JSON file
+      const fs = require('fs');
+      const path = require('path');
+      const eagleNestPath = path.resolve(process.cwd(), 'backend', 'workspace', 'eagle_nest', `${advisoryId}.json`);
+      
+      if (!fs.existsSync(eagleNestPath)) {
+        return res.status(404).json({ message: 'Eagle Nest advisory not found' });
+      }
+      
+      try {
+        const eagleNestData = JSON.parse(fs.readFileSync(eagleNestPath, 'utf8'));
+        
+        // Check if HTML file exists in backend/workspace/ or backend/workspace/email_cache/
+        let htmlFileName = null;
+        const workspacePath = path.resolve(process.cwd(), 'backend', 'workspace');
+        const emailCachePath = path.resolve(process.cwd(), 'backend', 'workspace', 'email_cache');
+        
+        // Search in workspace root first
+        let htmlFiles = fs.readdirSync(workspacePath).filter(f => f.startsWith(advisoryId) && f.endsWith('.html'));
+        
+        if (htmlFiles.length === 0 && fs.existsSync(emailCachePath)) {
+          // Search in email_cache folder
+          htmlFiles = fs.readdirSync(emailCachePath).filter(f => f.startsWith(advisoryId) && f.endsWith('.html'));
+          if (htmlFiles.length > 0) {
+            htmlFileName = `email_cache/${htmlFiles[0]}`; // Include subfolder path
+            console.log(`📧 Found Eagle Nest HTML file in cache: ${htmlFileName}`);
+          }
+        } else if (htmlFiles.length > 0) {
+          htmlFileName = htmlFiles[0]; // Use the first matching HTML file
+          console.log(`📧 Found Eagle Nest HTML file: ${htmlFileName}`);
+        }
+        
+        // Use raw Eagle Nest data - template generator handles all field name variations
+        advisory = {
+          ...eagleNestData, // Spread all original fields
+          _id: advisoryId, // Ensure _id is set
+          htmlFileName: htmlFileName // Add HTML filename if found
+        };
+      } catch (err) {
+        console.error('Error parsing Eagle Nest advisory:', err);
+        return res.status(500).json({ message: 'Failed to load Eagle Nest advisory' });
+      }
     }
 
     // Process recipients and create email jobs
@@ -213,12 +264,12 @@ export default async function handler(req, res) {
         }
         console.log(`✅ Using workspace HTML file for email body`);
       } else {
-        console.log(`⚠️ Workspace HTML file not found, falling back to generated template`);
-        emailBody = generateDashboardStyleEmailTemplate(advisory, customMessage);
+        console.log(`⚠️ Workspace HTML file not found, falling back to advisory_4 template`);
+        emailBody = generateAdvisory4EmailTemplate(advisory, customMessage);
       }
     } else {
-      console.log(`📧 No workspace HTML file specified, using generated template`);
-      emailBody = generateDashboardStyleEmailTemplate(advisory, customMessage);
+      console.log(`📧 No workspace HTML file specified, using advisory_4 template`);
+      emailBody = generateAdvisory4EmailTemplate(advisory, customMessage);
     }
 
     // Initialize tracking if enabled
@@ -271,6 +322,7 @@ export default async function handler(req, res) {
     // Schedule or send emails
     const scheduledEmails = [];
     let scheduledAt = new Date();
+    const useAppsScript = appsScriptScheduler.isAvailable() && isScheduled;
 
     if (isScheduled && scheduledDate && scheduledTime) {
       const scheduleDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
@@ -280,10 +332,22 @@ export default async function handler(req, res) {
       scheduledAt = scheduleDateTime;
     }
 
-    await agenda.start();
+    // Decide scheduling method
+    if (useAppsScript) {
+      console.log('📧 Using Google Apps Script for scheduling (cloud-based, 24/7)');
+    } else if (isScheduled) {
+      console.log('⏰ Using local Agenda.js for scheduling (requires server running)');
+      await agenda.start();
+    } else {
+      console.log('⚡ Sending emails immediately via Agenda.js');
+      await agenda.start();
+    }
 
     for (const emailJob of emailJobs) {
       try {
+        // Add email body to each job
+        emailJob.body = emailBody;
+        
         // Add tracking IDs to email job if tracking is enabled
         if (trackingRecords.length > 0) {
           emailJob.trackingData = trackingRecords.filter(tr => 
@@ -297,11 +361,52 @@ export default async function handler(req, res) {
           ...emailJob,
           scheduledDate: scheduledAt,
           sentAt: undefined, // Don't mark as sent until actually sent
-          trackingEnabled: trackingOptions.enableTracking || false
+          trackingEnabled: trackingOptions.enableTracking || false,
+          schedulingMethod: useAppsScript ? 'apps-script' : 'agenda'
         });
 
-        if (isScheduled) {
-          // Schedule the email for later
+        if (useAppsScript) {
+          // Use Google Apps Script for reliable cloud-based scheduling
+          try {
+            // Ensure all required fields are present
+            const toEmails = Array.isArray(emailJob.to) ? emailJob.to.join(', ') : emailJob.to;
+            
+            if (!toEmails || !emailJob.subject || !emailJob.body) {
+              throw new Error('Missing required email fields');
+            }
+
+            console.log(`📤 Scheduling via Apps Script for: ${toEmails}`);
+
+            const appsScriptResult = await appsScriptScheduler.scheduleEmail({
+              to: toEmails,
+              subject: emailJob.subject,
+              htmlBody: emailJob.body,
+              scheduledTime: scheduledAt.toISOString(),
+              replyTo: process.env.SMTP_USER,
+              trackingId: emailJob.trackingData?.[0]?.trackingId,
+              advisoryId: advisoryId,
+              clientId: emailJob.clientId
+            });
+
+            // Store Apps Script email ID
+            emailDoc.appsScriptEmailId = appsScriptResult.emailId;
+            await emailDoc.save();
+
+            console.log(`✅ Scheduled via Apps Script: ${appsScriptResult.emailId}`);
+
+          } catch (appsScriptError) {
+            console.error('❌ Apps Script scheduling failed, using Agenda.js instead:', appsScriptError.message);
+            // Fallback to Agenda.js
+            if (!agenda._ready) await agenda.start();
+            await agenda.schedule(scheduledAt, 'send-scheduled-advisory-email', { 
+              emailId: emailDoc._id 
+            });
+            emailDoc.schedulingMethod = 'agenda-fallback';
+            await emailDoc.save();
+          }
+
+        } else if (isScheduled) {
+          // Schedule the email for later using Agenda.js
           await agenda.schedule(scheduledAt, 'send-scheduled-advisory-email', { 
             emailId: emailDoc._id 
           });
@@ -315,7 +420,8 @@ export default async function handler(req, res) {
         scheduledEmails.push({
           id: emailDoc._id,
           to: emailJob.to,
-          clientName: emailJob.clientName || null
+          clientName: emailJob.clientName || null,
+          method: useAppsScript ? 'apps-script' : 'agenda'
         });
 
       } catch (error) {

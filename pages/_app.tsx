@@ -1,6 +1,6 @@
 import '@/styles/globals-new.css';
 import type { AppProps } from 'next/app';
-import Navbar from '@/components/NavbarClean';
+import Sidebar from '@/components/Sidebar';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
@@ -40,17 +40,18 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-tech-gradient relative overflow-hidden">
+      <div className="min-h-screen bg-tech-gradient relative overflow-hidden flex">
         {/* Subtle background texture */}
         <div className="absolute inset-0 bg-gradient-to-br from-tech-navy/20 via-transparent to-tech-purple/10 pointer-events-none"></div>
         
         {/* Animated Background - show on all pages EXCEPT advisory detail page */}
         {!isAdvisoryDetailPage && <AnimatedBackground />}
         
+        {/* Sidebar Navigation - show on all pages EXCEPT advisory detail page */}
+        {!isAdvisoryDetailPage && <Sidebar />}
+        
         {/* Main content */}
-        <div className="relative z-10">
-          {/* Only show navbar if not on advisory detail page */}
-          {!isAdvisoryDetailPage && <Navbar />}
+        <div className="relative z-10 flex-1">
           <main className="transition-all duration-300 ease-in-out">
             <Component {...pageProps} />
           </main>

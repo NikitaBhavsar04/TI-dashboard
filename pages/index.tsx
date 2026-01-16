@@ -154,12 +154,12 @@ function Home() {
                     <ArrowRight className="w-4 h-4 text-cyan-400 group-hover:translate-x-1 group-hover:text-cyan-300 transition-all duration-300" />
                   </div>
                 </Link> */}
-                <Link href="/login" className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-2 border-purple-400/50 rounded-xl backdrop-blur-md transition-all duration-300 hover:border-purple-400 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:scale-105 transform">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600/30 to-pink-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <Link href="/login" className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border-2 border-cyan-400/50 rounded-xl backdrop-blur-md transition-all duration-300 hover:border-cyan-400 hover:shadow-[0_0_30px_rgba(6,182,212,0.4)] hover:scale-105 transform">
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/30 to-blue-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="relative flex items-center gap-3 text-white font-orbitron font-semibold">
-                    <Shield className="w-5 h-5 text-purple-400 group-hover:text-purple-300 group-hover:drop-shadow-[0_0_12px_rgba(168,85,247,0.8)] transition-all duration-300" />
-                    <span className="group-hover:text-purple-100 transition-colors duration-300">Access Platform</span>
-                    <ArrowRight className="w-4 h-4 text-purple-400 group-hover:translate-x-1 group-hover:text-purple-300 transition-all duration-300" />
+                    <Shield className="w-5 h-5 text-cyan-400 group-hover:text-cyan-300 group-hover:drop-shadow-[0_0_12px_rgba(6,182,212,0.8)] transition-all duration-300" />
+                    <span className="group-hover:text-cyan-100 transition-colors duration-300">Access Platform</span>
+                    <ArrowRight className="w-4 h-4 text-cyan-400 group-hover:translate-x-1 group-hover:text-cyan-300 transition-all duration-300" />
                   </div>
                 </Link>
               </div>

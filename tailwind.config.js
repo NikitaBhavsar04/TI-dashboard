@@ -7,6 +7,18 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'sans': ['Hanken Grotesk', 'Helvetica', 'Arial', 'sans-serif'],
+        'primary': ['Hanken Grotesk', 'Helvetica', 'Arial', 'sans-serif'],
+        'roboto': ['Roboto', 'sans-serif'],
+        'secondary': ['Roboto', 'sans-serif'],
+        'orbitron': ['Hanken Grotesk', 'Orbitron', 'sans-serif'],
+        'rajdhani': ['Hanken Grotesk', 'Rajdhani', 'sans-serif'],
+        'display': ['Hanken Grotesk', 'Orbitron', 'sans-serif'],
+        'body': ['Hanken Grotesk', 'Rajdhani', 'sans-serif'],
+        'mono': ['Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', 'JetBrains Mono', 'monospace'],
+        'system': ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+      },
       colors: {
         'cyber-blue': '#00b4d8',
         'cyber-dark': '#0a0e27',
