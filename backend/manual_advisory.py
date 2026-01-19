@@ -7,6 +7,7 @@ MANUAL ADVISORY GENERATION PIPELINE (SOC-grade)
 """
 
 import datetime
+import os
 from typing import Dict, List
 
 from opensearchpy import OpenSearch
@@ -26,8 +27,11 @@ from llm.mbc import extract_mbc
 
 cfg = read_yaml("config.yaml")
 
-OPENSEARCH_HOST = cfg.get("opensearch", {}).get("host", "localhost")
-OPENSEARCH_PORT = cfg.get("opensearch", {}).get("port", 9200)
+# Use environment variables as fallback for OpenSearch configuration
+OPENSEARCH_HOST = os.getenv("OPENSEARCH_HOST", cfg.get("opensearch", {}).get("host", "localhost"))
+OPENSEARCH_PORT = int(os.getenv("OPENSEARCH_PORT", cfg.get("opensearch", {}).get("port", 9200)))
+OPENSEARCH_USERNAME = os.getenv("OPENSEARCH_USERNAME", cfg.get("opensearch", {}).get("username", ""))
+OPENSEARCH_PASSWORD = os.getenv("OPENSEARCH_PASSWORD", cfg.get("opensearch", {}).get("password", ""))
 
 RAW_INDEX = cfg.get("opensearch", {}).get("raw_index", "ti-raw-articles")
 ADV_INDEX = cfg.get("opensearch", {}).get("advisory_index", "ti-generated-advisories")
@@ -40,15 +44,22 @@ TLP_DEFAULT = report_cfg.get("tlp", "AMBER")
 # OPENSEARCH CLIENT
 # ============================================================
 
-os_client = OpenSearch(
-    hosts=[{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}],
-    use_ssl=False,
-    verify_certs=False,
-    http_compress=True,
-    timeout=30,
-    max_retries=3,
-    retry_on_timeout=True,
-)
+# Prepare OpenSearch client configuration
+opensearch_config = {
+    "hosts": [{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}],
+    "use_ssl": False,
+    "verify_certs": False,
+    "http_compress": True,
+    "timeout": 30,
+    "max_retries": 3,
+    "retry_on_timeout": True,
+}
+
+# Add authentication if provided
+if OPENSEARCH_USERNAME and OPENSEARCH_PASSWORD:
+    opensearch_config["http_auth"] = (OPENSEARCH_USERNAME, OPENSEARCH_PASSWORD)
+
+os_client = OpenSearch(**opensearch_config)
 
 # ============================================================
 # HELPERS
@@ -149,19 +160,32 @@ def generate_advisory_for_article(article_id: str) -> dict:
     logger.info(f"[DEBUG] Normalized IOCs: {iocs}")
 
     # --------------------------------------------------------
-    # LLM Summary
+    # LLM Summary (with fallback)
     # --------------------------------------------------------
-    advisory = summarize_item(
-        item={
+    try:
+        advisory = summarize_item(
+            item={
+                "title": article["title"],
+                "summary": article.get("summary", ""),
+                "link": article["article_url"],
+                "nested_links": article.get("nested_links", []),
+                "cves": article.get("cves", []),
+                "source": article.get("source"),
+            },
+            source_text=source_text,
+        )
+    except Exception as llm_error:
+        logger.warning(f"[LLM] LLM summary failed, using fallback: {llm_error}")
+        # Fallback advisory structure when LLM is not available
+        advisory = {
             "title": article["title"],
-            "summary": article.get("summary", ""),
-            "link": article["article_url"],
-            "nested_links": article.get("nested_links", []),
+            "exec_summary": article.get("summary", "Summary not available - LLM service unavailable."),
+            "threat_type": "Unknown",
+            "affected_product": "Not specified",
+            "vendor": "Unknown",
             "cves": article.get("cves", []),
-            "source": article.get("source"),
-        },
-        source_text=source_text,
-    )
+            "tlp": TLP_DEFAULT
+        }
 
     exec_summary_parts = [
         p.strip()
@@ -189,19 +213,27 @@ def generate_advisory_for_article(article_id: str) -> dict:
         patch_details = [patch_details]
 
     # --------------------------------------------------------
-    # MITRE + MBC
+    # MITRE + MBC (with fallback)
     # --------------------------------------------------------
-    mitre = map_to_tactics(
-        advisory.get("attack_keywords", []),
-        f"{advisory.get('title','')} {advisory.get('exec_summary','')}",
-    )
+    try:
+        mitre = map_to_tactics(
+            advisory.get("attack_keywords", []),
+            f"{advisory.get('title','')} {advisory.get('exec_summary','')}",
+        )
+    except Exception as mitre_error:
+        logger.warning(f"[MITRE] MITRE mapping failed, using empty: {mitre_error}")
+        mitre = []
 
-    mbc = extract_mbc(
-        title=advisory.get("title", ""),
-        threat_type=advisory.get("threat_type", ""),
-        exec_summary=advisory.get("exec_summary", ""),
-        mitre=mitre,
-    )
+    try:
+        mbc = extract_mbc(
+            title=advisory.get("title", ""),
+            threat_type=advisory.get("threat_type", ""),
+            exec_summary=advisory.get("exec_summary", ""),
+            mitre=mitre,
+        )
+    except Exception as mbc_error:
+        logger.warning(f"[MBC] MBC extraction failed, using empty: {mbc_error}")
+        mbc = []
 
     # --------------------------------------------------------
     # CVSS (STRICT-SAFE)

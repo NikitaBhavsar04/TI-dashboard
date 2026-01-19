@@ -61,38 +61,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const backendPath = path.resolve(process.cwd(), 'backend');
     const scriptPath = path.join(backendPath, 'manual_advisory.py');
 
+    console.log('[MANUAL-ADVISORY] Generating advisory for article:', articleId);
+    console.log('[MANUAL-ADVISORY] Backend path:', backendPath);
+    console.log('[MANUAL-ADVISORY] Script path:', scriptPath);
+    console.log('[MANUAL-ADVISORY] OpenSearch config:', {
+      host: process.env.OPENSEARCH_HOST || 'localhost',
+      port: process.env.OPENSEARCH_PORT || '9200',
+      username: process.env.OPENSEARCH_USERNAME ? '***' : '(empty)',
+      password: process.env.OPENSEARCH_PASSWORD ? '***' : '(empty)'
+    });
+
     // Check if Python script exists
     if (!fs.existsSync(scriptPath)) {
-      console.log('[MANUAL-ADVISORY] Python script not found, using fallback');
-      
-      const fallbackAdvisory = {
-        advisoryId: articleId,
-        title: `Security Advisory - Article ${articleId}`,
-        summary: 'Advisory generated without Python backend. Please customize.',
-        severity: 'Medium',
-        category: 'General',
-        description: 'Advisory generated from article analysis. Requires manual review.',
-        content: 'Advisory generated from article analysis. Requires manual review and customization.',
-        author: 'TI-Dashboard System',
-        recommendations: [
-          'Review the source article for specific details',
-          'Customize this advisory based on the threat intelligence'
-        ],
-        references: [],
-        tags: ['auto-generated', 'fallback'],
-        iocs: []
-      };
-
-      return res.status(200).json({ 
-        success: true, 
-        advisory: fallbackAdvisory,
-        note: 'Generated without Python backend. Please review and customize.'
-      });
+      console.error('[MANUAL-ADVISORY] Python script not found:', scriptPath);
+      throw new Error(`Python script not found: ${scriptPath}`);
     }
 
     const python = spawn('python', [scriptPath, articleId], {
       cwd: backendPath,
-      env: { ...process.env },
+      env: { 
+        ...process.env,
+        OPENSEARCH_HOST: process.env.OPENSEARCH_HOST || 'localhost',
+        OPENSEARCH_PORT: process.env.OPENSEARCH_PORT || '9200',
+        OPENSEARCH_USERNAME: process.env.OPENSEARCH_USERNAME || '',
+        OPENSEARCH_PASSWORD: process.env.OPENSEARCH_PASSWORD || ''
+      },
     });
 
     let stdout = '';
@@ -109,19 +102,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await new Promise((resolve, reject) => {
       python.on('close', (code) => {
+        console.log(`[MANUAL-ADVISORY] Python process finished with code: ${code}`);
         if (code === 0) {
           resolve(true);
         } else {
           console.error(`[MANUAL-ADVISORY] Process failed with code ${code}`);
           console.error(`[MANUAL-ADVISORY] STDERR: ${stderr}`);
           console.error(`[MANUAL-ADVISORY] STDOUT: ${stdout}`);
-          reject(new Error(`Process exited with code ${code}. Error: ${stderr}`));
+          reject(new Error(`Process exited with code ${code}. Error: ${stderr || 'Unknown error'}`));
         }
       });
 
       python.on('error', (err) => {
         console.error(`[MANUAL-ADVISORY] Process error:`, err);
-        // If Python fails, fall back to basic advisory
         console.log('[MANUAL-ADVISORY] Python failed, using fallback method');
         
         const fallbackAdvisory = {

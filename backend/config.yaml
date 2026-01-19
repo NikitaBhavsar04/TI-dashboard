@@ -218,5 +218,14 @@ report:
   tlp: "AMBER"
   advisory_id_prefix: "SOC-TA"
   max_advisories_per_run: 3
+
+opensearch:
+  host: "172.16.16.183"
+  port: 9200
+  username: ""
+  password: ""
+  raw_index: "ti-raw-articles"
+  advisory_index: "ti-generated-advisories"
+
 #hf_token:"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"
 #open_router: "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"

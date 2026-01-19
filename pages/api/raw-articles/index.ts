@@ -39,7 +39,7 @@ export default async function handler(
     try {
       // Query OpenSearch for raw articles
       const searchParams = {
-        index: OPENSEARCH_INDEX,
+        index: 'ti-raw-articles',
         body: {
           query: {
             match_all: {}
