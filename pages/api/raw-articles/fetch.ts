@@ -24,7 +24,7 @@ export default async function handler(
 
   if (req.method === 'POST') {
     try {
-      const scriptPath = path.join(process.cwd(), 'backend', 'raw_article_fetcher.py');
+      const scriptPath = path.join(process.cwd(), 'backend', 'all_feeds.py');
       const backendPath = path.join(process.cwd(), 'backend');
       
       console.log('[RAW-ARTICLES] Script path:', scriptPath);
