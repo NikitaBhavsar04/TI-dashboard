@@ -32,20 +32,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       // Fallback: Generate a basic advisory structure
       const fallbackAdvisory = {
-        id: articleId,
+        advisoryId: articleId,
         title: `Security Advisory - Article ${articleId}`,
         summary: 'This advisory was generated in a serverless environment. Please review and customize the content.',
         severity: 'Medium',
         category: 'General',
         description: 'Advisory generated from article analysis. Requires manual review.',
+        content: 'Advisory generated from article analysis. Requires manual review and customization.',
+        author: 'TI-Dashboard System',
         recommendations: [
           'Review the source article for specific details',
           'Customize this advisory based on the threat intelligence',
           'Update severity and category as appropriate'
         ],
         references: [],
-        created: new Date().toISOString(),
-        generated_by: 'TI-Dashboard (Serverless Mode)'
+        tags: ['auto-generated', 'serverless'],
+        iocs: []
       };
 
       return res.status(200).json({ 
@@ -64,19 +66,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log('[MANUAL-ADVISORY] Python script not found, using fallback');
       
       const fallbackAdvisory = {
-        id: articleId,
+        advisoryId: articleId,
         title: `Security Advisory - Article ${articleId}`,
         summary: 'Advisory generated without Python backend. Please customize.',
         severity: 'Medium',
         category: 'General',
         description: 'Advisory generated from article analysis. Requires manual review.',
+        content: 'Advisory generated from article analysis. Requires manual review and customization.',
+        author: 'TI-Dashboard System',
         recommendations: [
           'Review the source article for specific details',
           'Customize this advisory based on the threat intelligence'
         ],
         references: [],
-        created: new Date().toISOString(),
-        generated_by: 'TI-Dashboard (Fallback Mode)'
+        tags: ['auto-generated', 'fallback'],
+        iocs: []
       };
 
       return res.status(200).json({ 
@@ -121,19 +125,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('[MANUAL-ADVISORY] Python failed, using fallback method');
         
         const fallbackAdvisory = {
-          id: articleId,
+          advisoryId: articleId,
           title: `Security Advisory - Article ${articleId}`,
           summary: 'Advisory generated after Python execution failed. Please customize.',
           severity: 'Medium',
           category: 'General',
           description: 'Advisory generated from article analysis. Requires manual review.',
+          content: 'Advisory generated from article analysis. Requires manual review and customization.',
+          author: 'TI-Dashboard System',
           recommendations: [
             'Review the source article for specific details',
             'Customize this advisory based on the threat intelligence'
           ],
           references: [],
-          created: new Date().toISOString(),
-          generated_by: 'TI-Dashboard (Error Recovery Mode)'
+          tags: ['auto-generated', 'error-recovery'],
+          iocs: []
         };
 
         return res.status(200).json({ 
@@ -159,19 +165,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       // Fallback if JSON parsing fails
       const fallbackAdvisory = {
-        id: articleId,
+        advisoryId: articleId,
         title: `Security Advisory - Article ${articleId}`,
         summary: 'Advisory generated but JSON parsing failed. Please customize.',
         severity: 'Medium',
         category: 'General',
         description: 'Advisory generated from article analysis. Requires manual review.',
+        content: 'Advisory generated from article analysis. Requires manual review and customization.',
+        author: 'TI-Dashboard System',
         recommendations: [
           'Review the source article for specific details',
           'Check the Python script output for details'
         ],
         references: [],
-        created: new Date().toISOString(),
-        generated_by: 'TI-Dashboard (Parse Error Recovery)',
+        tags: ['auto-generated', 'parse-error'],
+        iocs: [],
         raw_output: stdout
       };
 
@@ -187,19 +195,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     // Final fallback for any other errors
     const fallbackAdvisory = {
-      id: articleId,
+      advisoryId: articleId,
       title: `Security Advisory - Article ${articleId}`,
       summary: 'Advisory generated in error recovery mode. Please customize.',
       severity: 'Medium',
       category: 'General',
       description: 'Advisory generated from article analysis. Requires manual review.',
+      content: 'Advisory generated from article analysis. Requires manual review and customization.',
+      author: 'TI-Dashboard System',
       recommendations: [
         'Review the source article for specific details',
         'Customize this advisory based on the threat intelligence'
       ],
       references: [],
-      created: new Date().toISOString(),
-      generated_by: 'TI-Dashboard (Final Fallback)'
+      tags: ['auto-generated', 'final-fallback'],
+      iocs: []
     };
 
     return res.status(200).json({ 
