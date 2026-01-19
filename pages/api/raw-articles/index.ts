@@ -1,7 +1,20 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyToken } from '@/lib/auth';
-import fs from 'fs';
-import path from 'path';
+import { Client } from '@opensearch-project/opensearch';
+
+// OpenSearch client configuration
+const opensearchClient = new Client({
+  node: `http://${process.env.OPENSEARCH_HOST || 'localhost'}:${process.env.OPENSEARCH_PORT || 9200}`,
+  auth: process.env.OPENSEARCH_USERNAME && process.env.OPENSEARCH_PASSWORD ? {
+    username: process.env.OPENSEARCH_USERNAME,
+    password: process.env.OPENSEARCH_PASSWORD,
+  } : undefined,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
+const OPENSEARCH_INDEX = 'ti-raw-articles';
 
 export default async function handler(
   req: NextApiRequest,
@@ -24,48 +37,54 @@ export default async function handler(
 
   if (req.method === 'GET') {
     try {
-      // Read raw_articles.json from workspace
-      const filePath = path.join(process.cwd(), 'backend', 'workspace', 'raw_articles.json');
-      
-      if (!fs.existsSync(filePath)) {
-        return res.status(200).json({ 
-          articles: [], 
-          message: 'No articles found. Run the fetcher first.' 
-        });
-      }
+      // Query OpenSearch for raw articles
+      const searchParams = {
+        index: OPENSEARCH_INDEX,
+        body: {
+          query: {
+            match_all: {}
+          },
+          sort: [
+            {
+              fetched_at: {
+                order: 'desc'
+              }
+            }
+          ],
+          size: 1000 // Limit to 1000 articles, adjust as needed
+        }
+      };
 
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const response = await opensearchClient.search(searchParams);
       
-      // Handle empty or invalid JSON
-      if (!fileContent || fileContent.trim() === '') {
-        console.log('[RAW-ARTICLES] File is empty, initializing with empty array');
-        fs.writeFileSync(filePath, '[]', 'utf-8');
-        return res.status(200).json({ 
-          articles: [], 
-          message: 'No articles found. Run the fetcher first.' 
-        });
-      }
-      
-      let articles;
-      try {
-        articles = JSON.parse(fileContent);
-      } catch (parseError) {
-        console.error('[RAW-ARTICLES] JSON parse error, resetting file:', parseError);
-        fs.writeFileSync(filePath, '[]', 'utf-8');
-        return res.status(200).json({ 
-          articles: [], 
-          message: 'Invalid data found. File has been reset. Please run the fetcher.' 
-        });
-      }
+      const articles = response.body.hits.hits.map((hit: any) => ({
+        id: hit._id,
+        ...hit._source
+      }));
 
       return res.status(200).json({ 
         articles,
         count: articles.length,
-        lastFetched: fs.statSync(filePath).mtime
+        total: response.body.hits.total.value,
+        lastFetched: articles.length > 0 ? articles[0].fetched_at : null
       });
-    } catch (error) {
-      console.error('Error reading raw articles:', error);
-      return res.status(500).json({ error: 'Failed to read raw articles' });
+    } catch (error: any) {
+      console.error('Error querying OpenSearch:', error);
+      
+      // Handle case where index doesn't exist yet
+      if (error.body?.error?.type === 'index_not_found_exception') {
+        return res.status(200).json({ 
+          articles: [], 
+          count: 0,
+          total: 0,
+          message: 'No articles found. Index not created yet. Run the fetcher first.' 
+        });
+      }
+      
+      return res.status(500).json({ 
+        error: 'Failed to fetch articles from OpenSearch',
+        details: error.message 
+      });
     }
   } else {
     res.setHeader('Allow', ['GET']);
