@@ -3,6 +3,8 @@ import { getUserFromRequest } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import ScheduledEmail from '@/models/ScheduledEmail';
 import Advisory from '@/models/Advisory';
+import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -34,32 +36,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ message: 'Advisory not found' });
     }
 
-    // Update scheduled email status
-    scheduledEmail.status = 'sent';
-    scheduledEmail.sentAt = new Date();
-    await scheduledEmail.save();
-
-    return res.status(200).json({
-      success: true,
-      message: 'Email sent successfully',
-      emailId: scheduledEmail._id
+    // Create nodemailer transporter
+    const transporter = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
     });
 
-  } catch (error) {
-    console.error('Error sending scheduled email:', error);
-    return res.status(500).json({ 
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? String(error) : undefined 
-    });
-  }
-}
-                    ${advisory.references.map((ref: string) => `<li><a href="${ref}" target="_blank">${ref}</a></li>`).join('')}
-                  </ul>
-                </div>
-              ` : ''}
+    // Create email HTML content
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Threat Advisory: ${advisory.title}</title>
+        </head>
+        <body>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1>Threat Advisory: ${advisory.title}</h1>
+            <p><strong>Severity:</strong> ${advisory.severity}</p>
+            <p><strong>Date:</strong> ${new Date(advisory.date).toLocaleDateString()}</p>
+            
+            <div>
+              <h3>Description:</h3>
+              <p>${advisory.description}</p>
             </div>
             
-            <div class="footer">
+            ${advisory.affectedProducts && advisory.affectedProducts.length > 0 ? `
+              <div>
+                <h3>Affected Products:</h3>
+                <ul>
+                  ${advisory.affectedProducts.map((product: string) => `<li>${product}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            ${advisory.references && advisory.references.length > 0 ? `
+              <div>
+                <h3>References:</h3>
+                <ul>
+                  ${advisory.references.map((ref: string) => `<li><a href="${ref}" target="_blank">${ref}</a></li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            <div style="margin-top: 30px; padding: 20px; background-color: #f5f5f5; border-radius: 5px;">
               <p>This is an automated threat advisory from ThreatWatch</p>
               <p>Stay vigilant and keep your systems updated</p>
               <p><em>Sent on ${new Date().toLocaleString()}</em></p>
