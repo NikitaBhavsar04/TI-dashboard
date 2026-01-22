@@ -32,7 +32,7 @@ function readWorkspaceHTML(htmlFileName) {
     }
     
     const htmlContent = fs.readFileSync(workspacePath, 'utf8');
-    console.log(`✅ Successfully read workspace HTML file: ${htmlFileName}`);
+    console.log(`Successfully read workspace HTML file: ${htmlFileName}`);
     return htmlContent;
   } catch (error) {
     console.error(`Error reading workspace HTML file:`, error);
@@ -262,7 +262,7 @@ export default async function handler(req, res) {
         } else {
           emailBody = workspaceHTML;
         }
-        console.log(`✅ Using workspace HTML file for email body`);
+        console.log(`Using workspace HTML file for email body`);
       } else {
         console.log(`⚠️ Workspace HTML file not found, falling back to advisory_4 template`);
         emailBody = generateAdvisory4EmailTemplate(advisory, customMessage);
@@ -283,7 +283,7 @@ export default async function handler(req, res) {
         const db = mongoose.connection.db;
         const trackingCollection = db.collection('emailTracking');
 
-        console.log(`🔗 Database connection state: ${mongoose.connection.readyState}`);
+        console.log(` Database connection state: ${mongoose.connection.readyState}`);
         console.log(`🗄️ Database name: ${db.databaseName}`);
 
         for (const emailJob of emailJobs) {
@@ -301,7 +301,7 @@ export default async function handler(req, res) {
 
             console.log(`🔄 Attempting to insert tracking record for: ${email}`);
             const insertResult = await trackingCollection.insertOne(trackingRecord);
-            console.log(`✅ Insert result: ${insertResult.insertedId ? 'SUCCESS' : 'FAILED'} - ID: ${insertResult.insertedId}`);
+            console.log(`Insert result: ${insertResult.insertedId ? 'SUCCESS' : 'FAILED'} - ID: ${insertResult.insertedId}`);
             
             // Verify the record was actually saved
             const verifyRecord = await trackingCollection.findOne({ trackingId });
@@ -311,7 +311,7 @@ export default async function handler(req, res) {
             console.log(`📊 Tracking record created: ${email} -> ${trackingId}`);
           }
         }
-        console.log(`✅ Created ${trackingRecords.length} tracking records`);
+        console.log(`Created ${trackingRecords.length} tracking records`);
       } catch (error) {
         console.error('Failed to initialize tracking:', error);
         console.error('Error details:', error.stack);
@@ -392,7 +392,7 @@ export default async function handler(req, res) {
             emailDoc.appsScriptEmailId = appsScriptResult.emailId;
             await emailDoc.save();
 
-            console.log(`✅ Scheduled via Apps Script: ${appsScriptResult.emailId}`);
+            console.log(`Scheduled via Apps Script: ${appsScriptResult.emailId}`);
 
           } catch (appsScriptError) {
             console.error('❌ Apps Script scheduling failed, using Agenda.js instead:', appsScriptError.message);

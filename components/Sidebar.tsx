@@ -51,13 +51,13 @@ const TooltipPortal: React.FC<{ content: string; children: React.ReactNode }> = 
 
   return (
     <>
-      <div ref={ref} className="w-full flex justify-center">
+      <div ref={ref} className="w-full flex justify-center" style={{ pointerEvents: 'auto' }}>
         {children}
       </div>
       {visible && mounted && typeof window !== 'undefined' &&
         createPortal(
           <div
-            className="fixed px-4 py-2 rounded-lg bg-gray-800 border-2 border-cyan-400/50 text-sm font-medium text-cyan-200 shadow-2xl shadow-cyan-500/30 pointer-events-none"
+            className="fixed px-4 py-2 rounded-lg bg-gray-800 border-2 border-cyan-400/50 text-sm font-medium text-cyan-200 shadow-2xl shadow-cyan-500/30"
             style={{
               top: `${pos.y}px`,
               left: `${pos.x}px`,
@@ -145,7 +145,7 @@ const menuItems = [
 
 
       {/* Navigation Menu - Icon with optional text */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2">
+      <nav className="flex-1 overflow-y-auto py-4 px-2 pb-6" style={{ minHeight: 0 }}>
         <div className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -153,22 +153,28 @@ const menuItems = [
             const linkContent = (
               <Link
                 href={item.path}
-                onClick={() => setIsMobileOpen(false)}
-                className={`
-                  group relative flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-3 py-3 rounded-lg
-                  transition-all duration-300
-                  ${active 
-                    ? 'bg-cyan-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20' 
-                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
-                  }
-                `}
+                passHref
+                legacyBehavior
               >
-                <Icon className={`h-7 w-7 transition-all duration-300 ${active ? '' : 'group-hover:scale-110'} ${isCollapsed ? '' : 'flex-shrink-0'}`} />
-                {!isCollapsed && (
-                  <span className="font-medium text-sm tracking-wide whitespace-nowrap">
-                    {item.label}
-                  </span>
-                )}
+                <a
+                  onClick={() => setIsMobileOpen(false)}
+                  className={`
+                    group relative flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-3 py-3 rounded-lg
+                    transition-all duration-300 cursor-pointer
+                    ${active 
+                      ? 'bg-cyan-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20' 
+                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+                    }
+                  `}
+                  style={{ pointerEvents: 'auto', position: 'relative', zIndex: 1 }}
+                >
+                  <Icon className={`h-7 w-7 transition-all duration-300 ${active ? '' : 'group-hover:scale-110'} ${isCollapsed ? '' : 'flex-shrink-0'}`} />
+                  {!isCollapsed && (
+                    <span className="font-medium text-sm tracking-wide whitespace-nowrap">
+                      {item.label}
+                    </span>
+                  )}
+                </a>
               </Link>
             );
             
@@ -185,34 +191,22 @@ const menuItems = [
 
       {/* User & Logout */}
       {isAuthenticated && (
-        <div className="border-t border-gray-800/50 p-4 space-y-3">
-          {/* User Info */}
-          {isCollapsed ? (
-            <TooltipPortal content={`${user?.username || 'User'} (${user?.role || 'Member'})`}>
-              <div className="flex items-center justify-center p-3 rounded-lg bg-slate-800/50 backdrop-blur-sm border border-slate-700/50">
-                <div className="relative">
-                  <User className="h-6 w-6 text-blue-400" />
-                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-slate-900"></div>
-                </div>
-              </div>
-            </TooltipPortal>
-          ) : (
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 backdrop-blur-sm border border-slate-700/50">
-              <div className="relative">
-                <User className="h-6 w-6 text-blue-400" />
-                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-slate-900"></div>
-              </div>
-              <div className="flex flex-col flex-1 min-w-0">
-                <span className="text-sm font-medium text-white truncate">
-                  {user?.username || 'User'}
-                </span>
-                <span className="text-xs text-slate-400 capitalize">
-                  {user?.role || 'Member'}
-                </span>
-              </div>
-            </div>
+        <div className="border-t border-gray-800/50 p-4 space-y-3" style={{ flexShrink: 0 }}>
+          {/* Admin Panel (User icon) */}
+          {isAdmin && (
+            isCollapsed ? (
+              <TooltipPortal content="Admin Panel">
+                <Link href="/admin" onClick={() => setIsMobileOpen(false)} className="w-full flex items-center justify-center p-3 rounded-lg bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 text-blue-400 hover:text-white transition-all duration-300">
+                  <User className="h-6 w-6" />
+                </Link>
+              </TooltipPortal>
+            ) : (
+              <Link href="/admin" onClick={() => setIsMobileOpen(false)} className="w-full flex items-center gap-2 justify-center p-3 rounded-lg bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 text-blue-400 hover:text-white transition-all duration-300">
+                <User className="h-5 w-5" />
+                <span className="font-medium text-sm">Admin Panel</span>
+              </Link>
+            )
           )}
-          
           {/* Logout Button */}
           {isCollapsed ? (
             <TooltipPortal content="Logout">
@@ -235,30 +229,7 @@ const menuItems = [
         </div>
       )}
 
-      {!isAuthenticated && (
-        <div className="border-t border-gray-800/50 p-4">
-          {isCollapsed ? (
-            <TooltipPortal content="Login">
-              <Link
-                href="/login"
-                onClick={() => setIsMobileOpen(false)}
-                className="w-full flex items-center justify-center px-4 py-3 rounded-lg bg-gradient-to-r from-cyan-600/20 to-cyan-500/20 border-2 border-cyan-500/30 backdrop-blur-md text-cyan-300 hover:text-white hover:border-cyan-400 transition-all duration-300 group"
-              >
-                <User className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
-              </Link>
-            </TooltipPortal>
-          ) : (
-            <Link
-              href="/login"
-              onClick={() => setIsMobileOpen(false)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-cyan-600/20 to-cyan-500/20 border-2 border-cyan-500/30 backdrop-blur-md text-cyan-300 hover:text-white hover:border-cyan-400 transition-all duration-300 group"
-            >
-              <User className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
-              <span className="font-semibold text-sm">Login</span>
-            </Link>
-          )}
-        </div>
-      )}
+      {/* Removed duplicate non-clickable admin logo at the bottom */}
     </>
   );
 
@@ -298,7 +269,7 @@ const menuItems = [
         style={{ isolation: 'unset' }}
       >
         {/* Enhanced Background Pattern */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 opacity-10 overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-500/5"></div>
           <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-cyan-500/5 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-1/4 right-1/4 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl animate-pulse"></div>

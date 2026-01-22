@@ -5,7 +5,7 @@ require('dotenv').config();
 async function checkTrackingData() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     const db = mongoose.connection.db;
     const trackingCollection = db.collection('emailTracking');

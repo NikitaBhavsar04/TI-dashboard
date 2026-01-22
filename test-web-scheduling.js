@@ -29,7 +29,7 @@ const testScheduling = async () => {
     
     if (response.ok) {
       const result = await response.json();
-      console.log('✅ Email scheduled successfully:', result);
+      console.log('Email scheduled successfully:', result);
       
       console.log('\n⏳ Waiting for scheduled time...');
       const waitTime = scheduleTime.getTime() - Date.now() + 10000; // Wait extra 10 seconds
@@ -37,7 +37,7 @@ const testScheduling = async () => {
       setTimeout(async () => {
         console.log('\n📊 Checking if email was sent...');
         // You can add code here to check the database for the email status
-        console.log('✅ Check your email inbox!');
+        console.log('Check your email inbox!');
       }, waitTime);
       
     } else {

@@ -11,7 +11,7 @@ try:
 
     # 1️⃣ Ping OpenSearch
     if client.ping():
-        print("✅ OpenSearch is reachable (PING OK)")
+        print("OpenSearch is reachable (PING OK)")
     else:
         print("❌ Ping failed")
         sys.exit(1)
@@ -29,7 +29,7 @@ try:
     print(f"Cluster name: {info['cluster_name']}")
     print(f"OpenSearch version: {info['version']['number']}")
 
-    print("\n🎯 Connection test SUCCESSFUL")
+    print("\nConnection test SUCCESSFUL")
 
 except Exception as e:
     print("\n❌ Connection test FAILED")

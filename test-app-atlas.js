@@ -10,16 +10,16 @@ async function testApplicationWithAtlas() {
   try {
     // Connect using your application's connection logic
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to Atlas using application logic');
+    console.log('Connected to Atlas using application logic');
     
     // Test fetching advisories (your main data)
     console.log('\n📋 Testing Advisory data:');
     const advisories = await Advisory.find().limit(5);
-    console.log(`✅ Found ${advisories.length} advisories`);
+    console.log(`Found ${advisories.length} advisories`);
     
     if (advisories.length > 0) {
       const firstAdvisory = advisories[0];
-      console.log('📄 Sample advisory:');
+      console.log(' Sample advisory:');
       console.log(`   Title: ${firstAdvisory.title}`);
       console.log(`   Severity: ${firstAdvisory.severity}`);
       console.log(`   Published: ${firstAdvisory.publishedDate}`);

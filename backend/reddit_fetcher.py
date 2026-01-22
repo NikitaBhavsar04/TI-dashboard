@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Reddit → Raw Article Fetcher (SOC-grade, OpenSearch-backed, hardened)
+Reddit → Raw Article Fetcher (OpenSearch-backed, hardened)
+- nested_links matches mapping: nested[{url(keyword), text(text)}] [web:67]
+- inline-only link extraction from Readability main content [web:83]
 """
+
 
 import sys
 import os
@@ -10,26 +13,29 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import time
 import socket
 from datetime import datetime
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin, urlunparse, parse_qsl, urlencode
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Dict
+from typing import List, Dict, Optional, Set
 
 import requests
-from opensearchpy import OpenSearch, helpers
+from bs4 import BeautifulSoup
+from readability import Document
+from opensearchpy import helpers
+from utils.opensearch_client import get_opensearch_client
+from dotenv import load_dotenv
 
 from utils.common import logger, sha1, read_yaml
 import article_utils
 
 # -------------------------------------------------------------------
-# HARD NETWORK SAFETY
+# ENV + HARD NETWORK SAFETY
 # -------------------------------------------------------------------
-
+load_dotenv()
 socket.setdefaulttimeout(10)
 
 # -------------------------------------------------------------------
 # CONFIG
 # -------------------------------------------------------------------
-
 cfg = read_yaml("config.yaml")
 
 reddit_cfg = cfg.get("reddit", {})
@@ -49,31 +55,14 @@ MAX_WORKERS = 6
 HTML_TIMEOUT = 12
 PER_HOST_MIN_DELAY = 0.2
 
-# -------------------------------------------------------------------
-# OPENSEARCH CONFIG (SAME INDEX AS RSS + TELEGRAM)
-# -------------------------------------------------------------------
-
-OPENSEARCH_HOST = cfg.get("opensearch", {}).get("host", "localhost")
-OPENSEARCH_PORT = cfg.get("opensearch", {}).get("port", 9200)
-INDEX = cfg.get("opensearch", {}).get("index", "raw-articles")
-
-os_client = OpenSearch(
-    hosts=[{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}],
-    use_ssl=False,
-    verify_certs=False,
-    http_compress=True,
-    timeout=30,
-    max_retries=3,
-    retry_on_timeout=True,
-)
+INDEX = "ti-raw-articles"
+os_client = get_opensearch_client()
 
 # -------------------------------------------------------------------
 # HTTP SESSION
 # -------------------------------------------------------------------
-
-HEADERS = {"User-Agent": REDDIT_USER_AGENT}
 session = requests.Session()
-session.headers.update(HEADERS)
+session.headers.update({"User-Agent": REDDIT_USER_AGENT})
 
 _last_host_access: dict[str, float] = {}
 
@@ -86,9 +75,87 @@ def _rate_limit_host(url: str):
     _last_host_access[host] = time.time()
 
 # -------------------------------------------------------------------
+# URL UTILS
+# -------------------------------------------------------------------
+TRACKING_PARAMS = {
+    "utm_source","utm_medium","utm_campaign","utm_term","utm_content",
+    "gclid","fbclid","mc_cid","mc_eid"
+}
+
+BLOCKED_EXTENSIONS = (".jpg",".jpeg",".png",".gif",".webp",".mp4",".pdf",".zip",".exe",".dmg")
+INLINE_PARENTS = {"p", "li", "blockquote", "h1", "h2", "h3", "h4"}
+BAD_PATH_PREFIXES = ("/tag/", "/author/", "/category/", "/newsletter", "/gsearch")
+
+def normalize_url(u: str) -> str:
+    try:
+        p = urlparse(u)
+        q = [(k, v) for (k, v) in parse_qsl(p.query, keep_blank_values=True) if k.lower() not in TRACKING_PARAMS]
+        q = sorted(q, key=lambda kv: kv[0].lower())
+        return urlunparse((p.scheme, p.netloc, p.path, "", urlencode(q, doseq=True), ""))
+    except Exception:
+        return u
+
+# -------------------------------------------------------------------
+# nested_links extractor (inline-only + mapping compatible)
+# -------------------------------------------------------------------
+def extract_nested_links_inline(raw_html: str, base_url: str, max_links: int = 20) -> List[Dict[str, str]]:
+    """
+    Returns: [{"url": "...", "text": "..."}] to match nested mapping. [web:67]
+    Uses Readability main content + inline-only filtering. [web:83]
+    """
+    try:
+        base = normalize_url(base_url)
+        base_netloc = urlparse(base).netloc.lower()
+
+        content_html = Document(raw_html).summary(html_partial=True)  # [web:83]
+        soup = BeautifulSoup(content_html, "html.parser")
+
+        out: List[Dict[str, str]] = []
+        seen: Set[str] = set()
+
+        for a in soup.find_all("a", href=True):
+            href = (a.get("href") or "").strip()
+            if not href or href.startswith(("mailto:", "javascript:", "tel:", "#")):
+                continue
+
+            anchor_text = a.get_text(" ", strip=True) or ""
+            if len(anchor_text) < 2:
+                continue
+
+            parent = a.parent.name.lower() if a.parent and getattr(a.parent, "name", None) else ""
+            if parent not in INLINE_PARENTS:
+                continue
+
+            abs_u = normalize_url(urljoin(base, href))  # [web:109]
+            if not abs_u.startswith(("http://", "https://")):
+                continue
+
+            if urlparse(abs_u).netloc.lower() != base_netloc:
+                continue
+
+            if abs_u.lower().endswith(BLOCKED_EXTENSIONS):
+                continue
+
+            path = urlparse(abs_u).path or ""
+            if path.startswith(BAD_PATH_PREFIXES):
+                continue
+
+            if abs_u == base or abs_u in seen:
+                continue
+
+            seen.add(abs_u)
+            out.append({"url": abs_u, "text": anchor_text[:300]})
+
+            if len(out) >= max_links:
+                break
+
+        return out
+    except Exception:
+        return []
+
+# -------------------------------------------------------------------
 # OPENSEARCH DEDUP
 # -------------------------------------------------------------------
-
 def incident_doc_id(incident_key: str) -> str:
     return sha1(incident_key)
 
@@ -107,14 +174,11 @@ def url_exists(url_hash: str) -> bool:
         return False
 
 # -------------------------------------------------------------------
-# URL / HTML
+# REDDIT URL / HTML
 # -------------------------------------------------------------------
-
 def is_valid_url(url: str) -> bool:
     domain = urlparse(url).netloc.lower()
-    if domain.startswith("i.redd.it"):
-        return False
-    if domain in ("reddit.com", "www.reddit.com", "old.reddit.com"):
+    if domain in ("reddit.com", "www.reddit.com", "old.reddit.com", "redd.it", "i.redd.it"):
         return False
     if url.lower().endswith((".jpg", ".png", ".gif", ".jpeg", ".webp", ".mp4")):
         return False
@@ -123,7 +187,7 @@ def is_valid_url(url: str) -> bool:
 def fetch_html(url: str) -> str:
     _rate_limit_host(url)
     try:
-        r = session.get(url, timeout=HTML_TIMEOUT)
+        r = session.get(url, timeout=HTML_TIMEOUT, allow_redirects=True)
         if r.status_code != 200 or not r.text or len(r.text) < 500:
             return ""
         r.encoding = r.encoding or r.apparent_encoding
@@ -134,7 +198,6 @@ def fetch_html(url: str) -> str:
 # -------------------------------------------------------------------
 # REDDIT API
 # -------------------------------------------------------------------
-
 def fetch_subreddit(sub: str) -> List[dict]:
     url = f"https://www.reddit.com/r/{sub}/new.json?limit={MAX_POSTS_PER_SUBREDDIT}"
     try:
@@ -151,13 +214,13 @@ def fetch_subreddit(sub: str) -> List[dict]:
 # -------------------------------------------------------------------
 # POST PROCESSOR
 # -------------------------------------------------------------------
-
-def process_post(post: dict) -> Dict | None:
+def process_post(post: dict) -> Optional[Dict]:
     try:
         url = post.get("url")
         if not url or not is_valid_url(url):
             return None
 
+        url = normalize_url(url)
         url_hash = sha1(url)
         if url_exists(url_hash):
             return None
@@ -172,7 +235,8 @@ def process_post(post: dict) -> Dict | None:
 
         title = article_utils.extract_title(html) or post.get("title", "")
         cves = article_utils.extract_cves(text)
-        nested = article_utils.extract_nested_links(html, url)
+
+        nested = extract_nested_links_inline(html, url)
 
         incident_key = (
             "CVE::" + ",".join(sorted(cves))
@@ -195,7 +259,7 @@ def process_post(post: dict) -> Dict | None:
             "fetched_at": datetime.utcnow().isoformat() + "Z",
             "summary": text[:2000],
             "article_text": text,
-            "nested_links": nested,
+            "nested_links": nested,     # <-- correct nested objects
             "cves": sorted(cves),
             "status": "NEW",
             "source_type": "REDDIT",
@@ -208,7 +272,6 @@ def process_post(post: dict) -> Dict | None:
 # -------------------------------------------------------------------
 # MAIN
 # -------------------------------------------------------------------
-
 def main():
     jobs: List[dict] = []
 
@@ -245,7 +308,12 @@ def main():
         for a in articles
     ]
 
-    success, _ = helpers.bulk(os_client, actions, raise_on_error=False)
+    success, errors = helpers.bulk(os_client, actions, raise_on_error=False, raise_on_exception=False)
+    if errors:
+        logger.error(f"[REDDIT][BULK] failures={len(errors)} (showing up to 3)")
+        for item in errors[:3]:
+            logger.error(f"[REDDIT][BULK][FAIL] {item}")
+
     logger.info(f"[REDDIT][DONE] New incidents indexed: {success}")
 
 if __name__ == "__main__":

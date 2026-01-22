@@ -4,7 +4,7 @@
 
 This error occurs when the Python LLM integration needs configuration. Here's how to fix it:
 
-## 🎯 Quick Fix (5 minutes)
+## Quick Fix (5 minutes)
 
 ### Option 1: Use HuggingFace API (Free - Recommended)
 
@@ -66,9 +66,9 @@ This error occurs when the Python LLM integration needs configuration. Here's ho
 
 ## 🔄 Already Fixed Issues
 
-✅ **OpenAI Library Version** - Downgraded to 0.28 (compatible)
-✅ **JSON Parsing** - Updated to extract JSON from mixed output
-✅ **Error Handling** - Improved stderr handling
+**OpenAI Library Version** - Downgraded to 0.28 (compatible)
+**JSON Parsing** - Updated to extract JSON from mixed output
+**Error Handling** - Improved stderr handling
 
 ## 📋 Complete Setup Checklist
 
@@ -169,29 +169,29 @@ No environment variables needed, just:
 - Update config.yaml
 - Run `ollama serve`
 
-## 🎯 Recommended Solution
+## Recommended Solution
 
 **For Most Users: HuggingFace (Free)**
-- ✅ No installation needed
-- ✅ Free API access
-- ✅ Good quality models
-- ✅ Fast setup (5 minutes)
+- No installation needed
+- Free API access
+- Good quality models
+- Fast setup (5 minutes)
 
 **For Privacy/Offline: Ollama**
-- ✅ 100% local
-- ✅ No API keys
-- ✅ No internet after setup
+- 100% local
+- No API keys
+- No internet after setup
 - ❌ Requires 8GB+ RAM
 - ❌ Slower processing
 
-## ✅ Success Criteria
+## Success Criteria
 
 After setup, you should see:
-1. ✅ Python script outputs valid JSON
-2. ✅ No LLM errors in output
-3. ✅ HTML files generated in workspace/
-4. ✅ Auto Advisory button works in web UI
-5. ✅ New advisories appear after generation
+1. Python script outputs valid JSON
+2. No LLM errors in output
+3. HTML files generated in workspace/
+4. Auto Advisory button works in web UI
+5. New advisories appear after generation
 
 ## 🚀 Next Steps
 

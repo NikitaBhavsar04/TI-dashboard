@@ -1,6 +1,6 @@
 # 🚀 AWS Deployment Guide - inteldesk.eagleyesoc.ai
 
-## 🎯 **Deployment Overview**
+## **Deployment Overview**
 - **Domain:** inteldesk.eagleyesoc.ai
 - **Platform:** AWS Instance (alongside existing Next.js project)
 - **Database:** MongoDB Atlas (already configured)
@@ -235,7 +235,7 @@ sudo crontab -e
 */10 * * * * curl -X POST -H "Authorization: Bearer super-secure-cron-secret-key-2024-aws-deployment" https://inteldesk.eagleyesoc.ai/api/cron/process-emails
 ```
 
-## ✅ **Verification Steps**
+## **Verification Steps**
 
 ### **1. Test Application**
 ```bash

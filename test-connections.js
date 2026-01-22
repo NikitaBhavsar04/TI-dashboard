@@ -9,7 +9,7 @@ async function testAtlasConnection() {
   try {
     // Connect to Atlas
     await mongoose.connect(ATLAS_URI);
-    console.log('✅ Successfully connected to MongoDB Atlas!');
+    console.log('Successfully connected to MongoDB Atlas!');
     
     // Test database operations
     const db = mongoose.connection.db;
@@ -19,11 +19,11 @@ async function testAtlasConnection() {
     // Test if we can create a test document
     const testCollection = db.collection('connection-test');
     await testCollection.insertOne({ test: true, timestamp: new Date() });
-    console.log('✅ Successfully inserted test document');
+    console.log('Successfully inserted test document');
     
     // Clean up test document
     await testCollection.deleteOne({ test: true });
-    console.log('✅ Cleaned up test document');
+    console.log('Cleaned up test document');
     
     await mongoose.disconnect();
     console.log('🔌 Disconnected from Atlas');
@@ -44,7 +44,7 @@ async function testLocalConnection() {
   
   try {
     await mongoose.connect(LOCAL_URI);
-    console.log('✅ Successfully connected to Local MongoDB!');
+    console.log('Successfully connected to Local MongoDB!');
     
     const db = mongoose.connection.db;
     const collections = await db.listCollections().toArray();
@@ -78,8 +78,8 @@ async function main() {
   const localResult = await testLocalConnection();
   
   console.log('\n📊 Connection Summary:');
-  console.log(`   Atlas: ${atlasWorking ? '✅ Working' : '❌ Failed'}`);
-  console.log(`   Local: ${localResult.success ? '✅ Working' : '❌ Failed'}`);
+  console.log(`   Atlas: ${atlasWorking ? 'Working' : '❌ Failed'}`);
+  console.log(`   Local: ${localResult.success ? 'Working' : '❌ Failed'}`);
   
   if (atlasWorking && localResult.success) {
     console.log('\n🚀 Both connections working! Ready for migration.');

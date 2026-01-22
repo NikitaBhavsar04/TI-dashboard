@@ -1,132 +1,168 @@
 run_profile: "daily"
 workspace: "./workspace"
+
 filters:
-  keywords: ["vulnerability", "exploit", "zero-day", "patch", "cve", "malware", "trojan", "worm", "spyware", "backdoor", "rootkit", "ransomware", "phishing", "spearphishing", "smishing", "vishing", "botnet", "ddos", "denial of service", "supply chain", "insider threat", "data breach", "exfiltration", "privilege escalation", "remote code execution", "injection", "sql injection", "xss", "csrf", "authentication bypass", "credential theft", "brute force", "password spraying", "session hijacking", "man in the middle", "mitm", "apt", "nation-state", "cyber espionage", "campaign", "threat actor", "hacktivist", "trojanized", "loader", "dropper", "keylogger", "info stealer", "data wiper"]
+  keywords: 
+    - "vulnerability"
+    - "exploit"
+    - "zero-day"
+    - "patch"
+    - "cve"
+    - "malware"
+    - "trojan"
+    - "worm"
+    - "spyware"
+    - "backdoor"
+    - "rootkit"
+    - "ransomware"
+    - "phishing"
+    - "spearphishing"
+    - "smishing"
+    - "vishing"
+    - "botnet"
+    - "ddos"
+    - "denial of service"
+    - "supply chain"
+    - "insider threat"
+    - "data breach"
+    - "exfiltration"
+    - "privilege escalation"
+    - "remote code execution"
+    - "injection"
+    - "sql injection"
+    - "xss"
+    - "csrf"
+    - "authentication bypass"
+    - "credential theft"
+    - "brute force"
+    - "password spraying"
+    - "session hijacking"
+    - "man in the middle"
+    - "mitm"
+    - "apt"
+    - "nation-state"
+    - "cyber espionage"
+    - "campaign"
+    - "threat actor"
+    - "hacktivist"
+    - "trojanized"
+    - "loader"
+    - "dropper"
+    - "keylogger"
+    - "info stealer"
+    - "data wiper"
   cve_regex: '\bCVE-\d{4}-\d{4,7}\b'
+
 
 sources:
   rss:
-     #"https://thehackernews.com/feeds/posts/default"
-      - "https://krebsonsecurity.com/feed/"
-      - "https://www.darkreading.com/rss.xml" 
-      - "https://bleepingcomputer.com/feed/"
-      - "https://threatpost.com/feed/"
-      - "https://www.zdnet.com/topic/security/rss.xml"
-      - "https://www.csoonline.com/feed/"
-      - "https://www.scworld.com/rss.xml"
-      - "https://feeds.feedburner.com/TheHackersNews"
-      - "https://cyberscoop.com/feed/"
-      - "https://www.infosecurity-magazine.com/rss/news/"
-      - "https://www.securityweek.com/feed/"
-      - "https://www.techrepublic.com/rssfeeds/topic/cybersecurity/"
-      - "https://nakedsecurity.sophos.com/feed/"
-      - "https://www.crn.com/news/security/chronicle.rss"
-      - "https://www.channelpronetwork.com/rss/channel/2"
-      - "https://www.itpro.com/rss/news/security"
-      - "https://www.computerworld.com/category/security/rss"
-      - "https://www.networkworld.com/category/security/rss"
-      - "https://feeds.feedspot.com/cyber_security_news_rss_feeds/"
-
-      # 🔥 RESEARCH & THREAT INTEL (25)
-      - "https://securelist.com/feed/"
-      - "https://unit42.paloaltonetworks.com/feed/"
-      - "https://research.checkpoint.com/feed/"
-      - "https://blog.qualys.com/vulnerabilities-threat-research/feed/"
-      - "https://www.tenable.com/blog/feed"
-      - "https://www.fireeye.com/blog/threat-research/rss.xml"
-      - "https://www.cybereason.com/blog/rss.xml"
-      - "https://www.crowdstrike.com/blog/feed/"
-      - "https://www.mandiant.com/resources/blog/rss.xml"
-      - "https://www.deepinstinct.com/blog/feed/"
-      - "https://www.huntress.com/blog/rss.xml"
-      - "https://www.blackberry.com/us/en/feed/qr-blog-security-bulletin"
-      - "https://www.bitsight.com/blog/feed"
-      - "https://cyware.com/allnews/feed"
-      - "https://www.intezer.com/blog/feed/"
-      - "https://www.hydrantid.com/blog/feed"
-      - "https://www.juniper.net/us/en/research-topics/threat-research.html"
-      - "https://www.fortinet.com/blog/rss/fortiguard-labs"
-      - "https://www.trendmicro.com/en_us/research/rss.html"
-      - "https://www.zscaler.com/blogs/security-research/rss.xml"
-      - "https://www.lookout.com/blog/feed"
-      - "https://www.forcepoint.com/blog/threat-research/rss.xml"
-      - "https://www.proofpoint.com/us/threat-insight/rss.xml"
-      - "https://www.mcafee.com/blogs/feed/"
-      - "https://www.f-secure.com/en/business/labs/rss"
-
-      # 🔥 CVE & VULNERABILITY FEEDS (15)
-      - "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss.xml"
-      - "https://msrc.microsoft.com/update-guide/rss"
-      - "https://psirt.global.sonicwall.com/api/v1/feed/rss.xml"
-      - "https://www.ibm.com/security/data-breach/rss"
-      - "https://vuldb.com/rss/"
-      - "https://cve.mitre.org/data/refs/rss.xml"
-      - "https://www.exploit-db.com/rss.xml"
-      - "https://rss.packetstormsecurity.com/files/"
-      - "https://cxsecurity.com/rss/"
-      - "https://seclists.org/rss/fulldisclosure.rss"
-      - "https://seclists.org/rss/bugtraq.rss"
-      - "https://www.us-cert.gov/ncas/alerts.xml"
-      - "https://www.usom.gov.tr/rss/tehdit.rss"
-      - "https://www.usom.gov.tr/rss/duyuru.rss"
-      - "https://0dayfans.com/feed.rss"
-
-      # 🔥 ENTERPRISE & CLOUD (15)
-      - "https://aws.amazon.com/security/security-bulletins/feed/"
-      - "https://cloud.google.com/feed/blog-security"
-      - "https://azure.microsoft.com/en-us/blog/feed/?tag=security"
-      - "https://www.imperva.com/blog/feed/"
-      - "https://www.cloudflare.com/blog/feed/"
-      - "https://blog.sucuri.net/feed/"
-      - "https://www.akamai.com/blog/security/feed"
-      - "https://www.fastly.com/blog/feed/tag/security"
-      - "https://www.incapsula.com/feed/"
-      - "https://www.netscout.com/blog/asert/feed"
-      - "https://www.radware.com/security/feed/"
-      - "https://www.f5.com/company/blog/feed"
-      - "https://www.checkpoint.com/blog/feed/"
-      - "https://www.vmware.com/security/advisories/feed.xml"
-      - "https://www.cisco.com/c/en/us/support/security/psirt-security-advisories-rss.html"
-
-      # 🔥 COMMUNITY & AGGREGATORS (15)
-      - "https://isc.sans.edu/rssfeed.xml"
-      - "https://www.troyhunt.com/rss/"
-      - "https://haveibeenpwned.com/PwnedWebsitesRss"
-      - "https://feeds.feedspot.com/cyber_security_rss_feeds/"
-      - "https://rss.feedspot.com/information_security_rss_feeds/"
-      - "https://www.misp-project.org/feed.xml"
-      - "https://abuse.ch/feeds/"
-      - "https://otx.alienvault.com/feed"
-      - "https://urlscan.io/feed/"
-      - "https://www.virustotal.com/intelligence/feed/"
-      - "https://www.alienvault.com/open-threat-exchange/feed"
-      - "https://www.threatcrowd.org/feed.php"
-      - "https://www.recordedfuture.com/feed/"
-      - "https://intel471.com/feed/"
-      - "https://www.flashpoint-intel.com/feed/"
-
-      # 🔥 REGIONAL & SPECIALIZED (10)
-      - "https://www.helpnetsecurity.com/feed/"
-      - "https://nakedsecurity.sophos.com/feed/"
-      - "https://www.infosecisland.com/rss/"
-      - "https://www.securitymagazine.com/RSS.aspx"
-      - "https://www.govinfosecurity.com/rss_news.xml"
-      - "https://www.bankinfosecurity.com/rss_news.xml"
-      - "https://www.healthcareinfosecurity.com/rss_news.xml"
-      - "https://www.darknet.org.uk/feed/"
-      - "https://www.theregister.com/Software/Security/headlines.rss"
-      - "https://feeds.arstechnica.com/arstechnica/security/"
+    - https://feeds.feedburner.com/darkreading/nXMu8p7PkyH
+    - https://thehackernews.com/feeds/posts/default
+    - https://www.tenable.com/sitemap.xml?page=1
+    - https://www.tenable.com/sitemap.xml?page=2
+    - https://www.techrepublic.com/rssfeeds/articles/
+    - https://www.techrepublic.com/sitemap_index.xml
+    - https://krebsonsecurity.com/feed/
+    - https://www.zdnet.com/topic/security/rss.xml
+    - https://feeds.feedburner.com/eset/blog
+    - https://securelist.com/feed/
+    - https://psirtapi.global.sonicwall.com/api/v1/feed/rss.xml
+    - https://research.checkpoint.com/feed/
+    - https://unit42.paloaltonetworks.com/feed/
+    - https://blogs.cisco.com/security/feed
+    - https://www.mcafee.com/blogs/feed/
+    - https://www.crowdstrike.com/blog/feed/
+    - https://threatpost.com/feed/
+    - https://blogs.vmware.com/security/feed/
+    - https://feeds.feedburner.com/TheHackersNews?format=xml
+    - https://isc.sans.edu/rssfeed_full.xml
+    - https://www.troyhunt.com/rss/
+    - https://feeds.feedburner.com/0dayfans/KSk2PzAcRH8
+    - https://www.usom.gov.tr/rss/tehdit.rss
+    - https://www.usom.gov.tr/rss/duyuru.rss
+    - https://www.misp-project.org/feed.xml
+    - https://openphish.com/feed.txt
+    - https://github.com/thehappydinoa/awesome-threat-intel-rss
+    - https://rss.feedspot.com/cyber_security_rss_feeds/
+    - https://www.us-cert.gov/ncas/alerts.xml
+    - https://www.sans.org/webcasts/rss
+    - https://feeds.feedburner.com/TheHackersNews
+    - https://isc.sans.edu/rssfeed.xml
+    - https://feeds.feedburner.com/mandiant/UVARASaYM81
+    - https://www.infosecurity-magazine.com/rss/news/
+    - https://www.cybereason.com/blog/rss.xml
+    - https://blog.qualys.com/feed/
+    - https://www.tenable.com/blog/feed
+    - https://www.blackhillsinfosec.com/feed/
+    - https://www.arbornetworks.com/blog/asert/feed/
+    - https://feeds.feedburner.com/trendmicro/3QBsJEgwMxa
+    - https://www.ghacks.net/feed/
+    - https://www.cshub.com/rss/categories/attacks
+    - https://www.cshub.com/rss/categories/malware
+    - https://www.cshub.com/rss/categories/threat-defense
+    - https://www.cshub.com/rss/categories/data
+    - https://www.schneier.com/tag/cybersecurity/feed/
+    - https://fidelissecurity.com/feed/
+    - https://cyberbuilders.substack.com/feed
+    - https://ventureinsecurity.net/feed
+    - https://feeds.feedburner.com/mattpalmeroncybersecurity
+    - https://davinciforensics.co.za/cybersecurity/feed/
+    - https://www.imperva.com/blog/feed/
+    - https://www.scnsoft.com/blog/category/information-security/atom
+    - https://www.upguard.com/blog/rss.xml
+    - https://blog.pcisecuritystandards.org/rss.xml
+    - https://heimdalsecurity.com/blog/feed/
+    - https://www.cheapsslshop.com/blog/feed
+    - https://cyberhoot.com/category/blog/feed/
+    - https://socprime.com/feed/
+    - https://www.pivotpointsecurity.com/feed/
+    - https://clearnetwork.com/feed/
+    - https://feeds.feedburner.com/GoogleOnlineSecurityBlog
+    - https://www.blackfog.com/feed/
+    - https://www.lastwatchdog.com/feed/
+    - https://any.run/cybersecurity-blog/feed/
+    - https://www.cm-alliance.com/cybersecurity-blog/rss.xml
+    - https://feeds.feedburner.com/dataprivacymanager/41Db9YycvdY
+    - https://www.idsalliance.org/feed/
+    - https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss.xml
+    - https://msrc.microsoft.com/update-guide/rss
+    - https://www.exploitone.com/feed/
+    - https://www.tsfactory.com/forums/blogs/category/infosec-digest/feed/
+    - https://www.cyberpilot.io/cyberpilot-blog/rss.xml
+    - https://www.ignyteplatform.com/feed/
+    - https://www.canarytrap.com/feed/
+    - https://www.secureblink.com/rss-feeds/threat-feed
+    - https://www.virtru.com/blog/rss.xml
+    - https://www.empowerelearning.com/blog/feed/
+    - https://www.cloudbric.com/feed/
+    - https://www.go2bsecure.com/feed/
+    - https://www.theguardian.com/technology/data-computer-security/rss
+    - https://personalprivacyonline.com/feed/
+    - https://www.varutra.com/feed/
+    - https://internetsafetybrigade.org/our-blog/f.atom
+    - https://blogs.quickheal.com/feed/
+    - https://blog.securityinnovation.com/rss.xml
+    - https://blog.entersoftsecurity.com/feed/
+    - https://itega.org/feed/
+    - https://feeds.feedburner.com/ckdiii
+    - https://blog.blackswansecurity.com/feed/
+    - https://www.infinigate.com/uk/news-types/news-press/feed/
+    - https://cyberinsider.com/feed/
+    - https://azu.github.io/github-advisory-database-rss/composer.json
+    - https://azu.github.io/github-advisory-database-rss/go.json
+    - https://azu.github.io/github-advisory-database-rss/maven.json
+    - https://azu.github.io/github-advisory-database-rss/npm.json
+    - https://azu.github.io/github-advisory-database-rss/nuget.json
+    - https://azu.github.io/github-advisory-database-rss/pip.json
+    - https://azu.github.io/github-advisory-database-rss/pub.json
+    - https://azu.github.io/github-advisory-database-rss/rust.json
   feedly:
     enabled: false
     stream_id: "user/%7C%7C%7C/category/global.all"
-    FEEDLY_TOKEN: "AzvF1tlmFnsO4jbY5pWZoJR5B10DmESgdzG0Ja_hQNLl5zzp53ilhXkbMZISbBmfQXjJ7zOeROU0XRCHKS06zfs2lclcehXgz4OGUkY5flB6HJrEHPSr9rtjsO99O3d9RG3W05S8aJTQHtVf9hGpFBa6xSLuyWDTNLAN1bbP_xqkg9IoIHys6zVqKHu7xNqPsKw1OFsDXR4pSobPUGWtOUMkkQLF8clKP83Pq7xP-ithXnavMsYA82mSOr3w:feedlydev"
 
+# Telegram Configuration (non-sensitive settings)
 telegram:
-  api_id: 38624614
-  api_hash: "847retuhbb65u2004d7"
-  phone_number: "+91123456783"
   session_name: "telegram_scraper_session"
-
   channels:
     - "IsacaRuSec"
     - "ICTlive"
@@ -142,36 +178,14 @@ telegram:
     - "HackerS_AsyLum"
     - "Cyber_Security_Channel"
     - "topcybersecurity"
-    # - 1381726456  # example private channel id if needed
-
   max_messages_per_channel: 100
   message_limit_per_run: 50
-
   fetch_media: false
   fetch_replies: false
 
-  keywords:
-    - "vulnerability"
-    - "exploit"
-    - "zero-day"
-    - "CVE"
-    - "security"
-    - "malware"
-    - "ransomware"
-    - "breach"
-    - "hack"
-    - "threat"
-    - "phishing"
-    - "cybersecurity"
-    - "infosec"
-    - "CTF"
-    - "penetration testing"
-
+# Reddit Configuration
 reddit:
-  client_id: null        # or "your_id"
-  client_secret: null    # or "your_secret"
   user_agent: "python:cybersecurity-feed:v1.0 (by /u/anonymous)"
-
   subreddits:
     - "cybersecurity"
     - "netsec"
@@ -180,52 +194,29 @@ reddit:
     - "blueteamsec"
     - "redteamsec"
     - "malware"
-
   max_posts_per_subreddit: 100
   request_timeout: 30
-
   auth_url: "https://www.reddit.com/api/v1/access_token"
   api_base: "https://oauth.reddit.com"
 
-aws:
-  region: ""
-  s3_bucket: ""
-  s3_prefix: ""
-  sns_topic_arn: ""
+# OpenSearch Configuration
+
+# LLM Configuration
 ollama:
   enabled: false
   host: "http://localhost:11434"
   model: "llama3:latest"
+
 huggingface:
-  enabled: true
-  # Use a real chat model supported by HF Inference
-  #model: "deepseek-ai/deepseek-llm-7b-chat"
-  #model: "facebook/bart-large-cnn"
-  #model: "fdtn-ai/Foundation-Sec-1.1-8B-Instruct"
-  #model: "meta-llama/Llama-3.1-8B-Instruct:cerebras" 
-  #model: "microsoft/Phi-3.5-mini-instruct" 
-  model: "meta-llama/Llama-3.1-8B-Instruct" 
-  #model: "google/gemma-2-2b-it"
-  #model: "MiniMaxAI/MiniMax-M2.1"
+  enabled: false
+  model: "meta-llama/Llama-3.1-8B-Instruct"
+
 openrouter:
   enabled: true
- #model: "mistralai/devstral-2512:free"
- #model: "meta-llama/llama-3.2-3b-instruct:free"(too slow 15 tps)
- #model: "openai/gpt-oss-120b:free" (not responding)
   model: "mistralai/devstral-2512:free"
 
+# Report Configuration
 report:
   tlp: "AMBER"
   advisory_id_prefix: "SOC-TA"
   max_advisories_per_run: 3
-
-opensearch:
-  host: "172.16.16.183"
-  port: 9200
-  username: ""
-  password: ""
-  raw_index: "ti-raw-articles"
-  advisory_index: "ti-generated-advisories"
-
-#hf_token:"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"
-#open_router: "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"

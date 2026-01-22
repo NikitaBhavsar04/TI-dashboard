@@ -9,7 +9,7 @@ async function testTrackingCreation() {
 
     // Connect exactly like the email sending process does
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     const db = mongoose.connection.db;
     const trackingCollection = db.collection('emailTracking');
@@ -41,7 +41,7 @@ async function testTrackingCreation() {
       
       try {
         const result = await trackingCollection.insertOne(trackingRecord);
-        console.log(`   ✅ Inserted successfully: ${result.insertedId}`);
+        console.log(`   Inserted successfully: ${result.insertedId}`);
       } catch (insertError) {
         console.log(`   ❌ Insert failed: ${insertError.message}`);
       }
@@ -60,7 +60,7 @@ async function testTrackingCreation() {
     });
 
     await mongoose.disconnect();
-    console.log('\n✅ Test completed');
+    console.log('\nTest completed');
 
   } catch (error) {
     console.error('❌ Test failed:', error);

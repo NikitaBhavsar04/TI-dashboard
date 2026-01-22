@@ -11,7 +11,7 @@ const testAnalyticsEndpoint = async () => {
     console.log(`   Response: ${JSON.stringify(data1)}`);
     
     if (response1.status === 401) {
-      console.log('   ✅ Endpoint exists but requires authentication (expected)\n');
+      console.log('   Endpoint exists but requires authentication (expected)\n');
     } else {
       console.log('   ❌ Unexpected response\n');
     }

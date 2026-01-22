@@ -39,12 +39,12 @@ npm run dev
 
 ## What It Does
 
-✅ Fetches threats from 50+ RSS feeds
-✅ AI analyzes and structures data
-✅ Generates professional HTML advisories
-✅ Saves to MongoDB automatically
-✅ Includes CVEs, MITRE ATT&CK, recommendations
-✅ Matches format of manual advisories
+Fetches threats from 50+ RSS feeds
+AI analyzes and structures data
+Generates professional HTML advisories
+Saves to MongoDB automatically
+Includes CVEs, MITRE ATT&CK, recommendations
+Matches format of manual advisories
 
 ## Typical Output
 
@@ -92,7 +92,7 @@ sources:
 
 ## Next Steps
 
-1. ✅ Basic setup complete
+1. Basic setup complete
 2. 📖 Read full guide: `AUTO-ADVISORY-INTEGRATION.md`
 3. ⚙️ Customize RSS feeds in `config.yaml`
 4. 🔄 Set up scheduled generation (optional)

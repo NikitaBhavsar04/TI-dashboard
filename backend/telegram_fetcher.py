@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Telegram → Raw Article Fetcher (SOC-grade, OpenSearch-backed, hardened)
+Telegram → Raw Article Fetcher (OpenSearch-backed, hardened)
+- nested_links matches mapping: nested[{url(keyword), text(text)}] [web:67]
+- inline-only link extraction from Readability main content [web:83]
 """
 
 import sys
@@ -13,33 +15,37 @@ import socket
 import time
 from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Set
+from urllib.parse import urlparse, urljoin, urlunparse, parse_qsl, urlencode
 
 import requests
+from bs4 import BeautifulSoup
+from readability import Document
 from telethon import TelegramClient
-from opensearchpy import OpenSearch, helpers
+from opensearchpy import helpers
+from utils.opensearch_client import get_opensearch_client
+from dotenv import load_dotenv
 
 from utils.common import logger, sha1, read_yaml
 import article_utils
 
 # -------------------------------------------------------------------
-# HARD NETWORK SAFETY
+# ENV + HARD NETWORK SAFETY
 # -------------------------------------------------------------------
-
+load_dotenv()
 socket.setdefaulttimeout(10)
 
 # -------------------------------------------------------------------
 # CONFIG
 # -------------------------------------------------------------------
-
 cfg = read_yaml("config.yaml")
 
-tg_cfg = cfg.get("telegram", {})
-API_ID = tg_cfg.get("api_id")
-API_HASH = tg_cfg.get("api_hash")
-PHONE_NUMBER = tg_cfg.get("phone_number")
-SESSION_NAME = tg_cfg.get("session_name", "telegram_scraper_session")
+API_ID = int(os.getenv("TELEGRAM_API_ID"))
+API_HASH = os.getenv("TELEGRAM_API_HASH")
+PHONE_NUMBER = os.getenv("TELEGRAM_PHONE_NUMBER")
 
+tg_cfg = cfg.get("telegram", {})
+SESSION_NAME = tg_cfg.get("session_name", "telegram_scraper_session")
 TELEGRAM_CHANNELS = tg_cfg.get("channels", [])
 MESSAGE_LIMIT_PER_RUN = tg_cfg.get("message_limit_per_run", 50)
 
@@ -47,53 +53,43 @@ DAYS_BACK = 10
 MAX_WORKERS = 6
 PER_HOST_MIN_DELAY = 0.2
 
-REQUIRED_TG_FIELDS = [("api_id", API_ID), ("api_hash", API_HASH), ("phone_number", PHONE_NUMBER)]
-for name, value in REQUIRED_TG_FIELDS:
-    if not value:
-        raise RuntimeError(f"[CONFIG ERROR] Missing telegram.{name} in config.yaml")
+if not API_ID or not API_HASH or not PHONE_NUMBER:
+    raise RuntimeError("[CONFIG ERROR] Missing Telegram credentials in .env")
 
 if not TELEGRAM_CHANNELS:
-    raise RuntimeError("[TELEGRAM] No channels configured")
+    raise RuntimeError("[TELEGRAM] No channels configured in config.yaml")
 
 # -------------------------------------------------------------------
-# OPENSEARCH CONFIG (SAME INDEX AS RSS)
+# OPENSEARCH CLIENT
 # -------------------------------------------------------------------
-
-OPENSEARCH_HOST = cfg.get("opensearch", {}).get("host", "localhost")
-OPENSEARCH_PORT = cfg.get("opensearch", {}).get("port", 9200)
-INDEX = cfg.get("opensearch", {}).get("index", "raw-articles")
-
-os_client = OpenSearch(
-    hosts=[{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}],
-    use_ssl=False,
-    verify_certs=False,
-    http_compress=True,
-    timeout=30,
-    max_retries=3,
-    retry_on_timeout=True,
-)
+INDEX = "ti-raw-articles"
+os_client = get_opensearch_client()
 
 # -------------------------------------------------------------------
 # CONSTANTS
 # -------------------------------------------------------------------
-
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
 BLOCKED_DOMAINS = ("youtube.com", "youtu.be", "t.me", "reddit.com", "redd.it", "i.redd.it")
-BLOCKED_EXTENSIONS = (".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf", ".zip", ".exe")
-
+BLOCKED_EXTENSIONS = (".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf", ".zip", ".exe", ".dmg")
 URL_RE = re.compile(r"https?://\S+")
+
+TRACKING_PARAMS = {
+    "utm_source","utm_medium","utm_campaign","utm_term","utm_content",
+    "gclid","fbclid","mc_cid","mc_eid"
+}
+
+INLINE_PARENTS = {"p", "li", "blockquote", "h1", "h2", "h3", "h4"}
+BAD_PATH_PREFIXES = ("/tag/", "/author/", "/category/", "/newsletter", "/gsearch")
 
 # -------------------------------------------------------------------
 # RATE LIMITING
 # -------------------------------------------------------------------
-
 session = requests.Session()
 session.headers.update(HEADERS)
 _last_host_access: dict[str, float] = {}
 
 def _rate_limit_host(url: str):
-    from urllib.parse import urlparse
     host = urlparse(url).netloc
     now = time.time()
     last = _last_host_access.get(host, 0)
@@ -102,9 +98,20 @@ def _rate_limit_host(url: str):
     _last_host_access[host] = time.time()
 
 # -------------------------------------------------------------------
-# OPENSEARCH DEDUP
+# URL UTILS
 # -------------------------------------------------------------------
+def normalize_url(u: str) -> str:
+    try:
+        p = urlparse(u)
+        q = [(k, v) for (k, v) in parse_qsl(p.query, keep_blank_values=True) if k.lower() not in TRACKING_PARAMS]
+        q = sorted(q, key=lambda kv: kv[0].lower())
+        return urlunparse((p.scheme, p.netloc, p.path, "", urlencode(q, doseq=True), ""))
+    except Exception:
+        return u
 
+# -------------------------------------------------------------------
+# DEDUP
+# -------------------------------------------------------------------
 def incident_doc_id(incident_key: str) -> str:
     return sha1(incident_key)
 
@@ -125,7 +132,6 @@ def url_exists(url_hash: str) -> bool:
 # -------------------------------------------------------------------
 # URL / FETCH
 # -------------------------------------------------------------------
-
 def is_valid_article_url(url: str) -> bool:
     u = url.lower()
     if any(bad in u for bad in BLOCKED_DOMAINS):
@@ -145,7 +151,7 @@ def expand_url(url: str) -> str:
 def fetch_html(url: str) -> str:
     _rate_limit_host(url)
     try:
-        r = session.get(url, timeout=12)
+        r = session.get(url, timeout=12, allow_redirects=True)
         if r.status_code == 200 and len(r.text) > 500:
             r.encoding = r.encoding or r.apparent_encoding
             return r.text.encode("utf-8", "ignore").decode("utf-8", "ignore")
@@ -154,13 +160,71 @@ def fetch_html(url: str) -> str:
     return ""
 
 # -------------------------------------------------------------------
+# INLINE NESTED LINKS (mapping compatible)
+# -------------------------------------------------------------------
+def extract_nested_links_inline(raw_html: str, base_url: str, max_links: int = 20) -> List[Dict[str, str]]:
+    """
+    Returns: [{"url": "...", "text": "..."}] to match nested mapping. [web:67]
+    Uses Readability main content + inline-only filtering. [web:83]
+    """
+    try:
+        base = normalize_url(base_url)
+        base_netloc = urlparse(base).netloc.lower()
+
+        content_html = Document(raw_html).summary(html_partial=True)  # [web:83]
+        soup = BeautifulSoup(content_html, "html.parser")
+
+        out: List[Dict[str, str]] = []
+        seen: Set[str] = set()
+
+        for a in soup.find_all("a", href=True):
+            href = (a.get("href") or "").strip()
+            if not href or href.startswith(("mailto:", "javascript:", "tel:", "#")):
+                continue
+
+            anchor_text = a.get_text(" ", strip=True) or ""
+            if len(anchor_text) < 2:
+                continue
+
+            parent = a.parent.name.lower() if a.parent and getattr(a.parent, "name", None) else ""
+            if parent not in INLINE_PARENTS:
+                continue
+
+            abs_u = normalize_url(urljoin(base, href))  # relative -> absolute [web:109]
+            if not abs_u.startswith(("http://", "https://")):
+                continue
+
+            # same-host (keep your previous behavior)
+            if urlparse(abs_u).netloc.lower() != base_netloc:
+                continue
+
+            if abs_u.lower().endswith(BLOCKED_EXTENSIONS):
+                continue
+
+            path = urlparse(abs_u).path or ""
+            if path.startswith(BAD_PATH_PREFIXES):
+                continue
+
+            if abs_u == base or abs_u in seen:
+                continue
+
+            seen.add(abs_u)
+            out.append({"url": abs_u, "text": anchor_text[:300]})
+
+            if len(out) >= max_links:
+                break
+
+        return out
+    except Exception:
+        return []
+
+# -------------------------------------------------------------------
 # ARTICLE PROCESSOR
 # -------------------------------------------------------------------
-
 def process_article(job: Tuple[str, str, str]) -> Dict | None:
     msg_key, url, source_label = job
 
-    url = expand_url(url)
+    url = normalize_url(expand_url(url))
     if not is_valid_article_url(url):
         return None
 
@@ -168,17 +232,18 @@ def process_article(job: Tuple[str, str, str]) -> Dict | None:
     if url_exists(url_hash):
         return None
 
-    html = fetch_html(url)
-    if not html:
+    raw_html = fetch_html(url)
+    if not raw_html:
         return None
 
-    text = article_utils.extract_article_text(html)
+    text = article_utils.extract_article_text(raw_html)
     if not text or not article_utils.has_security_context(text):
         return None
 
-    title = article_utils.extract_title(html)
+    title = article_utils.extract_title(raw_html)
     cves = article_utils.extract_cves(text)
-    nested = article_utils.extract_nested_links(html, url)
+
+    nested = extract_nested_links_inline(raw_html, url)
 
     incident_key = (
         "CVE::" + ",".join(sorted(cves))
@@ -201,7 +266,7 @@ def process_article(job: Tuple[str, str, str]) -> Dict | None:
         "fetched_at": datetime.utcnow().isoformat() + "Z",
         "summary": text[:2000],
         "article_text": text,
-        "nested_links": nested,
+        "nested_links": nested,   # <-- correct type: nested array of objects
         "cves": sorted(cves),
         "status": "NEW",
         "source_type": "TELEGRAM",
@@ -210,12 +275,11 @@ def process_article(job: Tuple[str, str, str]) -> Dict | None:
 # -------------------------------------------------------------------
 # TELEGRAM COLLECTOR
 # -------------------------------------------------------------------
-
 async def collect_jobs() -> List[Tuple[str, str, str]]:
     client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
     await client.start(phone=PHONE_NUMBER)
 
-    jobs = []
+    jobs: List[Tuple[str, str, str]] = []
     cutoff = datetime.now(timezone.utc) - timedelta(days=DAYS_BACK)
 
     for channel in TELEGRAM_CHANNELS:
@@ -228,8 +292,8 @@ async def collect_jobs() -> List[Tuple[str, str, str]]:
             msg_key = f"{msg.chat_id}:{msg.id}"
             urls = URL_RE.findall(msg.text)
 
-            for url in urls:
-                jobs.append((msg_key, url, f"Telegram:{channel}"))
+            for u in urls:
+                jobs.append((msg_key, u, f"Telegram:{channel}"))
 
         await asyncio.sleep(0.5)
 
@@ -240,7 +304,6 @@ async def collect_jobs() -> List[Tuple[str, str, str]]:
 # -------------------------------------------------------------------
 # MAIN
 # -------------------------------------------------------------------
-
 async def main_async():
     jobs = await collect_jobs()
     articles: List[Dict] = []
@@ -269,7 +332,12 @@ async def main_async():
         for a in articles
     ]
 
-    success, _ = helpers.bulk(os_client, actions, raise_on_error=False)
+    success, errors = helpers.bulk(os_client, actions, raise_on_error=False, raise_on_exception=False)
+    if errors:
+        logger.error(f"[TG][BULK] failures={len(errors)} (showing up to 3)")
+        for item in errors[:3]:
+            logger.error(f"[TG][BULK][FAIL] {item}")
+
     logger.info(f"[TG][DONE] New incidents indexed: {success}")
 
 def run_once():

@@ -62,14 +62,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!scheduledEmail.isOpened) {
       scheduledEmail.isOpened = true;
       scheduledEmail.openedAt = now;
-      console.log(`✅ [TRACKING] FIRST OPEN recorded for email ${scheduledEmail._id}`);
+      console.log(`[TRACKING] FIRST OPEN recorded for email ${scheduledEmail._id}`);
     } else {
       console.log(`📊 [TRACKING] Additional open recorded (total: ${scheduledEmail.opens.length})`);
     }
 
     await scheduledEmail.save();
 
-    console.log(`✅ [TRACKING] Email tracking saved successfully - ID: ${trackingId}, Total opens: ${scheduledEmail.opens.length}`);
+    console.log(`[TRACKING] Email tracking saved successfully - ID: ${trackingId}, Total opens: ${scheduledEmail.opens.length}`);
 
     // Return 1x1 transparent pixel
     return sendTrackingPixel(res);

@@ -131,7 +131,7 @@ export default async function handler(req, res) {
           trackingId: trackedEmail.trackingId
         });
 
-        console.log(`✅ Generated tracked email for ${job.to} - Tracking ID: ${trackedEmail.trackingId}`);
+        console.log(`Generated tracked email for ${job.to} - Tracking ID: ${trackedEmail.trackingId}`);
 
       } catch (error) {
         console.error(`❌ Failed to generate tracked email for ${job.to}:`, error);
@@ -252,7 +252,7 @@ agenda.define('send enhanced advisory email', async (job) => {
       }
     });
 
-    console.log(`✅ Enhanced advisory email sent successfully: ${result.messageId}`);
+    console.log(`Enhanced advisory email sent successfully: ${result.messageId}`);
 
     // Update scheduled email status
     await ScheduledEmail.findByIdAndUpdate(emailId, {

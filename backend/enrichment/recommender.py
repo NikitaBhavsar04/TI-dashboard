@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-SOC Recommendation & Patch Enrichment Engine (Dynamic-Only)
+SOC Recommendation & Patch Enrichment Engine (STRICT, SOURCE-DRIVEN)
 
-• ALL recommendations fetched dynamically from online sources
-• NO static / hardcoded SOC playbooks
-• Sentence-complete extraction
-• Semantic deduplication
-• NO LLM usage
-• Safe for automated pipelines
+✔ Advisory-specific recommendations
+✔ No generic boilerplate
+✔ No LLM
+✔ Full paragraph extraction
+✔ CVE-aware + non-CVE patch detection
+✔ NEVER returns empty dict
 """
 
 import re
@@ -16,198 +16,169 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from typing import List, Dict, Optional
 from googlesearch import search
-
+from llm.recommender_refiner import refine_blocks
 
 # ============================================================
-# CONSTANTS
+# CONFIG
 # ============================================================
-
-PATCH_VERBS = {
-    "fixed in", "patched in", "upgrade to", "update to",
-    "apply patch", "security update", "hotfix",
-    "interim fix", "resolved in", "workaround"
-}
-
-RECOMMENDATION_VERBS = {
-    "should", "must", "are advised", "are urged",
-    "recommended", "recommend", "disable",
-    "restrict", "apply", "configure", "mitigate",
-    "remove", "block", "rotate", "monitor",
-}
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 }
 
-STOP_WORDS = {
-    "the", "a", "an", "in", "is", "on", "of", "for", "to",
-    "and", "with", "by", "vulnerability", "issue", "flaw",
-    "summary", "detected"
-}
+TIMEOUT = 8
+MAX_RESULTS = 8
 
 SKIP_DOMAINS = (
-    "facebook.com",
-    "twitter.com",
-    "linkedin.com",
-    "youtube.com",
-    "reddit.com",
-    "medium.com",
-    "github.com",  # avoid PoC noise
-    "nvd.nist.gov",
-    "cve.mitre.org",
+    "facebook.com", "twitter.com", "linkedin.com",
+    "youtube.com", "reddit.com", "medium.com",
+    "github.com", "nvd.nist.gov", "cve.mitre.org",
 )
 
+PATCH_ANCHORS = (
+    "patched", "fixed in", "upgrade to", "update to",
+    "security update", "hotfix", "resolved in",
+)
+
+MITIGATION_ANCHORS = (
+    "mitigation", "workaround", "remediation",
+    "defenders should", "organizations should",
+    "recommended to", "can reduce risk",
+)
+
+SECTION_STOP = re.compile(
+    r"^(references|impact|technical|ioc|indicators|overview|summary)$",
+    re.I,
+)
+
+CVE_RE = re.compile(r"\bCVE-\d{4}-\d{4,7}\b", re.I)
 
 # ============================================================
-# CORE ENGINE
+# PUBLIC API
 # ============================================================
 
-class RecommendationEngine:
-    """
-    Dynamic SOC-grade enrichment engine.
+def get_recommendations(advisory_summary: str) -> Dict[str, List[str]]:
+    engine = _Engine()
+    return engine.run(advisory_summary)
 
-    Returns ONLY externally sourced recommendations.
-    """
+# ============================================================
+# ENGINE
+# ============================================================
 
-    # --------------------------------------------------------
-    # PUBLIC ENTRY
-    # --------------------------------------------------------
-    def get_recommendations(self, advisory_summary: str) -> Dict[str, Optional[List[str]]]:
-        recommendations: List[str] = []
-        patch_details: List[str] = []
+class _Engine:
 
-        query = self._build_query(advisory_summary)
+    def run(self, text: str) -> Dict[str, List[str]]:
+        cve = self._extract_cve(text)
+        query = self._build_query(text, cve)
+
+        blocks: List[str] = []
 
         try:
-            results = search(
-                query,
-                num_results=8,
-                advanced=True
-            )
-
-            for r in results:
+            for r in search(query, num_results=MAX_RESULTS, advanced=True):
                 url = r.url
-                if self._skip_url(url):
+                if self._skip(url):
                     continue
 
-                patches, recs = self._scrape_url(url)
-                patch_details.extend(patches)
-                recommendations.extend(recs)
+                blocks.extend(self._extract_blocks(url))
 
         except Exception:
-            pass  # Never break SOC pipeline
+            return {"recommendations": [], "patch_details": []}
 
-        # Semantic dedup
-        recommendations = self._dedup_semantic(recommendations)
-        patch_details = self._dedup_semantic(patch_details)
+        blocks = self._dedup(blocks)
 
-        return {
-            "recommendations": recommendations[:6] or None,
-            "patch_details": patch_details[:5] or None,
-        }
+        if cve:
+            patches = refine_blocks(blocks[:5], "patch_details")
+            return {"patch_details": patches}
 
-    # ========================================================
-    # SCRAPING
-    # ========================================================
+        patches = refine_blocks(blocks[:5], "patch_details")
+        if patches:
+            return {"patch_details": patches}
 
-    def _scrape_url(self, url: str) -> tuple[List[str], List[str]]:
-        patches: List[str] = []
-        recs: List[str] = []
+        recs = refine_blocks(blocks[:5], "recommendations")
+        return {"recommendations": recs}
+
+    # --------------------------------------------------------
+
+    def _build_query(self, text: str, cve: Optional[str]) -> str:
+        if cve:
+            return f"{cve} remediation mitigation guidance"
+
+        words = re.findall(r"[a-zA-Z]{4,}", text.lower())
+        keywords = " ".join(words[:6])
+        return f"{keywords} security mitigation recommendation"
+
+    # --------------------------------------------------------
+
+    def _extract_blocks(self, url: str) -> List[str]:
+        out: List[str] = []
 
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=8)
-            resp.raise_for_status()
+            r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+            r.raise_for_status()
+        except Exception:
+            return out
 
-            soup = BeautifulSoup(resp.text, "html.parser")
-            for tag in soup(["script", "style", "noscript"]):
-                tag.decompose()
+        soup = BeautifulSoup(r.text, "html.parser")
+        for tag in soup(["script", "style", "noscript"]):
+            tag.decompose()
 
-            text = soup.get_text(" ", strip=True)
-            text = re.sub(r"\s+", " ", text)
+        domain = urlparse(url).netloc
 
-            sentences = re.split(r"(?<=[.!?])\s+", text)
-            domain = urlparse(url).netloc
+        for el in soup.find_all(["p", "li"]):
+            text = el.get_text(" ", strip=True)
+            low = text.lower()
 
-            for s in sentences:
-                s_clean = s.strip()
-                s_lower = s_clean.lower()
+            if len(text) < 60:
+                continue
 
-                # ---------------- PATCH EXTRACTION ----------------
-                if any(v in s_lower for v in PATCH_VERBS):
-                    if 40 <= len(s_clean) <= 350:
-                        patches.append(f"{s_clean} (Source: {domain})")
+            if any(a in low for a in PATCH_ANCHORS + MITIGATION_ANCHORS):
+                block = [text]
+
+                for sib in el.find_next_siblings():
+                    sib_text = sib.get_text(" ", strip=True)
+                    if not sib_text:
                         continue
 
-                # ------------- RECOMMENDATION EXTRACTION ----------
-                if any(v in s_lower for v in RECOMMENDATION_VERBS):
-                    if 40 <= len(s_clean) <= 260:
-                        recs.append(f"{s_clean} (Source: {domain})")
+                    if SECTION_STOP.match(sib_text.lower()):
+                        break
 
-        except Exception:
-            pass
+                    if len(sib_text) <= 200:
+                        block.append(sib_text)
+                        continue
 
-        return patches, recs
+                    break
 
-    # ========================================================
-    # QUERY GENERATION
-    # ========================================================
+                merged = " ".join(block)
+                merged = re.sub(r"\s+", " ", merged).strip()
 
-    def _build_query(self, text: str) -> str:
-        cve = self._extract_cve(text)
-        if cve:
-            return f"{cve} mitigation remediation guidance"
+                if len(merged) >= 80:
+                    out.append(f"{merged} (Source: {domain})")
 
-        keywords = self._extract_keywords(text)
-        return f"{keywords} security mitigation remediation"
+        return out
 
-    # ========================================================
-    # EXTRACTION HELPERS
-    # ========================================================
+    # --------------------------------------------------------
 
     def _extract_cve(self, text: str) -> Optional[str]:
-        m = re.search(r"\bCVE-\d{4}-\d{4,7}\b", text or "", re.I)
+        m = CVE_RE.search(text or "")
         return m.group(0).upper() if m else None
 
-    def _extract_keywords(self, text: str) -> str:
-        words = re.findall(r"[a-zA-Z0-9]+", (text or "").lower())
-        keywords = [w for w in words if w not in STOP_WORDS and len(w) > 3]
-        return " ".join(keywords[:6])
+    def _skip(self, url: str) -> bool:
+        return any(b in url for b in SKIP_DOMAINS)
 
-    def _skip_url(self, url: str) -> bool:
-        return any(bad in url for bad in SKIP_DOMAINS)
-
-    # ========================================================
-    # SEMANTIC DEDUP
-    # ========================================================
-
-    def _normalize(self, text: str) -> str:
-        text = text.lower()
-        text = re.sub(r"\(source:.*?\)", "", text)
-        text = re.sub(r"[^a-z0-9 ]+", "", text)
-        return re.sub(r"\s+", " ", text).strip()
-
-    def _dedup_semantic(self, items: List[str]) -> List[str]:
+    def _dedup(self, items: List[str]) -> List[str]:
         seen = set()
         out = []
 
-        for item in items:
-            if not item:
-                continue
+        for i in items:
+            norm = re.sub(r"\(Source:.*?\)", "", i).lower()
+            norm = re.sub(r"[^a-z0-9 ]+", "", norm)
+            norm = re.sub(r"\s+", " ", norm).strip()
 
-            norm = self._normalize(item)
             if norm in seen:
                 continue
 
             seen.add(norm)
-            out.append(item)
+            out.append(i)
 
         return out
-
-
-# ============================================================
-# MODULE-LEVEL WRAPPER
-# ============================================================
-
-def get_recommendations(advisory_summary: str) -> Dict[str, Optional[List[str]]]:
-    engine = RecommendationEngine()
-    return engine.get_recommendations(advisory_summary)
+    

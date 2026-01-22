@@ -10,7 +10,7 @@ async function manualTrackingTest() {
 
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     const db = mongoose.connection.db;
     const trackingCollection = db.collection('emailTracking');
@@ -45,7 +45,7 @@ async function manualTrackingTest() {
         }
       );
 
-      console.log(`✅ Update result: Modified ${updateResult.modifiedCount} documents`);
+      console.log(`Update result: Modified ${updateResult.modifiedCount} documents`);
 
       // Verify the update
       const updatedRecord = await trackingCollection.findOne({ trackingId: '1598bd97-f884-4e84-9dba-5a974f3c9371' });
@@ -76,7 +76,7 @@ async function manualTrackingTest() {
         }
       );
 
-      console.log(`✅ Click update result: Modified ${clickUpdateResult.modifiedCount} documents`);
+      console.log(`Click update result: Modified ${clickUpdateResult.modifiedCount} documents`);
 
       // Final verification
       const finalRecord = await trackingCollection.findOne({ trackingId: '1598bd97-f884-4e84-9dba-5a974f3c9371' });
@@ -86,7 +86,7 @@ async function manualTrackingTest() {
       console.log(`   Total events: ${finalRecord.events?.length || 0}`);
       console.log(`   Last opened: ${finalRecord.lastOpened?.toISOString() || 'Never'}`);
 
-      console.log('\n✅ Manual tracking events added successfully!');
+      console.log('\nManual tracking events added successfully!');
       console.log('🔄 Now check the dashboard to see if real-time data appears.');
 
     } else {

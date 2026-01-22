@@ -70,7 +70,7 @@ export default async function handler(req, res) {
       throw new Error(result.data?.error || 'Failed to cancel email');
     }
 
-    console.log('✅ Email cancelled successfully');
+    console.log('Email cancelled successfully');
 
     // Update tracking record
     if (trackingId) {

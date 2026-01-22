@@ -55,7 +55,7 @@ def fetch_cvss(cve_id: str) -> Optional[Dict]:
         return {
             "cve": cve_id,
             "score": float(score),
-            "criticality": severity.upper(),  # ✅ normalize
+            "criticality": severity.upper(),  # normalize
             "vector": cvss.get("vectorString"),
             "version": version,
         }

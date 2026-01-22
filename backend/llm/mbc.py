@@ -1,10 +1,19 @@
 # llm/mbc.py
 
+import os
 import json
 from typing import Dict, List
 from openai import OpenAI
+from dotenv import load_dotenv
 
 from utils.common import logger, read_yaml
+
+# ============================================================
+# LOAD ENVIRONMENT VARIABLES
+# ============================================================
+
+# This will search for .env in current dir, then parent dirs
+load_dotenv()
 
 # ============================================================
 # CONFIG
@@ -19,7 +28,7 @@ if not or_cfg.get("enabled", False):
     raise RuntimeError("OpenRouter is disabled in config.yaml")
 
 OPENROUTER_MODEL = or_cfg.get("model")
-API_KEY = "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"
+API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not OPENROUTER_MODEL or not API_KEY:
     raise RuntimeError("OpenRouter model or API key missing")
@@ -38,6 +47,8 @@ ALLOWED_MBC_BEHAVIORS = {
     "System Discovery",
     "Lateral Movement Capability",
 }
+
+ALLOWED_CONFIDENCE = {"High", "Medium", "Low"}
 
 MAX_BEHAVIORS = 5
 MIN_SUMMARY_LEN = 200
@@ -71,9 +82,10 @@ Your task is to extract **Malware Behavior Catalog (MBC)** behaviors.
 STRICT RULES:
 - Use ONLY behaviors from the allowed list below
 - Focus ONLY on observable malware behavior
-- Do NOT infer intent beyond the text
+- Do NOT infer attacker intent
 - Do NOT invent behaviors
 - Evidence MUST be copied verbatim from the executive summary
+- Objective must describe WHAT the behavior achieves (max 6 words)
 - Maximum {MAX_BEHAVIORS} behaviors
 - If no malware behavior is present, return an empty list []
 
@@ -163,16 +175,32 @@ def extract_mbc(
             return []
 
         validated = []
+
         for item in mbc:
-            if (
-                isinstance(item, dict)
-                and item.get("behavior") in ALLOWED_MBC_BEHAVIORS
-                and item.get("evidence")
-            ):
-                validated.append(item)
+            if not isinstance(item, dict):
+                continue
+
+            behavior = item.get("behavior")
+            evidence = item.get("evidence", "")
+            confidence = item.get("confidence")
+
+            if behavior not in ALLOWED_MBC_BEHAVIORS:
+                continue
+
+            if confidence not in ALLOWED_CONFIDENCE:
+                continue
+
+            # Evidence must be verbatim from executive summary
+            if not evidence or evidence not in exec_summary:
+                continue
+
+            validated.append(item)
 
         return validated[:MAX_BEHAVIORS]
 
     except Exception as e:
-        logger.warning(f"[MBC] Extraction failed: {e}")
+        logger.warning(
+            "[MBC] Extraction failed",
+            extra={"title": title, "error": str(e)}
+        )
         return []

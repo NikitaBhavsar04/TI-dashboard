@@ -42,7 +42,7 @@ async function testTrackingPixel() {
       
       if (test.expectImage) {
         if (contentType && contentType.includes('image')) {
-          console.log(`   ✅ Successfully returned image`);
+          console.log(`   Successfully returned image`);
           const buffer = await response.buffer();
           console.log(`   📏 Image size: ${buffer.length} bytes`);
         } else {
@@ -53,7 +53,7 @@ async function testTrackingPixel() {
       } else if (test.expectJSON) {
         if (response.ok) {
           const data = await response.json();
-          console.log(`   ✅ JSON response received`);
+          console.log(`   JSON response received`);
           console.log(`   Events: ${data.events?.length || 0}`);
           console.log(`   Summary: ${JSON.stringify(data.summary || {})}`);
         } else {
@@ -72,7 +72,7 @@ async function testTrackingPixel() {
   console.log('   If the tracking pixel endpoints return images (PNG), tracking should work.');
   console.log('   If you see "Successfully returned image", the pixel tracking is functional.');
   console.log('   The issue might be that emails need to actually load the pixel to register opens.');
-  console.log('\n🔗 Next steps:');
+  console.log('\n Next steps:');
   console.log('   1. Open an actual email that was sent');
   console.log('   2. Check if the email HTML includes the tracking pixel');
   console.log('   3. Verify the pixel URL in the email is correct');

@@ -100,7 +100,7 @@ async function main() {
   try {
     console.log('🔌 Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI);
-    console.log('✅ Connected to MongoDB\n');
+    console.log('Connected to MongoDB\n');
 
     // Find all advisories without htmlFileName
     const advisories = await Advisory.find({
@@ -127,7 +127,7 @@ async function main() {
         // HTML file exists, just update the database
         advisory.htmlFileName = expectedFileName;
         await advisory.save();
-        console.log(`  ✅ Updated with existing file: ${expectedFileName}`);
+        console.log(`  Updated with existing file: ${expectedFileName}`);
         successCount++;
       } else {
         // Generate new HTML file
@@ -136,7 +136,7 @@ async function main() {
         if (result.success) {
           advisory.htmlFileName = result.htmlPath;
           await advisory.save();
-          console.log(`  ✅ Generated and updated: ${result.htmlPath}`);
+          console.log(`  Generated and updated: ${result.htmlPath}`);
           successCount++;
         } else {
           console.log(`  ❌ Failed: ${result.error}`);
@@ -148,7 +148,7 @@ async function main() {
     }
 
     console.log('='.repeat(60));
-    console.log(`✅ Successfully updated: ${successCount}`);
+    console.log(`Successfully updated: ${successCount}`);
     console.log(`❌ Failed: ${failCount}`);
     console.log('='.repeat(60));
 

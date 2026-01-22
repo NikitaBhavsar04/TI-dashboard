@@ -193,11 +193,11 @@ python generate_advisories.py 3 2>&1 | tee logs/run.log
 
 ## 🔐 Security
 
-- ✅ All logs go to stderr (not stdout)
-- ✅ JSON output is ASCII-safe
-- ✅ API keys stored in `.env` (not committed)
-- ✅ Input validation and sanitization
-- ✅ No shell injection vulnerabilities
+- All logs go to stderr (not stdout)
+- JSON output is ASCII-safe
+- API keys stored in `.env` (not committed)
+- Input validation and sanitization
+- No shell injection vulnerabilities
 
 ## 📚 Dependencies
 
@@ -214,5 +214,5 @@ See `requirements.txt` for complete list.
 ---
 
 **Location:** `C:\Threat-Advisory\backend\`
-**Status:** ✅ Integrated
+**Status:** Integrated
 **Last Updated:** January 1, 2026

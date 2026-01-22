@@ -17,7 +17,7 @@ const scheduleTestEmail = async () => {
     });
     
     const result = await response.json();
-    console.log('✅ Schedule result:', result);
+    console.log('Schedule result:', result);
     
     if (result.success) {
       console.log('🎉 Email scheduled successfully!');

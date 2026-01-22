@@ -36,7 +36,7 @@ async function testWorkflow() {
     }
 
     const cookies = loginRes.headers.get('set-cookie');
-    console.log('✅ Login successful\n');
+    console.log('Login successful\n');
 
     // Step 2: Generate advisory
     console.log('📝 Step 2: Generate advisory from raw article...');
@@ -61,7 +61,7 @@ async function testWorkflow() {
       throw new Error(`Generate error: ${generateData.error}`);
     }
 
-    console.log('✅ Advisory generated successfully');
+    console.log('Advisory generated successfully');
     console.log(`   Advisory ID: ${generateData.advisory.advisory_id}`);
     console.log(`   Title: ${generateData.advisory.title}\n`);
 
@@ -86,7 +86,7 @@ async function testWorkflow() {
       throw new Error(`Save error: ${saveData.error}`);
     }
 
-    console.log('✅ Advisory saved to Eagle Nest');
+    console.log('Advisory saved to Eagle Nest');
     console.log(`   File: ${saveData.advisory_id}.json\n`);
 
     // Step 4: Retrieve from Eagle Nest
@@ -104,7 +104,7 @@ async function testWorkflow() {
 
     const listData = await listRes.json();
     
-    console.log('✅ Eagle Nest advisories retrieved');
+    console.log('Eagle Nest advisories retrieved');
     console.log(`   Total advisories: ${listData.advisories.length}`);
     
     const foundAdvisory = listData.advisories.find(
@@ -112,7 +112,7 @@ async function testWorkflow() {
     );
     
     if (foundAdvisory) {
-      console.log(`   ✅ Test advisory found in list`);
+      console.log(`   Test advisory found in list`);
       console.log(`      Status: ${foundAdvisory.status}`);
       console.log(`      Saved at: ${foundAdvisory.saved_to_eagle_nest_at}\n`);
     } else {
@@ -138,17 +138,17 @@ async function testWorkflow() {
     const deleteData = await deleteRes.json();
     
     if (deleteData.success) {
-      console.log('✅ Test advisory deleted successfully\n');
+      console.log('Test advisory deleted successfully\n');
     }
 
     console.log('🎉 ALL TESTS PASSED!\n');
     console.log('WORKFLOW SUMMARY:');
     console.log('================');
-    console.log('1. ✅ Admin authentication');
-    console.log('2. ✅ Advisory generation from raw article');
-    console.log('3. ✅ Advisory saved to Eagle Nest');
-    console.log('4. ✅ Advisory retrieved from Eagle Nest');
-    console.log('5. ✅ Advisory deleted from Eagle Nest');
+    console.log('1. Admin authentication');
+    console.log('2. Advisory generation from raw article');
+    console.log('3. Advisory saved to Eagle Nest');
+    console.log('4. Advisory retrieved from Eagle Nest');
+    console.log('5. Advisory deleted from Eagle Nest');
     console.log('\n📋 The complete workflow is functioning correctly!');
 
   } catch (error) {

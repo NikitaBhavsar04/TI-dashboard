@@ -12,7 +12,7 @@ async function testEmailTrackingSystem() {
 
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     const trackingService = new EmailTrackingService(mongoose.connection);
     const templateGenerator = new EnhancedEmailTemplateGenerator(trackingService);
@@ -34,11 +34,11 @@ async function testEmailTrackingSystem() {
       }
     });
 
-    console.log(`   ✅ Tracking initialized: ${testTracking.trackingId}`);
+    console.log(`   Tracking initialized: ${testTracking.trackingId}`);
     console.log(`   📸 Pixel URL: ${testTracking.pixelUrl}`);
     
     const testLinkUrl = testTracking.trackLinkFunction('https://example.com/test', 'test_link');
-    console.log(`   🔗 Test tracked link: ${testLinkUrl}`);
+    console.log(`    Test tracked link: ${testLinkUrl}`);
 
     // Test 2: Generate tracked email template
     console.log('\n2️⃣ Testing email template generation...');
@@ -80,7 +80,7 @@ async function testEmailTrackingSystem() {
       }
     });
 
-    console.log(`   ✅ Email template generated successfully`);
+    console.log(`   Email template generated successfully`);
     console.log(`   📧 HTML length: ${trackedEmail.html.length} characters`);
     console.log(`   🆔 Tracking ID: ${trackedEmail.trackingId}`);
 
@@ -122,7 +122,7 @@ async function testEmailTrackingSystem() {
     console.log(`   👀 Total opens: ${analytics.statistics.totalOpens}`);
     console.log(`   🖱️  Total clicks: ${analytics.statistics.totalClicks}`);
     console.log(`   📍 Open rate: ${analytics.statistics.openRate}%`);
-    console.log(`   🎯 Click rate: ${analytics.statistics.clickRate}%`);
+    console.log(`   Click rate: ${analytics.statistics.clickRate}%`);
 
     // Test 5: Get detailed tracking events
     console.log('\n5️⃣ Testing detailed event retrieval...');
@@ -136,7 +136,7 @@ async function testEmailTrackingSystem() {
         console.log(`      📱 Device: ${event.device.type} - ${event.device.browser} on ${event.device.os}`);
       }
       if (event.linkUrl) {
-        console.log(`      🔗 Link: ${event.linkUrl}`);
+        console.log(`       Link: ${event.linkUrl}`);
       }
     });
 
@@ -195,14 +195,14 @@ async function testEmailTrackingSystem() {
 
     console.log('\n🎉 All tests completed successfully!');
     console.log('\n📋 Test Results Summary:');
-    console.log('   ✅ Tracking initialization');
-    console.log('   ✅ Email template generation');
-    console.log('   ✅ Event logging (opens & clicks)');
-    console.log('   ✅ Analytics retrieval');
-    console.log('   ✅ Event detail retrieval');
-    console.log('   ✅ URL validation');
-    console.log('   ✅ Performance test');
-    console.log('   ✅ Data cleanup');
+    console.log('   Tracking initialization');
+    console.log('   Email template generation');
+    console.log('   Event logging (opens & clicks)');
+    console.log('   Analytics retrieval');
+    console.log('   Event detail retrieval');
+    console.log('   URL validation');
+    console.log('   Performance test');
+    console.log('   Data cleanup');
 
   } catch (error) {
     console.error('❌ Test failed:', error);
@@ -287,7 +287,7 @@ async function loadTestEmailTracking() {
       }
 
       await Promise.all(batchPromises);
-      console.log(`   ✅ Batch ${batch + 1}/${batches} completed`);
+      console.log(`   Batch ${batch + 1}/${batches} completed`);
     }
 
     const endTime = Date.now();

@@ -33,6 +33,7 @@
     "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.1",
+    "nunjucks": "^3.2.4",
     "pdfkit": "^0.13.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 
 async function testSMTP() {
   try {
-    console.log('🔗 Testing SMTP connection...');
+    console.log(' Testing SMTP connection...');
     
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -24,7 +24,7 @@ async function testSMTP() {
 
     // Verify connection
     await transporter.verify();
-    console.log('✅ SMTP connection verified successfully');
+    console.log('SMTP connection verified successfully');
 
     // Send test email
     const testEmail = {
@@ -40,7 +40,7 @@ async function testSMTP() {
 
     console.log('📧 Sending test email...');
     const info = await transporter.sendMail(testEmail);
-    console.log('✅ Test email sent successfully!');
+    console.log('Test email sent successfully!');
     console.log('📋 Message ID:', info.messageId);
     console.log('📧 Response:', info.response);
 

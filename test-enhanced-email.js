@@ -100,7 +100,7 @@ Contact the SOC team for assistance: +1-555-SECURITY`;
     
     const emailHtml = generateAdvisoryEmailBody(mockAdvisory, customMessage);
     
-    console.log('✅ Email generation successful!');
+    console.log('Email generation successful!');
     console.log(`📏 Generated email size: ${(emailHtml.length / 1024).toFixed(2)} KB`);
     
     // Check for key components

@@ -1,3 +1,21 @@
+// Normalize backend advisory fields to frontend schema
+function normalizeAdvisoryFields(advisory: any) {
+  if (!advisory || typeof advisory !== 'object') return advisory;
+  return {
+    ...advisory,
+    advisoryId: advisory.advisory_id || advisory.advisoryId,
+    severity: advisory.criticality || advisory.severity,
+    category: advisory.threat_type || advisory.category,
+    affectedProducts: advisory.affectedProducts || (advisory.affected_product ? [advisory.affected_product] : []),
+    affectedProduct: advisory.affected_product || (advisory.affectedProducts && advisory.affectedProducts[0]),
+    cveIds: advisory.cves || advisory.cveIds,
+    patchDetails: advisory.patch_details || advisory.patchDetails,
+    mitreTactics: advisory.mitre || advisory.mitreTactics,
+    publishedDate: advisory.created_at || advisory.publishedDate,
+    executiveSummary: advisory.exec_summary_parts ? advisory.exec_summary_parts.join('\n\n') : advisory.executiveSummary,
+    description: advisory.exec_summary_parts ? advisory.exec_summary_parts.join('\n\n') : advisory.description,
+  };
+}
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { requireAdmin } from '@/lib/auth';
 import { spawn } from 'child_process';
@@ -118,11 +136,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('[MANUAL-ADVISORY] Python failed, using fallback method');
         
         const fallbackAdvisory = {
-          advisoryId: articleId,
+          advisory_id: articleId,
           title: `Security Advisory - Article ${articleId}`,
           summary: 'Advisory generated after Python execution failed. Please customize.',
-          severity: 'Medium',
-          category: 'General',
+          criticality: 'Medium',
+          threat_type: 'General',
           description: 'Advisory generated from article analysis. Requires manual review.',
           content: 'Advisory generated from article analysis. Requires manual review and customization.',
           author: 'TI-Dashboard System',
@@ -137,7 +155,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         return res.status(200).json({ 
           success: true, 
-          advisory: fallbackAdvisory,
+          advisory: normalizeAdvisoryFields(fallbackAdvisory),
           note: 'Generated in error recovery mode. Please review and customize.',
           warning: 'Python backend unavailable'
         });
@@ -151,18 +169,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const advisory = JSON.parse(stdout);
       return res.status(200).json({ 
         success: true, 
-        advisory 
+        advisory: normalizeAdvisoryFields(advisory) 
       });
     } catch (parseError) {
       console.error('[MANUAL-ADVISORY] Failed to parse advisory JSON');
       
       // Fallback if JSON parsing fails
       const fallbackAdvisory = {
-        advisoryId: articleId,
+        advisory_id: articleId,
         title: `Security Advisory - Article ${articleId}`,
         summary: 'Advisory generated but JSON parsing failed. Please customize.',
-        severity: 'Medium',
-        category: 'General',
+        criticality: 'Medium',
+        threat_type: 'General',
         description: 'Advisory generated from article analysis. Requires manual review.',
         content: 'Advisory generated from article analysis. Requires manual review and customization.',
         author: 'TI-Dashboard System',
@@ -178,7 +196,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       return res.status(200).json({ 
         success: true, 
-        advisory: fallbackAdvisory,
+        advisory: normalizeAdvisoryFields(fallbackAdvisory),
         note: 'JSON parsing failed, using fallback advisory'
       });
     }
@@ -188,11 +206,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     // Final fallback for any other errors
     const fallbackAdvisory = {
-      advisoryId: articleId,
+      advisory_id: articleId,
       title: `Security Advisory - Article ${articleId}`,
       summary: 'Advisory generated in error recovery mode. Please customize.',
-      severity: 'Medium',
-      category: 'General',
+      criticality: 'Medium',
+      threat_type: 'General',
       description: 'Advisory generated from article analysis. Requires manual review.',
       content: 'Advisory generated from article analysis. Requires manual review and customization.',
       author: 'TI-Dashboard System',
@@ -207,7 +225,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ 
       success: true, 
-      advisory: fallbackAdvisory,
+      advisory: normalizeAdvisoryFields(fallbackAdvisory),
       note: 'Generated in final fallback mode. Please review and customize.',
       error_details: error.message
     });

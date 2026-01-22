@@ -8,7 +8,7 @@ const testTrackingEndpoints = async () => {
     const response = await fetch('http://localhost:3000/api/tracking/pixel?trackingId=track-001-1755509439111');
     console.log(`   Status: ${response.status}`);
     console.log(`   Content-Type: ${response.headers.get('content-type')}`);
-    console.log('   ✅ Pixel endpoint working\n');
+    console.log('   Pixel endpoint working\n');
   } catch (error) {
     console.log(`   ❌ Pixel endpoint error: ${error.message}\n`);
   }
@@ -22,7 +22,7 @@ const testTrackingEndpoints = async () => {
     });
     console.log(`   Status: ${response.status}`);
     console.log(`   Location header: ${response.headers.get('location')}`);
-    console.log('   ✅ Click tracking working\n');
+    console.log('   Click tracking working\n');
   } catch (error) {
     console.log(`   ❌ Click tracking error: ${error.message}\n`);
   }
@@ -35,13 +35,13 @@ const testTrackingEndpoints = async () => {
     if (response.ok) {
       const data = await response.json();
       console.log(`   Data keys: ${Object.keys(data).join(', ')}`);
-      console.log('   ✅ Analytics data endpoint working\n');
+      console.log('   Analytics data endpoint working\n');
     }
   } catch (error) {
     console.log(`   ❌ Analytics data error: ${error.message}\n`);
   }
 
-  console.log('✅ All tracking endpoints tested!');
+  console.log('All tracking endpoints tested!');
 };
 
 testTrackingEndpoints();

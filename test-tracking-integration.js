@@ -10,7 +10,7 @@ async function testTrackingIntegration() {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB\n');
+    console.log('Connected to MongoDB\n');
     
     const db = mongoose.connection.db;
     const trackingCollection = db.collection('emailTracking');
@@ -26,7 +26,7 @@ async function testTrackingIntegration() {
     }
 
     // Test 2: Create a test tracking record
-    console.log('\n🎯 Creating test tracking record...');
+    console.log('\nCreating test tracking record...');
     const testRecord = {
       trackingId: `test-${Date.now()}`,
       emailId: 'test-advisory-123',
@@ -38,7 +38,7 @@ async function testTrackingIntegration() {
     };
 
     const insertResult = await trackingCollection.insertOne(testRecord);
-    console.log(`   ✅ Test record created: ${insertResult.insertedId}`);
+    console.log(`   Test record created: ${insertResult.insertedId}`);
 
     // Test 3: Simulate tracking events
     console.log('\n📈 Simulating tracking events...');
@@ -63,7 +63,7 @@ async function testTrackingIntegration() {
         $inc: { openCount: 1 }
       }
     );
-    console.log('   ✅ Email open event simulated');
+    console.log('   Email open event simulated');
 
     // Simulate click event
     const clickEvent = {
@@ -86,7 +86,7 @@ async function testTrackingIntegration() {
         $push: { events: clickEvent }
       }
     );
-    console.log('   ✅ Link click event simulated');
+    console.log('   Link click event simulated');
 
     // Test 4: Verify tracking data
     console.log('\n🔍 Verifying tracking data...');
@@ -95,7 +95,7 @@ async function testTrackingIntegration() {
     console.log(`   Open count: ${updatedRecord.openCount}`);
 
     // Test 5: Test tracking URLs
-    console.log('\n🔗 Testing tracking URL generation...');
+    console.log('\n Testing tracking URL generation...');
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     
     const pixelUrl = `/api/emails/tracking?t=${testRecord.trackingId}&type=open`;
@@ -124,11 +124,11 @@ async function testTrackingIntegration() {
 
     // Test 7: Check API endpoints
     console.log('\n🌐 API Endpoints Status:');
-    console.log('   ✅ Pixel tracking: /api/emails/tracking');
-    console.log('   ✅ Link tracking: /api/track/link');
-    console.log('   ✅ Analytics API: /api/tracking/analytics');
-    console.log('   ✅ Events API: /api/tracking/events');
-    console.log('   ✅ Dashboard: /analytics/email-tracking');
+    console.log('   Pixel tracking: /api/emails/tracking');
+    console.log('   Link tracking: /api/track/link');
+    console.log('   Analytics API: /api/tracking/analytics');
+    console.log('   Events API: /api/tracking/events');
+    console.log('   Dashboard: /analytics/email-tracking');
 
     // Cleanup test record
     await trackingCollection.deleteOne({ trackingId: testRecord.trackingId });
@@ -136,12 +136,12 @@ async function testTrackingIntegration() {
 
     console.log('\n🎉 Email tracking integration test completed successfully!');
     console.log('\n📋 Summary:');
-    console.log('   ✅ Database connection working');
-    console.log('   ✅ Tracking record creation working');
-    console.log('   ✅ Event logging working');
-    console.log('   ✅ URL generation working');
-    console.log('   ✅ Analytics calculation working');
-    console.log('   ✅ All API endpoints available');
+    console.log('   Database connection working');
+    console.log('   Tracking record creation working');
+    console.log('   Event logging working');
+    console.log('   URL generation working');
+    console.log('   Analytics calculation working');
+    console.log('   All API endpoints available');
 
   } catch (error) {
     console.error('❌ Test failed:', error);

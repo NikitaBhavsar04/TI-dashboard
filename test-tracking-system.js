@@ -8,7 +8,7 @@ async function testTracking() {
     
     // Connect to database
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB\n');
+    console.log('Connected to MongoDB\n');
 
     const db = mongoose.connection.db;
     const trackingCollection = db.collection('emailTracking');
@@ -37,7 +37,7 @@ async function testTracking() {
     };
 
     await trackingCollection.insertOne(testRecord);
-    console.log(`   ✅ Test tracking record created: ${testTrackingId}\n`);
+    console.log(`   Test tracking record created: ${testTrackingId}\n`);
 
     // Test 3: Simulate an email open
     console.log('3. Simulating email open...');
@@ -57,7 +57,7 @@ async function testTracking() {
       }
     );
 
-    console.log(`   ✅ Email open simulated (Modified: ${updateResult.modifiedCount})\n`);
+    console.log(`   Email open simulated (Modified: ${updateResult.modifiedCount})\n`);
 
     // Test 4: Check updated data
     console.log('4. Checking final tracking data...');
@@ -71,7 +71,7 @@ async function testTracking() {
       console.log(`   Test record events: ${testRecordUpdated.events.length}\n`);
     }
 
-    console.log('✅ Email tracking test completed successfully!');
+    console.log('Email tracking test completed successfully!');
     console.log('\n📋 Summary:');
     console.log(`   - Database connection: Working ✅`);
     console.log(`   - Tracking record creation: Working ✅`);

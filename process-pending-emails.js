@@ -11,7 +11,7 @@ const processPendingEmails = async () => {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Find all pending emails that should have been sent
     const now = new Date();
@@ -34,7 +34,7 @@ const processPendingEmails = async () => {
         try {
           // Schedule immediate job
           await agenda.now('send-scheduled-email', { emailId: email._id.toString() });
-          console.log(`✅ Queued email ${email._id} for immediate processing`);
+          console.log(`Queued email ${email._id} for immediate processing`);
         } catch (error) {
           console.error(`❌ Failed to queue email ${email._id}:`, error);
         }

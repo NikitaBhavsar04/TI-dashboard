@@ -25,7 +25,7 @@ async function testMinimalEmail() {
 
     console.log('📧 Sending minimal test email...');
     const info = await transporter.sendMail(testEmail);
-    console.log('✅ Email sent successfully!');
+    console.log('Email sent successfully!');
     console.log('📧 Message ID:', info.messageId);
     console.log('📬 Accepted:', info.accepted);
     console.log('❌ Rejected:', info.rejected);

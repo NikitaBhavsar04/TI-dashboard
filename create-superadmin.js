@@ -8,7 +8,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://threatadvisory:7U%
 async function createSuperAdmin() {
   try {
     await mongoose.connect(MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Define User schema
     const UserSchema = new mongoose.Schema({
@@ -28,7 +28,7 @@ async function createSuperAdmin() {
     const existingSuperAdmin = await User.findOne({ role: 'super_admin' });
     
     if (existingSuperAdmin) {
-      console.log('✅ Super admin already exists:');
+      console.log('Super admin already exists:');
       console.log(`   Email: ${existingSuperAdmin.email}`);
       console.log(`   Username: ${existingSuperAdmin.username}`);
       return;
@@ -48,7 +48,7 @@ async function createSuperAdmin() {
           }
         }
       );
-      console.log('✅ Converted admin to super_admin:');
+      console.log('Converted admin to super_admin:');
       console.log(`   Email: ${existingAdmin.email}`);
       console.log(`   Username: ${existingAdmin.username}`);
       console.log('   Use the existing admin password to login');
@@ -73,7 +73,7 @@ async function createSuperAdmin() {
 
     await superAdmin.save();
     
-    console.log('✅ Super admin created successfully!');
+    console.log('Super admin created successfully!');
     console.log('');
     console.log('🔐 Super Admin Login Credentials:');
     console.log('   Email: superadmin@threatadvisory.com');

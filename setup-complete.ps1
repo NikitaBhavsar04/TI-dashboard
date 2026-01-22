@@ -139,7 +139,7 @@ Set-Location ..
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  ✅ Setup Complete! Threat-Advisory is 100% Independent" -ForegroundColor Green
+Write-Host "  Setup Complete! Threat-Advisory is 100% Independent" -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Next Steps:" -ForegroundColor Yellow

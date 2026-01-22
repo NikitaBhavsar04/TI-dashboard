@@ -12,7 +12,7 @@ async function testTrackingDirect() {
 
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     const trackingService = new EmailTrackingService(mongoose.connection);
     const templateGenerator = new EnhancedEmailTemplateGenerator(trackingService);
@@ -32,7 +32,7 @@ async function testTrackingDirect() {
       }
     });
 
-    console.log(`   ✅ Tracking ID: ${testTracking.trackingId}`);
+    console.log(`   Tracking ID: ${testTracking.trackingId}`);
     console.log(`   📸 Pixel URL: ${testTracking.pixelUrl}`);
 
     // Test 2: Generate email with tracking
@@ -74,11 +74,11 @@ async function testTrackingDirect() {
       }
     });
 
-    console.log(`   ✅ Generated tracked email`);
+    console.log(`   Generated tracked email`);
     console.log(`   📧 HTML length: ${trackedEmail.html.length} characters`);
     console.log(`   🆔 Tracking ID: ${trackedEmail.trackingId}`);
     console.log(`   📸 Contains pixel: ${trackedEmail.html.includes('api/track/pixel') ? '✅' : '❌'}`);
-    console.log(`   🔗 Contains tracked links: ${trackedEmail.html.includes('api/track/link') ? '✅' : '❌'}`);
+    console.log(`    Contains tracked links: ${trackedEmail.html.includes('api/track/link') ? '✅' : '❌'}`);
 
     // Test 3: Simulate tracking events
     console.log('\n3️⃣ Testing event simulation...');
@@ -114,7 +114,7 @@ async function testTrackingDirect() {
     console.log(`   👀 Total opens: ${analytics.statistics.totalOpens}`);
     console.log(`   🖱️  Total clicks: ${analytics.statistics.totalClicks}`);
     console.log(`   📈 Open rate: ${analytics.statistics.openRate}%`);
-    console.log(`   🎯 Click rate: ${analytics.statistics.clickRate}%`);
+    console.log(`   Click rate: ${analytics.statistics.clickRate}%`);
 
     // Test 5: URL extraction from generated email
     console.log('\n5️⃣ Testing URL extraction...');
@@ -128,7 +128,7 @@ async function testTrackingDirect() {
     // Extract tracked links
     const linkMatches = trackedEmail.html.match(/href="([^"]*api\/track\/link[^"]*)"/g);
     if (linkMatches) {
-      console.log(`   🔗 Found ${linkMatches.length} tracked links:`);
+      console.log(`    Found ${linkMatches.length} tracked links:`);
       linkMatches.slice(0, 3).forEach((match, index) => {
         const url = match.match(/href="([^"]*)"/)[1];
         console.log(`      ${index + 1}. ${url.substring(0, 100)}...`);
@@ -143,7 +143,7 @@ async function testTrackingDirect() {
     if (baseUrl.includes('localhost')) {
       console.log(`   ⚠️  WARNING: Using localhost - external tracking won't work`);
     } else {
-      console.log(`   ✅ Production domain configured`);
+      console.log(`   Production domain configured`);
     }
 
     console.log('\n🎉 Direct integration test completed successfully!');

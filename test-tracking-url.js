@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://inteldesk.eagleyesoc.ai';
 
-console.log('🔗 Environment Variables:');
+console.log(' Environment Variables:');
 console.log('   NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL);
 console.log('   NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
 console.log('   Final baseUrl:', baseUrl);

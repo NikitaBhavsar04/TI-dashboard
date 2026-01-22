@@ -9,7 +9,7 @@ async function migrateRoles() {
   
   try {
     await client.connect();
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
     
     const db = client.db();
     const users = db.collection('users');
@@ -38,7 +38,7 @@ async function migrateRoles() {
         }
       );
       
-      console.log('✅ Successfully converted to super_admin');
+      console.log('Successfully converted to super_admin');
       
       // Other admins remain as limited admins
       if (adminUsers.length > 1) {
@@ -64,7 +64,7 @@ async function migrateRoles() {
       };
       
       await users.insertOne(defaultSuperAdmin);
-      console.log('✅ Created default super_admin user');
+      console.log('Created default super_admin user');
       console.log('\\n🔐 Default Super Admin Credentials:');
       console.log('   Email: superadmin@threatadvisory.com');
       console.log('   Password: SuperAdmin123!');
@@ -87,7 +87,7 @@ async function migrateRoles() {
     for (const index of indexes) {
       try {
         await auditLogs.createIndex(index.key, { name: index.name });
-        console.log(`   ✅ Created index: ${index.name}`);
+        console.log(`   Created index: ${index.name}`);
       } catch (error) {
         if (error.code === 85) {
           console.log(`   ℹ️  Index already exists: ${index.name}`);
@@ -108,7 +108,7 @@ async function migrateRoles() {
       console.log(`   ${stat._id}: ${stat.count} users`);
     });
     
-    console.log('\\n✅ Migration completed successfully!');
+    console.log('\\nMigration completed successfully!');
     console.log('\\n📋 Role Permissions Summary:');
     console.log('   🟣 SUPER_ADMIN:');
     console.log('      - Full system access');

@@ -11,13 +11,13 @@ const checkAdvisoryStructure = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Find the advisory
     const advisory = await Advisory.findById('6883112b4610d828d41c557f');
     
     if (advisory) {
-      console.log(`📄 Full advisory data:`);
+      console.log(` Full advisory data:`);
       console.log(JSON.stringify(advisory, null, 2));
     } else {
       console.log(`❌ Advisory not found`);

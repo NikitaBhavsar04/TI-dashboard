@@ -27,7 +27,7 @@ const testAutoScheduling = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Create a scheduled email for 1 minute from now
     const now = new Date();
@@ -47,7 +47,7 @@ const testAutoScheduling = async () => {
     });
 
     await testEmail.save();
-    console.log(`✅ Email created with ID: ${testEmail._id}`);
+    console.log(`Email created with ID: ${testEmail._id}`);
 
     // Now call the API to create the Agenda job (simulate what the web interface does)
     console.log('📤 Creating Agenda job via API...');
@@ -75,7 +75,7 @@ const testAutoScheduling = async () => {
     console.log(`📅 Sent at: ${updatedEmail.sentAt || 'Not sent'}`);
     
     if (updatedEmail.status === 'sent') {
-      console.log('✅ AUTO-SCHEDULING WORKS! Email was sent automatically with content!');
+      console.log('AUTO-SCHEDULING WORKS! Email was sent automatically with content!');
     } else if (updatedEmail.status === 'failed') {
       console.log('❌ Email failed to send automatically');
       console.log(`Error: ${updatedEmail.errorMessage}`);

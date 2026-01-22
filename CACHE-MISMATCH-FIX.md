@@ -80,7 +80,7 @@ Result: Backend sees no cached items → Generates new advisories ✅
 ```
 
 ## Files Modified
-- ✅ [pages/api/clear-advisory-cache.ts](pages/api/clear-advisory-cache.ts) - Fixed cache file path
+- [pages/api/clear-advisory-cache.ts](pages/api/clear-advisory-cache.ts) - Fixed cache file path
 
 ## Additional Notes
 - The fix is backward compatible - it clears both cache files
@@ -96,6 +96,6 @@ Result: Backend sees no cached items → Generates new advisories ✅
 
 ---
 
-**Issue Status:** ✅ RESOLVED
+**Issue Status:** RESOLVED
 
 **Testing Required:** Manual testing via UI to confirm cache clearing works correctly

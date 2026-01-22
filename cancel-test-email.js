@@ -21,7 +21,7 @@ async function cancelEmail() {
     
     const result = await appsScriptScheduler.cancelEmail(emailId);
     
-    console.log('✅ Email cancelled successfully!');
+    console.log('Email cancelled successfully!');
     console.log(result);
 
   } catch (error) {

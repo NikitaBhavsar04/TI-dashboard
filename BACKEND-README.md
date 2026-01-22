@@ -1,6 +1,6 @@
 # 🎉 Backend Now Integrated!
 
-## ✅ Auto Advisory Backend is Now Local
+## Auto Advisory Backend is Now Local
 
 The Python backend for automated advisory generation is now fully integrated into the Threat-Advisory project. No need for external folders!
 
@@ -42,11 +42,11 @@ cd C:\Threat-Advisory
 npm run dev
 ```
 
-## 🎯 What Changed
+## What Changed
 
-- ✅ **Before:** Auto Advisory called external `ThreatAdvisory-Automation` folder
-- ✅ **After:** Auto Advisory uses integrated `backend/` folder
-- ✅ **Result:** Everything in one place!
+- **Before:** Auto Advisory called external `ThreatAdvisory-Automation` folder
+- **After:** Auto Advisory uses integrated `backend/` folder
+- **Result:** Everything in one place!
 
 ## 📚 Documentation
 
@@ -63,5 +63,5 @@ npm run dev
 
 ---
 
-**Status:** ✅ Ready to Use
+**Status:** Ready to Use
 **Date:** January 1, 2026

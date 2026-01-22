@@ -41,7 +41,7 @@
                 if (response.ok) {
                     resultDiv.innerHTML = `
                         <div class="result success">
-                            <h3>✅ Success!</h3>
+                            <h3>Success!</h3>
                             <p>${data.message}</p>
                             <p><strong>Advisory ID:</strong> ${data.advisoryId}</p>
                             <p><strong>Patch Details Added:</strong> ${data.patchDetailsCount} items</p>
@@ -50,7 +50,7 @@
                                 <li>🔧 Patch Details: ${data.sectionsAdded.patchDetails} items</li>
                                 <li>⚔️ MITRE Tactics: ${data.sectionsAdded.mitreTactics} items</li>
                                 <li>📦 Affected Products: ${data.sectionsAdded.affectedProducts} items</li>
-                                <li>🎯 Target Sectors: ${data.sectionsAdded.targetSectors} items</li>
+                                <li>Target Sectors: ${data.sectionsAdded.targetSectors} items</li>
                                 <li>🌍 Regions: ${data.sectionsAdded.regions} items</li>
                             </ul>
                             <p><strong>Check your email - it should now have all three sections!</strong></p>

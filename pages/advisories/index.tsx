@@ -25,14 +25,12 @@ import AdvisoryCardWithEmail from '@/components/AdvisoryCardWithEmail';
 import EmailModal from '@/components/EmailModal';
 import ScheduledEmailsManager from '@/components/ScheduledEmailsManager';
 import EditScheduledEmailModal from '@/components/EditScheduledEmailModal';
-import { IAdvisory } from '@/models/Advisory';
 import { formatDate } from '@/lib/utils';
 import dbConnect from '@/lib/db';
-import Advisory from '@/models/Advisory';
 import { verifyToken } from '@/lib/auth';
 
 interface AdvisoriesPageProps {
-  advisories: IAdvisory[];
+  advisories: any[];
   categories: string[];
   stats: {
     total: number;
@@ -53,7 +51,7 @@ type ViewMode = 'grid' | 'list';
 export default function AdvisoriesPage({ advisories, categories, stats, currentPage, totalPages, totalAdvisories }: AdvisoriesPageProps) {
   const { isAdmin, isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const [filteredAdvisories, setFilteredAdvisories] = useState(advisories);
+  const [filteredAdvisories, setFilteredAdvisories] = useState<any[]>(advisories);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSeverity, setSelectedSeverity] = useState('');
@@ -63,7 +61,7 @@ export default function AdvisoriesPage({ advisories, categories, stats, currentP
   const [isLoading, setIsLoading] = useState(false);
   const [isAutoRunning, setIsAutoRunning] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
-  const [selectedAdvisoryForEmail, setSelectedAdvisoryForEmail] = useState<IAdvisory | null>(null);
+  const [selectedAdvisoryForEmail, setSelectedAdvisoryForEmail] = useState<any | null>(null);
   const [showScheduledEmails, setShowScheduledEmails] = useState(false);
   const [editEmailModalOpen, setEditEmailModalOpen] = useState(false);
   const [editingEmailData, setEditingEmailData] = useState<any>(null);
@@ -181,7 +179,7 @@ export default function AdvisoriesPage({ advisories, categories, stats, currentP
     });
   };
 
-  const handleEmailAdvisory = (advisory: IAdvisory, e: React.MouseEvent) => {
+  const handleEmailAdvisory = (advisory: any, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setSelectedAdvisoryForEmail(advisory);
@@ -879,66 +877,15 @@ export const getServerSideProps: GetServerSideProps = async ({ req, query }) => 
     };
   }
 
-  await dbConnect();
-
-  try {
-    // Pagination settings
-    const ITEMS_PER_PAGE = 20;
-    const page = parseInt(query.page as string) || 1;
-    const skip = (page - 1) * ITEMS_PER_PAGE;
-
-    // Get total count for pagination
-    const totalAdvisories = await Advisory.countDocuments({});
-    const totalPages = Math.ceil(totalAdvisories / ITEMS_PER_PAGE);
-
-    // Fetch paginated advisories
-    const advisories = await Advisory.find({})
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(ITEMS_PER_PAGE)
-      .lean();
-    
-    // Get unique categories from all advisories (not just current page)
-    const allAdvisories = await Advisory.find({}).select('category').lean();
-    const categories = Array.from(new Set(allAdvisories.map(a => a.category))).filter(Boolean);
-    
-    // Calculate stats from all advisories
-    const allAdvisoriesWithSeverity = await Advisory.find({}).select('severity publishedDate').lean();
-    const stats = {
-      total: totalAdvisories,
-      critical: allAdvisoriesWithSeverity.filter(a => a.severity === 'Critical').length,
-      high: allAdvisoriesWithSeverity.filter(a => a.severity === 'High').length,
-      medium: allAdvisoriesWithSeverity.filter(a => a.severity === 'Medium').length,
-      low: allAdvisoriesWithSeverity.filter(a => a.severity === 'Low').length,
-      recent: allAdvisoriesWithSeverity.filter(a => {
-        const publishedDate = new Date(a.publishedDate);
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        return publishedDate >= sevenDaysAgo;
-      }).length
-    };
-
-    return {
-      props: {
-        advisories: JSON.parse(JSON.stringify(advisories)),
-        categories,
-        stats,
-        currentPage: page,
-        totalPages,
-        totalAdvisories
-      }
-    };
-  } catch (error) {
-    console.error('Error fetching advisories:', error);
-    return {
-      props: {
-        advisories: [],
-        categories: [],
-        stats: { total: 0, critical: 0, high: 0, medium: 0, low: 0, recent: 0 },
-        currentPage: 1,
-        totalPages: 0,
-        totalAdvisories: 0
-      }
-    };
-  }
+  // TODO: Replace with OpenSearch fetch logic
+  return {
+    props: {
+      advisories: [],
+      categories: [],
+      stats: { total: 0, critical: 0, high: 0, medium: 0, low: 0, recent: 0 },
+      currentPage: 1,
+      totalPages: 0,
+      totalAdvisories: 0
+    }
+  };
 };

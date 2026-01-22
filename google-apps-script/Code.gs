@@ -253,7 +253,7 @@ function sendEmailNow(emailData) {
       options
     );
     
-    Logger.log(`✅ Workspace HTML email sent successfully to ${emailData.to}`);
+    Logger.log(`Workspace HTML email sent successfully to ${emailData.to}`);
     
     // Update status
     emailData.status = 'sent';
@@ -426,7 +426,7 @@ function setupRecurringTrigger() {
     .everyMinutes(1)
     .create();
   
-  Logger.log('✅ Recurring trigger created - will check for emails every minute');
+  Logger.log('Recurring trigger created - will check for emails every minute');
 }
 
 /**
@@ -573,7 +573,7 @@ function runSetup() {
   // Create recurring trigger
   setupRecurringTrigger();
   
-  Logger.log('✅ Setup complete!');
+  Logger.log('Setup complete!');
   Logger.log('📧 The script will now check for scheduled emails every minute');
   Logger.log('💡 You can now schedule emails from your Next.js app');
 }

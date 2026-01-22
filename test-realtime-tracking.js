@@ -10,7 +10,7 @@ async function testRealTimeTracking() {
 
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     const db = mongoose.connection.db;
     const trackingCollection = db.collection('emailTracking');
@@ -108,7 +108,7 @@ async function testRealTimeTracking() {
     }
 
     // 4. Test tracking API endpoints
-    console.log('\n🔗 Testing API endpoints...');
+    console.log('\n Testing API endpoints...');
     
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     console.log(`   Base URL: ${baseUrl}`);
@@ -131,7 +131,7 @@ async function testRealTimeTracking() {
       console.log('   2. Click a link in the email to test click tracking');
       console.log('   3. Refresh the analytics dashboard to see real-time data');
     } else {
-      console.log('   ✅ Tracking system appears to be working correctly!');
+      console.log('   Tracking system appears to be working correctly!');
       console.log('   1. Check the analytics dashboard for real-time updates');
       console.log('   2. Monitor tracking events as emails are opened');
     }

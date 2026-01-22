@@ -373,6 +373,32 @@ export default function EagleNestDetail() {
                         </div>
                       </div>
                     )}
+
+                    {/* CVSS Scores */}
+                    {advisory.cvss && Object.keys(advisory.cvss).length > 0 && (
+                      <div className="mt-6">
+                        <label className="block text-slate-400 font-rajdhani text-sm mb-4">CVSS SCORES</label>
+                        <div className="space-y-3">
+                          {Object.entries(advisory.cvss).map(([cve, data]: [string, any], index: number) => (
+                            <div key={index} className="flex items-center justify-between p-4 bg-cyan-500/10 border border-cyan-400/30 rounded-lg hover:border-cyan-400/50 transition-all duration-200">
+                              <div className="flex items-center space-x-3">
+                                <Shield className="h-5 w-5 text-cyan-400" />
+                                <div>
+                                  <div className="font-mono text-cyan-300 font-semibold">{cve}</div>
+                                  <div className="text-slate-400 text-xs font-rajdhani mt-1">{data.criticality || 'N/A'}</div>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-3">
+                                <div className="text-right">
+                                  <div className="text-white font-orbitron font-bold text-lg">{data.score || 'N/A'}</div>
+                                  <div className="text-slate-400 text-xs font-rajdhani">CVSS Score</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
 
@@ -388,7 +414,7 @@ export default function EagleNestDetail() {
                       <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-400/50">
                         <FileText className="h-5 w-5 text-blue-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white">📄 EXECUTIVE SUMMARY</h2>
+                      <h2 className="font-orbitron font-bold text-xl text-white"> EXECUTIVE SUMMARY</h2>
                     </div>
 
                     <div className="space-y-4">
@@ -415,7 +441,7 @@ export default function EagleNestDetail() {
                       <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/20 border border-red-400/50">
                         <Target className="h-5 w-5 text-red-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white">🎯 AFFECTED SYSTEMS & TARGETS</h2>
+                      <h2 className="font-orbitron font-bold text-xl text-white">AFFECTED SYSTEMS & TARGETS</h2>
                     </div>
 
                     {/* Affected Products */}
@@ -475,7 +501,7 @@ export default function EagleNestDetail() {
                       <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500/20 border border-green-400/50">
                         <Shield className="h-5 w-5 text-green-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white">🕸️ MITRE ATT&CK FRAMEWORK</h2>
+                      <h2 className="font-orbitron font-bold text-xl text-white"> MITRE ATT&CK FRAMEWORK</h2>
                     </div>
 
                     <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
@@ -521,31 +547,102 @@ export default function EagleNestDetail() {
                       <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-400/50">
                         <Activity className="h-5 w-5 text-amber-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white">🦠 MALWARE BEHAVIOR CATALOG</h2>
+                      <h2 className="font-orbitron font-bold text-xl text-white"> MALWARE BEHAVIOR CATALOG</h2>
                     </div>
 
                     <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
                       <table className="w-full">
                         <thead className="bg-amber-500/10 border-b border-amber-400/30">
                           <tr>
-                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-4 px-6">OBJECTIVE</th>
-                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-4 px-6">BEHAVIOR ID</th>
                             <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-4 px-6">BEHAVIOR</th>
+                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-4 px-6">OBJECTIVE</th>
+                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-4 px-6">CONFIDENCE</th>
+                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-4 px-6">EVIDENCE</th>
                           </tr>
                         </thead>
                         <tbody>
                           {advisory.mbc.map((behavior: any, index: number) => (
                             <tr key={index} className="border-b border-slate-700/50 hover:bg-amber-500/10 transition-colors">
-                              <td className="py-4 px-6 text-white font-orbitron font-semibold">
+                              <td className="py-4 px-6 text-white font-rajdhani font-semibold">
+                                {behavior.behavior || 'N/A'}
+                              </td>
+                              <td className="py-4 px-6 text-slate-300 font-rajdhani">
                                 {behavior.objective || 'N/A'}
                               </td>
                               <td className="py-4 px-6">
-                                <span className="inline-block text-amber-400 font-mono bg-amber-500/10 border border-amber-400/30 rounded px-2 py-1">
-                                  {behavior.id || 'N/A'}
+                                {behavior.confidence && (
+                                  <span className={`inline-block px-2 py-1 rounded text-xs font-rajdhani font-semibold ${
+                                    behavior.confidence === 'High' ? 'bg-green-500/20 border border-green-400/30 text-green-300' :
+                                    behavior.confidence === 'Medium' ? 'bg-yellow-500/20 border border-yellow-400/30 text-yellow-300' :
+                                    behavior.confidence === 'Low' ? 'bg-red-500/20 border border-red-400/30 text-red-300' :
+                                    'bg-slate-500/20 border border-slate-400/30 text-slate-300'
+                                  }`}>
+                                    {behavior.confidence}
+                                  </span>
+                                )}
+                                {!behavior.confidence && <span className="text-slate-500">N/A</span>}
+                              </td>
+                              <td className="py-4 px-6 text-slate-300 font-rajdhani text-sm max-w-md">
+                                {behavior.evidence || 'N/A'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* IOCs (Indicators of Compromise) */}
+                {advisory.iocs && advisory.iocs.length > 0 && (
+                  <motion.div 
+                    className="glass-panel-hover p-8"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.38 }}
+                  >
+                    <div className="flex items-center space-x-3 mb-6 p-4 bg-red-500/10 border border-red-400/30 rounded-lg">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/20 border border-red-400/50">
+                        <Eye className="h-5 w-5 text-red-400" />
+                      </div>
+                      <h2 className="font-orbitron font-bold text-xl text-white">🔍 INDICATORS OF COMPROMISE (IOCs)</h2>
+                    </div>
+
+                    <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
+                      <table className="w-full">
+                        <thead className="bg-red-500/10 border-b border-red-400/30">
+                          <tr>
+                            <th className="text-left text-red-300 font-rajdhani font-semibold text-sm py-4 px-6">TYPE</th>
+                            <th className="text-left text-red-300 font-rajdhani font-semibold text-sm py-4 px-6">VALUE</th>
+                            <th className="text-center text-red-300 font-rajdhani font-semibold text-sm py-4 px-6">ACTIONS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {advisory.iocs.map((ioc: any, index: number) => (
+                            <tr key={index} className="border-b border-slate-700/50 hover:bg-red-500/10 transition-colors">
+                              <td className="py-4 px-6">
+                                <span className="inline-block text-red-400 font-mono bg-red-500/10 border border-red-400/30 rounded px-2 py-1 uppercase text-xs font-semibold">
+                                  {ioc.type || 'N/A'}
                                 </span>
                               </td>
-                              <td className="py-4 px-6 text-slate-300 font-rajdhani">
-                                {behavior.behavior || 'N/A'}
+                              <td className="py-4 px-6">
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-slate-300 font-mono text-sm break-all">
+                                    {ioc.value || 'N/A'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-4 px-6 text-center">
+                                <button
+                                  onClick={() => copyToClipboard(ioc.value, `ioc-${index}`)}
+                                  className="p-2 rounded bg-red-500/20 hover:bg-red-500/30 transition-all duration-200 inline-flex items-center space-x-1"
+                                >
+                                  {copiedItem === `ioc-${index}` ? (
+                                    <CheckCircle className="h-4 w-4 text-green-400" />
+                                  ) : (
+                                    <Copy className="h-4 w-4 text-red-300" />
+                                  )}
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -567,7 +664,7 @@ export default function EagleNestDetail() {
                       <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500/20 border border-green-400/50">
                         <CheckCircle className="h-5 w-5 text-green-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white">✅ SECURITY RECOMMENDATIONS</h2>
+                      <h2 className="font-orbitron font-bold text-xl text-white">SECURITY RECOMMENDATIONS</h2>
                     </div>
 
                     <div className="space-y-3">
@@ -597,7 +694,7 @@ export default function EagleNestDetail() {
                       <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-500/20 border border-orange-400/50">
                         <Download className="h-5 w-5 text-orange-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white">🧩 PATCH DETAILS</h2>
+                      <h2 className="font-orbitron font-bold text-xl text-white"> PATCH DETAILS</h2>
                     </div>
 
                     <div className="space-y-3">
@@ -624,7 +721,7 @@ export default function EagleNestDetail() {
                       <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-cyan-500/20 border border-cyan-400/50">
                         <FileText className="h-5 w-5 text-cyan-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white">🔗 REFERENCES</h2>
+                      <h2 className="font-orbitron font-bold text-xl text-white"> REFERENCES</h2>
                     </div>
 
                     <div className="space-y-2">

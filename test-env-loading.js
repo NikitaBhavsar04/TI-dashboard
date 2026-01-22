@@ -23,7 +23,7 @@ async function testOriginalSender() {
       subject: 'Test from Original EmailSender',
       body: '<p>This is a test from the original working email sender.</p>'
     });
-    console.log('✅ Original emailSender working!');
+    console.log('Original emailSender working!');
     console.log('Message ID:', result.messageId);
   } catch (error) {
     console.log('❌ Original emailSender failed:', error.message);

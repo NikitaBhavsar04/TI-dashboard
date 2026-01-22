@@ -85,7 +85,7 @@ export default async function handler(req, res) {
       throw new Error(result.data?.error || 'Failed to schedule email');
     }
 
-    console.log('✅ Email scheduled successfully:', result.data.emailId);
+    console.log('Email scheduled successfully:', result.data.emailId);
 
     // Update or create tracking record if trackingId provided
     if (trackingId) {

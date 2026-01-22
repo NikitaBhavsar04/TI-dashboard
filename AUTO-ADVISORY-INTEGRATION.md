@@ -4,7 +4,7 @@
 
 The **Auto Advisory** feature automatically generates professional threat intelligence advisories by integrating the ThreatAdvisory-Automation system with the Threat-Advisory web platform. It fetches threat intelligence from RSS feeds, analyzes them using AI, and creates fully formatted advisories matching your manual advisory format.
 
-## 🎯 Features
+## Features
 
 - **Automatic Threat Collection**: Monitors 50+ RSS feeds from major security vendors and researchers
 - **AI-Powered Analysis**: Uses Hugging Face LLM to analyze and structure threat intelligence
@@ -362,9 +362,9 @@ npm run dev
 6. **Cache Management**: Periodically clean `workspace/` directory
 7. **Version Control**: Keep both repositories in sync
 
-## 🎯 Next Steps
+## Next Steps
 
-1. ✅ Auto Advisory button configured
+1. Auto Advisory button configured
 2. ⏭️ Test generation with sample feeds
 3. ⏭️ Configure email notifications for new advisories
 4. ⏭️ Set up scheduled automatic generation (cron job)

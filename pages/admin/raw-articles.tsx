@@ -194,7 +194,7 @@ export default function RawArticles() {
                       Raw Articles Feed
                     </h1>
                     <p className="text-slate-400 font-rajdhani">
-                      RSS feed articles from security sources
+                      Articles from security sources
                     </p>
                   </div>
                 </div>
@@ -239,7 +239,7 @@ export default function RawArticles() {
                 <div className="flex items-center justify-between mb-2">
                   <Hash className="h-6 w-6 text-purple-400" />
                   <span className="text-2xl font-orbitron font-bold text-white">
-                    {articles.reduce((sum, a) => sum + a.cves.length, 0)}
+                    {articles.reduce((sum, a) => sum + (Array.isArray(a.cves) ? a.cves.length : 0), 0)}
                   </span>
                 </div>
                 <div className="text-slate-400 font-rajdhani text-sm">Total CVEs</div>

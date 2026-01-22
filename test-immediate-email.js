@@ -21,7 +21,7 @@ const ScheduledEmail = mongoose.models.ScheduledEmail || mongoose.model('Schedul
 async function testImmediateEmail() {
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Find any advisory for testing
     const Advisory = mongoose.model('Advisory');
@@ -49,7 +49,7 @@ async function testImmediateEmail() {
 
     // Start agenda and send immediately
     await agenda.start();
-    console.log('✅ Agenda started');
+    console.log('Agenda started');
 
     console.log('🚀 Queuing immediate email job...');
     const job = await agenda.now('send-scheduled-advisory-email', { 

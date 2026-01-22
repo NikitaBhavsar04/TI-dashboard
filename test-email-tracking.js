@@ -9,7 +9,7 @@ async function testTracking() {
     
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
     
     // Get ScheduledEmail model
     const ScheduledEmailSchema = new mongoose.Schema({}, { strict: false });
@@ -33,7 +33,7 @@ async function testTracking() {
       console.log(`   To: ${email.to.join(', ')}`);
       console.log(`   Sent: ${email.sentAt}`);
       console.log(`   Tracking ID: ${email.trackingId || 'NOT SET ❌'}`);
-      console.log(`   Is Opened: ${email.isOpened ? '✅ YES' : '❌ NO'}`);
+      console.log(`   Is Opened: ${email.isOpened ? 'YES' : '❌ NO'}`);
       console.log(`   Opens Count: ${email.opens?.length || 0}`);
       
       if (email.openedAt) {

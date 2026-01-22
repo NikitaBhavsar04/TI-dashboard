@@ -30,7 +30,7 @@ def test_manual_advisory_api():
         
         if response.status_code == 200:
             result = response.json()
-            print("✅ API call successful!")
+            print("API call successful!")
             print(f"Success: {result.get('success', False)}")
             
             advisory = result.get('advisory', {})

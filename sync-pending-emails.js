@@ -28,11 +28,11 @@ const syncPendingEmails = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Start Agenda
     const agenda = await startAgenda();
-    console.log('✅ Agenda started');
+    console.log('Agenda started');
 
     // Find all pending emails
     const pendingEmails = await ScheduledEmail.find({ status: 'pending' });
@@ -68,7 +68,7 @@ const syncPendingEmails = async () => {
       console.log('');
     }
 
-    console.log(`✅ Sync complete!`);
+    console.log(`Sync complete!`);
     console.log(`📊 Summary:`);
     console.log(`   - Total emails: ${pendingEmails.length}`);
     console.log(`   - Jobs created: ${processedCount}`);

@@ -73,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         };
       }));
 
-      console.log(`✅ Returning ${transformedEmails.length} scheduled emails`);
+      console.log(`Returning ${transformedEmails.length} scheduled emails`);
 
       return res.status(200).json({
         scheduledEmails: transformedEmails

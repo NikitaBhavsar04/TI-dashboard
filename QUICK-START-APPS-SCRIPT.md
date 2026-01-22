@@ -6,7 +6,7 @@ Your Threat Advisory platform now has **cloud-based email scheduling** using Goo
 
 ### **Problem Solved:**
 - ❌ **Before:** Emails only sent when your computer is on
-- ✅ **After:** Emails sent from Google's cloud 24/7
+- **After:** Emails sent from Google's cloud 24/7
 
 ---
 
@@ -37,7 +37,7 @@ Your Threat Advisory platform now has **cloud-based email scheduling** using Goo
 
 ---
 
-## 🎯 Next Steps (5 Minutes Setup)
+## Next Steps (5 Minutes Setup)
 
 ### **Step 1: Deploy Apps Script (3 minutes)**
 
@@ -88,7 +88,7 @@ If computer is OFF = ❌ Emails NOT sent
 ```
 Your Computer → Apps Script → Google Cloud → Gmail → Client
                      ↓
-              Even if computer is OFF = ✅ Emails SENT!
+              Even if computer is OFF = Emails SENT!
 ```
 
 ---
@@ -131,7 +131,7 @@ curl http://localhost:3000/api/emails/check-scheduled-status?emailId=EMAIL_ID
 
 ---
 
-## 🎯 Usage in Your App
+## Usage in Your App
 
 **No changes needed!** Just schedule emails normally:
 
@@ -224,7 +224,7 @@ A: Deploy to Google Workspace for higher limits (1,500 emails/day).
 
 ---
 
-## ✅ Deployment Checklist
+## Deployment Checklist
 
 - [ ] Apps Script deployed
 - [ ] `APPS_SCRIPT_URL` configured

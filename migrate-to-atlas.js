@@ -15,13 +15,13 @@ async function migrateData() {
     console.log('📡 Connecting to Local MongoDB...');
     localClient = new MongoClient(LOCAL_URI);
     await localClient.connect();
-    console.log('✅ Connected to Local MongoDB\n');
+    console.log('Connected to Local MongoDB\n');
     
     // Connect to Atlas
     console.log('☁️ Connecting to MongoDB Atlas...');
     atlasClient = new MongoClient(ATLAS_URI);
     await atlasClient.connect();
-    console.log('✅ Connected to MongoDB Atlas\n');
+    console.log('Connected to MongoDB Atlas\n');
     
     // Get databases
     const localDb = localClient.db('threat-advisory');
@@ -60,7 +60,7 @@ async function migrateData() {
           
           // Insert new data
           const result = await atlasCollection.insertMany(documents);
-          console.log(`   ✅ Migrated ${result.insertedCount} documents to Atlas`);
+          console.log(`   Migrated ${result.insertedCount} documents to Atlas`);
         } else {
           console.log(`   ⚠️ No documents to migrate`);
         }
@@ -104,7 +104,7 @@ async function verifyMigration() {
     const atlasDb = atlasClient.db('threat-advisory');
     const collections = await atlasDb.listCollections().toArray();
     
-    console.log(`✅ Atlas database has ${collections.length} collections:`);
+    console.log(`Atlas database has ${collections.length} collections:`);
     
     for (const collectionInfo of collections) {
       const collection = atlasDb.collection(collectionInfo.name);
@@ -113,7 +113,7 @@ async function verifyMigration() {
     }
     
     await atlasClient.close();
-    console.log('\n✅ Verification completed!');
+    console.log('\nVerification completed!');
     
   } catch (error) {
     console.error('❌ Verification failed:', error);

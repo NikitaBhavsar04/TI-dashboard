@@ -8,7 +8,7 @@ async function checkScheduledEmails() {
   try {
     console.log('📧 Connecting to MongoDB...');
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB\n');
+    console.log('Connected to MongoDB\n');
 
     const emails = await ScheduledEmail.find().sort({ createdAt: -1 }).limit(20).lean();
     
@@ -30,7 +30,7 @@ async function checkScheduledEmails() {
     }
 
     await mongoose.connection.close();
-    console.log('\n✅ Connection closed');
+    console.log('\nConnection closed');
   } catch (error) {
     console.error('❌ Error:', error.message);
     process.exit(1);

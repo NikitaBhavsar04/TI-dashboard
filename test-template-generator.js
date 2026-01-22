@@ -90,7 +90,7 @@ console.log('📊 Sample advisory data:', JSON.stringify(sampleAdvisory, null, 2
 
 try {
   const emailTemplate = generateAdvisory4EmailTemplate(sampleAdvisory);
-  console.log('✅ Template generation successful!');
+  console.log('Template generation successful!');
   console.log('📧 Email template length:', emailTemplate.length, 'characters');
   
   // Check if key fields are included

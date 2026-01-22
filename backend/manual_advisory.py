@@ -27,7 +27,6 @@ from llm.mbc import extract_mbc
 
 cfg = read_yaml("config.yaml")
 
-# Use environment variables as fallback for OpenSearch configuration
 OPENSEARCH_HOST = os.getenv("OPENSEARCH_HOST", cfg.get("opensearch", {}).get("host", "localhost"))
 OPENSEARCH_PORT = int(os.getenv("OPENSEARCH_PORT", cfg.get("opensearch", {}).get("port", 9200)))
 OPENSEARCH_USERNAME = os.getenv("OPENSEARCH_USERNAME", cfg.get("opensearch", {}).get("username", ""))
@@ -44,7 +43,6 @@ TLP_DEFAULT = report_cfg.get("tlp", "AMBER")
 # OPENSEARCH CLIENT
 # ============================================================
 
-# Prepare OpenSearch client configuration
 opensearch_config = {
     "hosts": [{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}],
     "use_ssl": False,
@@ -55,7 +53,6 @@ opensearch_config = {
     "retry_on_timeout": True,
 }
 
-# Add authentication if provided
 if OPENSEARCH_USERNAME and OPENSEARCH_PASSWORD:
     opensearch_config["http_auth"] = (OPENSEARCH_USERNAME, OPENSEARCH_PASSWORD)
 
@@ -90,19 +87,6 @@ def save_generated_advisory(advisory: dict):
     )
 
 def normalize_iocs(iocs_raw: dict) -> List[Dict]:
-    """
-    Convert IOC dict → strict-safe list
-    {
-      "domains": [...],
-      "ips": [...],
-      "hashes": [...]
-    }
-    →
-    [
-      {"type": "domain", "value": "..."},
-      {"type": "ip", "value": "..."}
-    ]
-    """
     normalized = []
 
     if not isinstance(iocs_raw, dict):
@@ -149,7 +133,7 @@ def generate_advisory_for_article(article_id: str) -> dict:
             n["text"] = n["text"][:6000]
 
     # --------------------------------------------------------
-    # IOC Extraction (FIXED)
+    # IOC Extraction
     # --------------------------------------------------------
     iocs_raw = extract_iocs(
         source_text,
@@ -176,10 +160,9 @@ def generate_advisory_for_article(article_id: str) -> dict:
         )
     except Exception as llm_error:
         logger.warning(f"[LLM] LLM summary failed, using fallback: {llm_error}")
-        # Fallback advisory structure when LLM is not available
         advisory = {
             "title": article["title"],
-            "exec_summary": article.get("summary", "Summary not available - LLM service unavailable."),
+            "exec_summary": article.get("summary", ""),
             "threat_type": "Unknown",
             "affected_product": "Not specified",
             "vendor": "Unknown",
@@ -194,34 +177,48 @@ def generate_advisory_for_article(article_id: str) -> dict:
     ] or ["Summary not available."]
 
     # --------------------------------------------------------
-    # Recommendations
+    # Recommendations / Patch Details (FIXED)
     # --------------------------------------------------------
     try:
-        query_text = advisory.get("exec_summary") or advisory.get("title", "")
+        query_text = f"""
+        {advisory.get("title","")}
+        {advisory.get("exec_summary","")}
+        {' '.join(advisory.get("cves", []))}
+        """
+
         rec_data = get_recommendations(query_text)
-        if rec_data:
-            advisory["recommendations"] = rec_data.get("recommendations", [])
-            advisory["patch_details"] = rec_data.get("patch_details", [])
-    except Exception:
-        advisory["recommendations"] = [
-            "Monitor logs for suspicious activity.",
-            "Apply vendor patches and security updates.",
-        ]
+
+        if isinstance(rec_data, dict):
+            if rec_data.get("recommendations"):
+                advisory["recommendations"] = rec_data["recommendations"]
+
+            if rec_data.get("patch_details"):
+                advisory["patch_details"] = rec_data["patch_details"]
+
+    except Exception as e:
+        logger.warning(f"[RECOMMENDER] Failed: {e}")
+        advisory.setdefault(
+            "recommendations",
+            [
+                "Monitor logs for suspicious activity.",
+                "Apply vendor patches and security updates.",
+            ],
+        )
+        advisory.setdefault("patch_details", [])
 
     patch_details = advisory.get("patch_details") or []
     if isinstance(patch_details, str):
         patch_details = [patch_details]
 
     # --------------------------------------------------------
-    # MITRE + MBC (with fallback)
+    # MITRE + MBC
     # --------------------------------------------------------
     try:
         mitre = map_to_tactics(
             advisory.get("attack_keywords", []),
             f"{advisory.get('title','')} {advisory.get('exec_summary','')}",
         )
-    except Exception as mitre_error:
-        logger.warning(f"[MITRE] MITRE mapping failed, using empty: {mitre_error}")
+    except Exception:
         mitre = []
 
     try:
@@ -231,12 +228,11 @@ def generate_advisory_for_article(article_id: str) -> dict:
             exec_summary=advisory.get("exec_summary", ""),
             mitre=mitre,
         )
-    except Exception as mbc_error:
-        logger.warning(f"[MBC] MBC extraction failed, using empty: {mbc_error}")
+    except Exception:
         mbc = []
 
     # --------------------------------------------------------
-    # CVSS (STRICT-SAFE)
+    # CVSS
     # --------------------------------------------------------
     cvss_entries: List[Dict] = []
     highest = None
@@ -286,6 +282,9 @@ def generate_advisory_for_article(article_id: str) -> dict:
         "criticality": final_criticality,
         "threat_type": advisory.get("threat_type"),
 
+        "sectors": advisory.get("sectors", []),
+        "regions": advisory.get("regions", []),
+
         "exec_summary_parts": exec_summary_parts,
 
         "affected_product": advisory.get("affected_product", "Not specified"),
@@ -310,7 +309,7 @@ def generate_advisory_for_article(article_id: str) -> dict:
     }
 
     save_generated_advisory(advisory_doc)
-    logger.info(f"✅ Advisory indexed: {advisory_uid}")
+    logger.info(f"Advisory indexed: {advisory_uid}")
 
     return advisory_doc
 
@@ -321,7 +320,7 @@ def generate_advisory_for_article(article_id: str) -> dict:
 if __name__ == "__main__":
     import sys
     import json
-    
+
     if len(sys.argv) != 2:
         print("Usage: manual_advisory.py <raw_article_id>", file=sys.stderr)
         sys.exit(1)
@@ -329,10 +328,8 @@ if __name__ == "__main__":
     try:
         article_id = sys.argv[1]
         advisory = generate_advisory_for_article(article_id)
-        
-        # Output the advisory as JSON to stdout
         print(json.dumps(advisory, indent=2, default=str))
-        
+
     except Exception as e:
         logger.error(f"❌ Error generating advisory: {e}")
         print(f"Error: {e}", file=sys.stderr)

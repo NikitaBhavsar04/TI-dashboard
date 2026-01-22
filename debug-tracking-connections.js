@@ -11,7 +11,7 @@ async function debugTrackingConnections() {
     console.log('   MONGODB_URI:', process.env.MONGODB_URI ? 'Present' : 'Missing');
     
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('   ✅ Connected via direct mongoose.connect()');
+    console.log('   Connected via direct mongoose.connect()');
     
     const db1 = mongoose.connection.db;
     const collection1 = db1.collection('emailTracking');
@@ -25,12 +25,12 @@ async function debugTrackingConnections() {
     });
     
     await mongoose.disconnect();
-    console.log('   ✅ Disconnected\n');
+    console.log('   Disconnected\n');
 
     // Method 2: Using fresh connection (like email sending)
     console.log('2️⃣ Method 2: Using fresh connection');
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('   ✅ Connected via fresh mongoose.connect()');
+    console.log('   Connected via fresh mongoose.connect()');
     
     const db2 = mongoose.connection.db;
     const collection2 = db2.collection('emailTracking');
@@ -58,7 +58,7 @@ async function debugTrackingConnections() {
     });
 
     await mongoose.disconnect();
-    console.log('\n✅ Debugging completed');
+    console.log('\nDebugging completed');
 
   } catch (error) {
     console.error('❌ Error debugging connections:', error);

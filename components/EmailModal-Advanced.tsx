@@ -301,7 +301,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
             
             ${advisory.recommendations && advisory.recommendations.length > 0 ? `
             <div class="section">
-                <div class="section-title">✅ Recommendations</div>
+                <div class="section-title">Recommendations</div>
                 <ul>${advisory.recommendations.map(rec => `<li>${rec}</li>`).join('')}</ul>
             </div>
             ` : ''}
@@ -309,7 +309,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
             <div class="section" style="background: linear-gradient(135deg, #1e40af, #3b82f6); text-align: center;">
                 <div class="section-title" style="color: #ffffff;">📋 Full Advisory Report</div>
                 <p style="margin: 0 0 15px 0; color: rgba(255, 255, 255, 0.9);">Access comprehensive threat analysis and detailed information</p>
-                <a href="#" style="display: inline-block; background: rgba(255, 255, 255, 0.1); color: #fbbf24; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: 600;">📄 View Full Report</a>
+                <a href="#" style="display: inline-block; background: rgba(255, 255, 255, 0.1); color: #fbbf24; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: 600;"> View Full Report</a>
             </div>
         </div>
     </div>
@@ -548,7 +548,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
               </p>
               <div className="mt-2 px-3 py-1 bg-green-500/20 border border-green-400/50 rounded-lg">
                 <span className="text-green-400 font-rajdhani text-sm font-bold">
-                  ✅ ADVANCED VERSION with Role-Based Access
+                  ADVANCED VERSION with Role-Based Access
                 </span>
               </div>
               {user?.role && (

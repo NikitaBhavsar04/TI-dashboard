@@ -151,9 +151,9 @@
 │                       ADVISORIES PAGE                               │
 │                    (Auto-refresh via router.reload())               │
 │                                                                     │
-│  ✅ New advisories appear in the list                              │
-│  ✅ Cards show title, severity, summary                            │
-│  ✅ Click to view full advisory                                    │
+│  New advisories appear in the list                              │
+│  Cards show title, severity, summary                            │
+│  Click to view full advisory                                    │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -308,7 +308,7 @@ RSS Feeds (50+)
 │  A critical stored cross-site scripting vulnerability has    │
 │  been discovered in Ivanti Endpoint Manager...               │
 │                                                              │
-│  📊 CVE-2024-12345  |  🎯 Vulnerability                      │
+│  📊 CVE-2024-12345  |  Vulnerability                      │
 │  👤 AutoFeed        |  📅 Jan 1, 2026                        │
 │                                                              │
 │  [View Details]  [Send Email]                                │
@@ -377,21 +377,21 @@ Click Button  ────►  [0s]  POST /api/auto-feed
                            │          │
                            │          ├─► [30s]  Render HTML 1
                            │          │
-                           │          │    ✅ Advisory 1 complete
+                           │          │    Advisory 1 complete
                            │          │
                            │          ├─► [35s]  Extract article 2
                            │          ├─► [50s]  LLM analysis 2
                            │          ├─► [53s]  MITRE mapping 2
                            │          ├─► [55s]  Render HTML 2
                            │          │
-                           │          │    ✅ Advisory 2 complete
+                           │          │    Advisory 2 complete
                            │          │
                            │          ├─► [60s]  Extract article 3
                            │          ├─► [75s]  LLM analysis 3
                            │          ├─► [78s]  MITRE mapping 3
                            │          └─► [80s]  Render HTML 3
                            │
-                           │                ✅ Advisory 3 complete
+                           │                Advisory 3 complete
                            │
                            ├─► [81s]  Parse Python output
                            ├─► [82s]  Read HTML files

@@ -6,7 +6,7 @@ async function testConnection() {
   
   try {
     await client.connect();
-    console.log('✅ Successfully connected to MongoDB!');
+    console.log('Successfully connected to MongoDB!');
     
     // List databases
     const dbs = await client.db().admin().listDatabases();

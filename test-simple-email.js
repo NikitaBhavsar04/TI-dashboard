@@ -92,7 +92,7 @@ function generateAdvisoryEmailBody(advisory, customMessage = '') {
                             <!-- Executive Summary -->
                             ${advisory.executiveSummary ? `
                             <div style="background: linear-gradient(135deg, #1e40af, #3730a3); padding: 20px; border-radius: 8px; margin-bottom: 25px;">
-                                <h3 style="margin: 0 0 15px 0; color: #ffffff; font-size: 18px;">🎯 Executive Summary</h3>
+                                <h3 style="margin: 0 0 15px 0; color: #ffffff; font-size: 18px;">Executive Summary</h3>
                                 <p style="margin: 0; color: #e2e8f0; line-height: 1.6;">${advisory.executiveSummary}</p>
                             </div>
                             ` : ''}
@@ -131,7 +131,7 @@ function generateAdvisoryEmailBody(advisory, customMessage = '') {
                             <!-- Recommendations -->
                             ${advisory.recommendations && advisory.recommendations.length > 0 ? `
                             <div style="background: linear-gradient(135deg, #059669, #047857); padding: 20px; border-radius: 8px; margin-bottom: 25px;">
-                                <h3 style="margin: 0 0 15px 0; color: #ffffff; font-size: 18px;">✅ Recommendations</h3>
+                                <h3 style="margin: 0 0 15px 0; color: #ffffff; font-size: 18px;">Recommendations</h3>
                                 <ul style="margin: 0; padding: 0; list-style: none;">
                                     ${advisory.recommendations.map(rec => `<li style="margin-bottom: 10px; color: #d1fae5; line-height: 1.6;"><span style="color: #10b981; margin-right: 8px;">▸</span> ${rec}</li>`).join('')}
                                 </ul>
@@ -172,7 +172,7 @@ Please:
 
 const emailHtml = generateAdvisoryEmailBody(mockAdvisory, customMessage);
 
-console.log('✅ Email generation successful!');
+console.log('Email generation successful!');
 console.log(`📏 Size: ${(emailHtml.length / 1024).toFixed(2)} KB`);
 
 // Verify components

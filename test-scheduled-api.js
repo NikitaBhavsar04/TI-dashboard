@@ -18,7 +18,7 @@ async function testAPI() {
 
     const data = await response.json();
     
-    console.log(`✅ Success! Found ${data.scheduledEmails?.length || 0} scheduled emails\n`);
+    console.log(`Success! Found ${data.scheduledEmails?.length || 0} scheduled emails\n`);
     
     if (data.scheduledEmails && data.scheduledEmails.length > 0) {
       console.log('📧 First 5 emails:');

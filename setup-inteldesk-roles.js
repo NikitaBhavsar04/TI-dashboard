@@ -6,7 +6,7 @@ require('dotenv').config();
 async function setupRoles() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Define User schema
     const UserSchema = new mongoose.Schema({
@@ -44,7 +44,7 @@ async function setupRoles() {
           }
         }
       );
-      console.log('✅ Converted to super_admin:');
+      console.log('Converted to super_admin:');
       console.log(`   Email: ${existingAdmin.email}`);
       console.log(`   Username: ${existingAdmin.username}`);
       console.log('   🔑 Use existing password to login as super_admin');
@@ -65,7 +65,7 @@ async function setupRoles() {
       });
 
       await superAdmin.save();
-      console.log('✅ Created super_admin:');
+      console.log('Created super_admin:');
       console.log('   Email: superadmin@inteldesk.com');
       console.log('   Password: SuperAdmin123!');
     }
@@ -92,7 +92,7 @@ async function setupRoles() {
       });
 
       await newAdmin.save();
-      console.log('✅ Created new admin user:');
+      console.log('Created new admin user:');
       console.log('   Email: admin@inteldesk.com');
       console.log('   Password: Admin123!');
     }
@@ -124,16 +124,16 @@ async function setupRoles() {
 
     console.log('\\n📊 Permission Summary:');
     console.log('   👑 SUPER_ADMIN:');
-    console.log('      ✅ Can create any user role');
-    console.log('      ✅ Can see client email addresses');
-    console.log('      ✅ Can delete users and clients');
-    console.log('      ✅ Full system access');
+    console.log('      Can create any user role');
+    console.log('      Can see client email addresses');
+    console.log('      Can delete users and clients');
+    console.log('      Full system access');
     console.log('\\n   🛡️  ADMIN:');
-    console.log('      ✅ Can create user accounts only');
+    console.log('      Can create user accounts only');
     console.log('      ❌ Cannot create admin/super_admin accounts');
     console.log('      ❌ Cannot see client email addresses');
     console.log('      ❌ Cannot delete clients');
-    console.log('      ✅ Can view audit logs');
+    console.log('      Can view audit logs');
 
     console.log('\\n⚠️  IMPORTANT: Change default passwords after first login!');
 

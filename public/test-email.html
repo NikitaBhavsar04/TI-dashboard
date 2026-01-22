@@ -21,7 +21,7 @@
         <h3>Test Email with Comprehensive Data</h3>
         <p>This will send a test email that <strong>guarantees</strong> all three sections are included:</p>
         <ul>
-            <li><span class="check">✅ Security Recommendations</span> - 3 detailed recommendations</li>
+            <li><span class="check">Security Recommendations</span> - 3 detailed recommendations</li>
             <li><span class="check">🔧 Patch Details</span> - 7 technical remediation steps</li>
             <li><span class="check">📋 Advisory Metadata</span> - Complete administrative information</li>
         </ul>
@@ -40,7 +40,7 @@
             <li><strong>Threat Parameters:</strong> Category, Published date, Analyst info</li>
             <li><strong>Affected Systems:</strong> CVE IDs, Target Sectors, Affected Products</li>
             <li><strong>MITRE ATT&CK Framework:</strong> Tactic/Technique mapping</li>
-            <li><strong>✅ Security Recommendations:</strong> Green section with numbered items</li>
+            <li><strong>Security Recommendations:</strong> Green section with numbered items</li>
             <li><strong>🔧 Patch Details:</strong> Purple section with technical steps</li>
             <li><strong>📋 Advisory Metadata:</strong> Gray section with admin info</li>
             <li><strong>Footer:</strong> Full Advisory Report link</li>
@@ -64,15 +64,15 @@
                 if (response.ok) {
                     resultDiv.innerHTML = `
                         <div class="result success">
-                            <h4>✅ Test Email Sent Successfully!</h4>
+                            <h4>Test Email Sent Successfully!</h4>
                             <p>${data.message}</p>
                             <p><strong>Sections included:</strong></p>
                             <ul>
-                                <li>✅ Recommendations: ${data.sections.recommendations} items</li>
+                                <li>Recommendations: ${data.sections.recommendations} items</li>
                                 <li>🔧 Patch Details: ${data.sections.patchDetails} items</li>
                                 <li>📋 MITRE Tactics: ${data.sections.mitreTactics} items</li>
                                 <li>📦 Affected Products: ${data.sections.affectedProducts} items</li>
-                                <li>🎯 Target Sectors: ${data.sections.targetSectors} items</li>
+                                <li>Target Sectors: ${data.sections.targetSectors} items</li>
                             </ul>
                             <p><strong>Check your email inbox for the complete test email with all three sections!</strong></p>
                         </div>

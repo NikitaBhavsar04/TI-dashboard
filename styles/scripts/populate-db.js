@@ -158,7 +158,7 @@ async function populateDatabase() {
   
   try {
     await client.connect();
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
     
     const db = client.db('threat-advisory');
     const collection = db.collection('advisories');
@@ -173,7 +173,7 @@ async function populateDatabase() {
     
     // Verify insertion
     const count = await collection.countDocuments();
-    console.log(`✅ Total advisories in database: ${count}`);
+    console.log(`Total advisories in database: ${count}`);
     
     // Display summary
     console.log('\n📋 Sample Data Summary:');

@@ -293,7 +293,7 @@ def main():
             processed_this_run.add(item_id)
             save_seen_ids(seen_path, seen_ids)
 
-            logger.info(f"✅ Generated {advisory_uid}")
+            logger.info(f"Generated {advisory_uid}")
 
         except Exception:
             logger.error("❌ HTML rendering failed", exc_info=True)
@@ -303,7 +303,7 @@ def main():
     # FINAL SUMMARY
     # --------------------------------------------------------
     print("\n" + "=" * 80)
-    print(f"✅ PIPELINE COMPLETE | Generated {len(generated)} advisories")
+    print(f"PIPELINE COMPLETE | Generated {len(generated)} advisories")
     print("=" * 80)
 
     for i, path in enumerate(generated, 1):

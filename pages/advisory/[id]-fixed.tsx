@@ -454,7 +454,7 @@ export default function AdvisoryDetailPage({ advisory }: AdvisoryDetailProps) {
                 </motion.div>
               )}
 
-              {/* 📄 THREAT DETAILS */}
+              {/*  THREAT DETAILS */}
               {(advisory.description || advisory.executiveSummary || advisory.summary || advisory.affectedProducts?.length || advisory.targetSectors?.length || advisory.regions?.length) && (
                 <motion.div 
                   className="glass-panel-hover p-8"
@@ -466,7 +466,7 @@ export default function AdvisoryDetailPage({ advisory }: AdvisoryDetailProps) {
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-400/50">
                       <FileText className="h-5 w-5 text-blue-400" />
                     </div>
-                    <h2 className="font-orbitron font-bold text-xl text-white">📄 THREAT DETAILS</h2>
+                    <h2 className="font-orbitron font-bold text-xl text-white"> THREAT DETAILS</h2>
                   </div>
 
                   {/* Executive Summary / Description */}
@@ -584,7 +584,7 @@ export default function AdvisoryDetailPage({ advisory }: AdvisoryDetailProps) {
                 </motion.div>
               )}
 
-              {/* 🕸️ MITRE ATT&CK FRAMEWORK */}
+              {/*  MITRE ATT&CK FRAMEWORK */}
               {advisory.mitreTactics && advisory.mitreTactics.length > 0 && (
                 <motion.div 
                   className="glass-panel-hover p-8"
@@ -596,7 +596,7 @@ export default function AdvisoryDetailPage({ advisory }: AdvisoryDetailProps) {
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500/20 border border-green-400/50">
                       <Grid className="h-5 w-5 text-green-400" />
                     </div>
-                    <h2 className="font-orbitron font-bold text-xl text-white">🕸️ MITRE ATT&CK FRAMEWORK</h2>
+                    <h2 className="font-orbitron font-bold text-xl text-white"> MITRE ATT&CK FRAMEWORK</h2>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -646,7 +646,7 @@ export default function AdvisoryDetailPage({ advisory }: AdvisoryDetailProps) {
                 </motion.div>
               )}
 
-              {/* 🧩 PATCH DETAILS */}
+              {/*  PATCH DETAILS */}
               {advisory.patchDetails && (
                 <motion.div 
                   className="glass-panel-hover p-8"
@@ -658,7 +658,7 @@ export default function AdvisoryDetailPage({ advisory }: AdvisoryDetailProps) {
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-500/20 border border-orange-400/50">
                       <Download className="h-5 w-5 text-orange-400" />
                     </div>
-                    <h2 className="font-orbitron font-bold text-xl text-white">🧩 PATCH DETAILS</h2>
+                    <h2 className="font-orbitron font-bold text-xl text-white"> PATCH DETAILS</h2>
                   </div>
                   <div className="prose prose-invert max-w-none">
                     <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap">
@@ -930,7 +930,7 @@ export default function AdvisoryDetailPage({ advisory }: AdvisoryDetailProps) {
                     onClick={() => document.getElementById('threat-details')?.scrollIntoView({ behavior: 'smooth' })}
                     className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200 font-rajdhani text-sm"
                   >
-                    📄 Threat Details
+                     Threat Details
                   </button>
                   <button 
                     onClick={() => document.getElementById('iocs')?.scrollIntoView({ behavior: 'smooth' })}
@@ -942,7 +942,7 @@ export default function AdvisoryDetailPage({ advisory }: AdvisoryDetailProps) {
                     onClick={() => document.getElementById('mitre')?.scrollIntoView({ behavior: 'smooth' })}
                     className="w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200 font-rajdhani text-sm"
                   >
-                    🕸️ MITRE ATT&CK
+                     MITRE ATT&CK
                   </button>
                   <button 
                     onClick={() => document.getElementById('recommendations')?.scrollIntoView({ behavior: 'smooth' })}

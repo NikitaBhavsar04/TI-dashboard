@@ -18,7 +18,7 @@ async function testAppsScriptIntegration() {
       console.log('📝 Please follow GOOGLE-APPS-SCRIPT-SETUP.md to set it up');
       return;
     }
-    console.log('✅ APPS_SCRIPT_URL found:', process.env.APPS_SCRIPT_URL.substring(0, 50) + '...');
+    console.log('APPS_SCRIPT_URL found:', process.env.APPS_SCRIPT_URL.substring(0, 50) + '...');
 
     // Step 2: Health check
     console.log('\n2️⃣ Performing health check...');
@@ -28,7 +28,7 @@ async function testAppsScriptIntegration() {
       console.log('📝 Please check your deployment URL and ensure the Web App is deployed');
       return;
     }
-    console.log('✅ Apps Script is online and accessible');
+    console.log('Apps Script is online and accessible');
 
     // Step 3: Schedule a test email (2 minutes from now)
     console.log('\n3️⃣ Scheduling test email...');
@@ -40,7 +40,7 @@ async function testAppsScriptIntegration() {
       htmlBody: `
         <html>
           <body style="font-family: Arial, sans-serif;">
-            <h1 style="color: #1a73e8;">✅ Success!</h1>
+            <h1 style="color: #1a73e8;">Success!</h1>
             <p>Your Google Apps Script integration is working correctly.</p>
             <p><strong>Scheduled Time:</strong> ${scheduledTime.toLocaleString()}</p>
             <p><strong>Actual Send Time:</strong> ${new Date().toLocaleString()}</p>
@@ -57,20 +57,20 @@ async function testAppsScriptIntegration() {
     };
 
     const result = await appsScriptScheduler.scheduleEmail(testEmailData);
-    console.log('✅ Email scheduled successfully!');
+    console.log('Email scheduled successfully!');
     console.log('📧 Email ID:', result.emailId);
     console.log('⏰ Scheduled for:', result.scheduledTime);
 
     // Step 4: Check email status
     console.log('\n4️⃣ Checking email status...');
     const status = await appsScriptScheduler.checkStatus(result.emailId);
-    console.log('✅ Email status:', status.status);
+    console.log('Email status:', status.status);
     console.log('📊 Full status:', JSON.stringify(status, null, 2));
 
     // Step 5: List all scheduled emails
     console.log('\n5️⃣ Listing all scheduled emails...');
     const emails = await appsScriptScheduler.listScheduledEmails();
-    console.log(`✅ Found ${emails.length} scheduled email(s)`);
+    console.log(`Found ${emails.length} scheduled email(s)`);
     
     if (emails.length > 0) {
       console.log('\n📋 Scheduled emails:');

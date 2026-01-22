@@ -57,10 +57,10 @@ async function updateAdvisoryWithPatchDetails() {
         { $set: updateData }
       );
       
-      console.log('✅ Updated advisory with missing fields:', Object.keys(updateData));
+      console.log('Updated advisory with missing fields:', Object.keys(updateData));
       console.log('Modified count:', result.modifiedCount);
     } else {
-      console.log('✅ Advisory already has all required fields');
+      console.log('Advisory already has all required fields');
     }
     
   } catch (error) {

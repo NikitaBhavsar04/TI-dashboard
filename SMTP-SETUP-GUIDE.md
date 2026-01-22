@@ -81,12 +81,12 @@ SMTP_SECURE=true
 
 ## Once Fixed:
 The email tracking system will work perfectly:
-✅ Emails will send with embedded tracking pixels
-✅ Link clicks will be tracked automatically  
-✅ Analytics will show open and click rates
-✅ All tracking uses your production domain
+Emails will send with embedded tracking pixels
+Link clicks will be tracked automatically  
+Analytics will show open and click rates
+All tracking uses your production domain
 
 ## Testing After Fix:
-1. Run `node test-smtp-config.js` - Should show ✅ success
+1. Run `node test-smtp-config.js` - Should show success
 2. Send a test advisory email from your admin panel
 3. Check email tracking in the analytics dashboard

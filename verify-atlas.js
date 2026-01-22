@@ -7,7 +7,7 @@ async function verifyAtlasData() {
   
   try {
     await mongoose.connect(ATLAS_URI);
-    console.log('✅ Connected to Atlas');
+    console.log('Connected to Atlas');
     
     const db = mongoose.connection.db;
     
@@ -31,7 +31,7 @@ async function verifyAtlasData() {
     const advisorySample = await advisoriesCollection.findOne();
     
     if (advisorySample) {
-      console.log('✅ Advisory data looks good:');
+      console.log('Advisory data looks good:');
       console.log(`   Title: ${advisorySample.title || 'N/A'}`);
       console.log(`   Severity: ${advisorySample.severity || 'N/A'}`);
       console.log(`   ID: ${advisorySample._id}`);

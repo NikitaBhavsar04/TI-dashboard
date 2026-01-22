@@ -35,7 +35,7 @@ const testAgendaSystem = async () => {
       for (const email of scheduledEmails) {
         if (new Date(email.scheduledAt) <= now) {
           await agenda.now('send-scheduled-email', { emailId: email._id.toString() });
-          console.log(`✅ Created immediate job for email to ${email.to}`);
+          console.log(`Created immediate job for email to ${email.to}`);
         } else {
           await agenda.schedule(email.scheduledAt, 'send-scheduled-email', { emailId: email._id.toString() });
           console.log(`⏰ Scheduled job for email to ${email.to} at ${email.scheduledAt}`);
@@ -56,7 +56,7 @@ const testAgendaSystem = async () => {
       console.log('');
     });
     
-    console.log('\n✅ Test completed. Agenda is now running and will process jobs automatically.');
+    console.log('\nTest completed. Agenda is now running and will process jobs automatically.');
     console.log('💡 Keep this script running to process emails, or integrate with your Next.js app.');
     
   } catch (error) {

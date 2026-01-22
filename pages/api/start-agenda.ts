@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { startAgenda } = require('../../lib/agenda');
       await startAgenda();
       agendaStarted = true;
-      console.log('✅ Agenda started via API');
+      console.log('Agenda started via API');
     }
 
     res.status(200).json({ 

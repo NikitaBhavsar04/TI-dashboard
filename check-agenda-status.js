@@ -8,7 +8,7 @@ const checkAgendaStatus = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Check Agenda jobs collection
     const agendaJobs = await mongoose.connection.db.collection('agendaJobs').find({}).toArray();

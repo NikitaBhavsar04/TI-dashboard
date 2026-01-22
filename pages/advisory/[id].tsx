@@ -63,9 +63,6 @@ const EmailModal = dynamic(() => import('@/components/EmailModal'), {
   ssr: false
 });
 
-import { IAdvisory } from '@/models/Advisory';
-import dbConnect from '@/lib/db';
-import Advisory from '@/models/Advisory';
 import { verifyToken } from '@/lib/auth';
 
 // Extended interface for comprehensive advisory data
@@ -727,7 +724,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                 </motion.div>
               )}
 
-              {/* 📄 THREAT DETAILS */}
+              {/*  THREAT DETAILS */}
               {(advisory.description || advisory.executiveSummary || advisory.summary) && (
                 <motion.div 
                   className="glass-panel-hover p-8"
@@ -739,7 +736,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-400/50">
                       <FileText className="h-5 w-5 text-blue-400" />
                     </div>
-                    <h2 className="font-orbitron font-bold text-xl text-white">📄 THREAT DETAILS</h2>
+                    <h2 className="font-orbitron font-bold text-xl text-white"> THREAT DETAILS</h2>
                   </div>
 
                   {/* Executive Summary Only */}
@@ -754,7 +751,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                 </motion.div>
               )}
 
-              {/* 🎯 AFFECTED SYSTEMS & TARGETS */}
+              {/* AFFECTED SYSTEMS & TARGETS */}
               {(advisory.affectedProducts?.length || advisory.affectedProduct || advisory.affectedSystems?.length || advisory.targetSectors?.length || advisory.regions?.length) && (
                 <motion.div 
                   className="glass-panel-hover p-8"
@@ -766,7 +763,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/20 border border-red-400/50">
                       <Target className="h-5 w-5 text-red-400" />
                     </div>
-                    <h2 className="font-orbitron font-bold text-xl text-white">🎯 AFFECTED SYSTEMS & TARGETS</h2>
+                    <h2 className="font-orbitron font-bold text-xl text-white">AFFECTED SYSTEMS & TARGETS</h2>
                   </div>
 
                   {/* Affected Products */}
@@ -869,7 +866,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                 </motion.div>
               )}
 
-              {/* 🕸️ MITRE ATT&CK FRAMEWORK */}
+              {/*  MITRE ATT&CK FRAMEWORK */}
               {advisory.mitreTactics && advisory.mitreTactics.length > 0 && (
                 <motion.div 
                   className="glass-panel-hover p-8"
@@ -881,7 +878,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500/20 border border-green-400/50">
                       <Grid className="h-5 w-5 text-green-400" />
                     </div>
-                    <h2 className="font-orbitron font-bold text-xl text-white">🕸️ MITRE ATT&CK FRAMEWORK</h2>
+                    <h2 className="font-orbitron font-bold text-xl text-white"> MITRE ATT&CK FRAMEWORK</h2>
                   </div>
                   <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
                     <table className="w-full">
@@ -939,7 +936,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                 </motion.div>
               )}
 
-              {/* 🧩 PATCH DETAILS */}
+              {/*  PATCH DETAILS */}
               {advisory.patchDetails && (
                 <motion.div 
                   className="glass-panel-hover p-8"
@@ -951,7 +948,7 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-500/20 border border-orange-400/50">
                       <Download className="h-5 w-5 text-orange-400" />
                     </div>
-                    <h2 className="font-orbitron font-bold text-xl text-white">🧩 PATCH DETAILS</h2>
+                    <h2 className="font-orbitron font-bold text-xl text-white"> PATCH DETAILS</h2>
                   </div>
                   <div className="prose prose-invert max-w-none">
                     <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap text-justify">
@@ -1267,39 +1264,34 @@ export default function AdvisoryDetail({ advisory }: AdvisoryDetailProps) {
 
 export const getServerSideProps: GetServerSideProps = async ({ params, req }) => {
   try {
-    await dbConnect();
+    // Fetch advisory from API endpoint instead of direct database access
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers.host;
+    const apiUrl = `${protocol}://${host}/api/advisories/${params?.id}`;
     
-    const advisory = await Advisory.findById(params?.id).lean();
+    const response = await fetch(apiUrl, {
+      headers: {
+        cookie: req.headers.cookie || '',
+      },
+    });
     
-    if (!advisory) {
+    if (!response.ok) {
+      return {
+        notFound: true,
+      };
+    }
+    
+    const data = await response.json();
+    
+    if (!data.advisory) {
       return {
         notFound: true,
       };
     }
 
-    // Check if user is authenticated for access control
-    let isAuthenticated = false;
-    let userRole = null;
-
-    const token = req.cookies.token;
-    if (token) {
-      try {
-        const tokenPayload = verifyToken(token);
-        if (tokenPayload) {
-          isAuthenticated = true;
-          userRole = tokenPayload.role;
-        }
-      } catch (error) {
-        // Token is invalid, user is not authenticated
-      }
-    }
-
-    // Convert ObjectId and Date objects for serialization - using JSON.parse/stringify to handle MongoDB objects
-    const serializedAdvisory = JSON.parse(JSON.stringify(advisory));
-
     return {
       props: {
-        advisory: serializedAdvisory,
+        advisory: data.advisory,
       },
     };
   } catch (error) {

@@ -31,7 +31,7 @@ const req = http.request(options, (res) => {
   res.on('end', () => {
     try {
       const response = JSON.parse(data);
-      console.log('\n✅ Response received:');
+      console.log('\nResponse received:');
       console.log(JSON.stringify(response, null, 2));
       
       if (response.success) {

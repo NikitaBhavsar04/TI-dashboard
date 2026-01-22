@@ -10,7 +10,7 @@ async function testEmailTracking() {
 
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     const db = mongoose.connection.db;
     const trackingCollection = db.collection('emailTracking');
@@ -30,7 +30,7 @@ async function testEmailTracking() {
     });
 
     // 2. Test tracking pixel URL generation
-    console.log('🎯 Testing tracking pixel URL generation...');
+    console.log('Testing tracking pixel URL generation...');
     if (trackingRecords.length > 0) {
       const sampleRecord = trackingRecords[0];
       const pixelUrl = `/api/emails/tracking?t=${sampleRecord.trackingId}&type=open`;
@@ -38,7 +38,7 @@ async function testEmailTracking() {
     }
 
     // 3. Test link tracking URL generation
-    console.log('\n🔗 Testing link tracking URL generation...');
+    console.log('\n Testing link tracking URL generation...');
     if (trackingRecords.length > 0) {
       const sampleRecord = trackingRecords[0];
       const originalUrl = 'https://example.com/advisory/details';
@@ -98,9 +98,9 @@ async function testEmailTracking() {
     console.log('\n🔍 System Health Check:');
     
     // Check if tracking pixel endpoint exists
-    console.log(`   ✅ Tracking pixel endpoint: /api/emails/tracking`);
-    console.log(`   ✅ Link tracking endpoint: /api/track/link`);
-    console.log(`   ✅ Analytics endpoint: /api/tracking/analytics`);
+    console.log(`   Tracking pixel endpoint: /api/emails/tracking`);
+    console.log(`   Link tracking endpoint: /api/track/link`);
+    console.log(`   Analytics endpoint: /api/tracking/analytics`);
     
     // Check tracking integration
     const hasTrackingData = trackingRecords.length > 0;

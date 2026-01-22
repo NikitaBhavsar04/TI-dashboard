@@ -18,7 +18,7 @@ This guide will help you set up **Google Apps Script** for cloud-based email sch
 
 ---
 
-## 🎯 Why Google Apps Script?
+## Why Google Apps Script?
 
 ### **Current Problem with SMTP/Agenda.js:**
 - ❌ Requires your local server to be running 24/7
@@ -27,12 +27,12 @@ This guide will help you set up **Google Apps Script** for cloud-based email sch
 - ❌ Limited reliability for scheduled emails
 
 ### **Benefits of Google Apps Script:**
-- ✅ **Runs 24/7** on Google's cloud servers
-- ✅ **True Gmail sending** using native GmailApp API
-- ✅ **Persistent scheduling** - survives system restarts
-- ✅ **Better deliverability** - emails come directly from Gmail
-- ✅ **Free** - No additional costs
-- ✅ **Automatic fallback** - System falls back to Agenda.js if Apps Script is unavailable
+- **Runs 24/7** on Google's cloud servers
+- **True Gmail sending** using native GmailApp API
+- **Persistent scheduling** - survives system restarts
+- **Better deliverability** - emails come directly from Gmail
+- **Free** - No additional costs
+- **Automatic fallback** - System falls back to Agenda.js if Apps Script is unavailable
 
 ---
 
@@ -122,7 +122,7 @@ APPS_SCRIPT_URL=https://script.google.com/macros/s/AKfycbxXXXXXXXXXXXXXXXX/exec
 
 ---
 
-## 🔗 Integration with Next.js
+##  Integration with Next.js
 
 The integration is **already implemented** in your codebase!
 
@@ -136,11 +136,11 @@ The integration is **already implemented** in your codebase!
 
 ### **Files Modified:**
 
-- ✅ `pages/api/emails/send-advisory.js` - Updated with Apps Script integration
-- ✅ `lib/appsScriptScheduler.js` - New utility module
-- ✅ `pages/api/emails/schedule-via-apps-script.js` - Direct scheduling endpoint
-- ✅ `pages/api/emails/cancel-scheduled.js` - Cancel endpoint
-- ✅ `pages/api/emails/check-scheduled-status.js` - Status check endpoint
+- `pages/api/emails/send-advisory.js` - Updated with Apps Script integration
+- `lib/appsScriptScheduler.js` - New utility module
+- `pages/api/emails/schedule-via-apps-script.js` - Direct scheduling endpoint
+- `pages/api/emails/cancel-scheduled.js` - Cancel endpoint
+- `pages/api/emails/check-scheduled-status.js` - Status check endpoint
 
 ### **Fallback Mechanism:**
 
@@ -187,7 +187,7 @@ curl YOUR_APPS_SCRIPT_URL
 6. Check the console logs - you should see:
    ```
    📧 Using Google Apps Script for scheduling (cloud-based)
-   ✅ Scheduled via Apps Script: EMAIL_xxxxx
+   Scheduled via Apps Script: EMAIL_xxxxx
    ```
 
 7. Wait for the scheduled time and check your inbox
@@ -309,11 +309,11 @@ Google Apps Script has the following limits:
 ## 🎉 You're All Set!
 
 Your Threat Advisory platform now has:
-- ✅ Cloud-based email scheduling
-- ✅ Persistent scheduled emails
-- ✅ Automatic fallback mechanism
-- ✅ True Gmail sending
-- ✅ 24/7 reliability
+- Cloud-based email scheduling
+- Persistent scheduled emails
+- Automatic fallback mechanism
+- True Gmail sending
+- 24/7 reliability
 
 **Next Steps:**
 1. Deploy your Next.js app to production

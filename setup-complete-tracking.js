@@ -10,7 +10,7 @@ async function setupCompleteTracking() {
 
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     const db = mongoose.connection.db;
     const trackingCollection = db.collection('emailTracking');
@@ -70,7 +70,7 @@ async function setupCompleteTracking() {
         }
       );
 
-      console.log('✅ Added recent tracking events');
+      console.log('Added recent tracking events');
     }
 
     // Create some additional recent tracking records for dashboard
@@ -136,7 +136,7 @@ async function setupCompleteTracking() {
 
     console.log('📧 Creating additional recent tracking records...');
     await trackingCollection.insertMany(additionalRecords);
-    console.log(`✅ Created ${additionalRecords.length} additional tracking records`);
+    console.log(`Created ${additionalRecords.length} additional tracking records`);
 
     // Display current tracking statistics
     console.log('\n📈 Current Tracking Statistics:');
@@ -174,12 +174,12 @@ async function setupCompleteTracking() {
       });
     }
 
-    console.log('\n🔗 Test URLs:');
+    console.log('\n Test URLs:');
     console.log(`   Dashboard: http://localhost:3000/analytics/email-tracking`);
     console.log(`   Pixel Test: http://localhost:3000/api/emails/tracking?t=${testTrackingId}&type=open`);
     console.log(`   Events API: http://localhost:3000/api/tracking/events?timeRange=24h`);
 
-    console.log('\n✅ Complete email tracking system is now set up with real-time data!');
+    console.log('\nComplete email tracking system is now set up with real-time data!');
     console.log('🔄 Refresh the dashboard to see the latest tracking events.');
 
   } catch (error) {

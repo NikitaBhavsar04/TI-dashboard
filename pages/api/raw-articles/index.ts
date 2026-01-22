@@ -2,16 +2,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyToken } from '@/lib/auth';
 import { Client } from '@opensearch-project/opensearch';
 
-// OpenSearch client configuration
-const opensearchClient = new Client({
-  node: `http://${process.env.OPENSEARCH_HOST || 'localhost'}:${process.env.OPENSEARCH_PORT || 9200}`,
-  auth: process.env.OPENSEARCH_USERNAME && process.env.OPENSEARCH_PASSWORD ? {
-    username: process.env.OPENSEARCH_USERNAME,
-    password: process.env.OPENSEARCH_PASSWORD,
-  } : undefined,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+// Initialize OpenSearch client
+const osClient = new Client({
+  node: process.env.OPENSEARCH_URL || 'http://localhost:9200',
+  ssl: { rejectUnauthorized: false },
 });
 
 const OPENSEARCH_INDEX = 'ti-raw-articles';
@@ -37,47 +31,39 @@ export default async function handler(
 
   if (req.method === 'GET') {
     try {
-      // Query OpenSearch for raw articles
-      const searchParams = {
-        index: 'ti-raw-articles',
+      // Fetch articles from OpenSearch
+      const response = await osClient.search({
+        index: OPENSEARCH_INDEX,
         body: {
-          query: {
-            match_all: {}
-          },
-          sort: [
-            {
-              fetched_at: {
-                order: 'desc'
-              }
-            }
-          ],
-          size: 1000 // Limit to 1000 articles, adjust as needed
+          query: { match_all: {} },
+          size: 10000, // Adjust based on your needs
+          sort: [{ fetched_at: { order: 'desc' } }]
         }
-      };
+      });
 
-      const response = await opensearchClient.search(searchParams);
-      
       const articles = response.body.hits.hits.map((hit: any) => ({
-        id: hit._id,
-        ...hit._source
+        ...hit._source,
+        _id: hit._id
       }));
 
+      // OpenSearch 7.x+ returns total as { value, relation }, older as number
+      const totalHits = typeof response.body.hits.total === 'number'
+        ? response.body.hits.total
+        : response.body.hits.total.value;
       return res.status(200).json({ 
         articles,
         count: articles.length,
-        total: response.body.hits.total.value,
-        lastFetched: articles.length > 0 ? articles[0].fetched_at : null
+        total: totalHits
       });
     } catch (error: any) {
-      console.error('Error querying OpenSearch:', error);
+      console.error('Error fetching articles from OpenSearch:', error);
       
-      // Handle case where index doesn't exist yet
-      if (error.body?.error?.type === 'index_not_found_exception') {
+      // Handle index not found error
+      if (error.meta?.statusCode === 404) {
         return res.status(200).json({ 
           articles: [], 
           count: 0,
-          total: 0,
-          message: 'No articles found. Index not created yet. Run the fetcher first.' 
+          message: 'No articles found. Run the fetcher first.' 
         });
       }
       

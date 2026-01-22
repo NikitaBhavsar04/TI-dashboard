@@ -8,14 +8,14 @@ async function testEmailSending() {
     // Check if agenda is running
     console.log('📋 Checking agenda status...');
     await agenda.start();
-    console.log('✅ Agenda started successfully');
+    console.log('Agenda started successfully');
     
     // Test immediate email sending
     console.log('📧 Testing immediate email send...');
     const testJob = await agenda.now('send-scheduled-advisory-email', {
       emailId: 'test-id-' + Date.now()
     });
-    console.log('✅ Immediate email job queued:', testJob.attrs.name);
+    console.log('Immediate email job queued:', testJob.attrs.name);
     
     // Test scheduled email
     console.log('⏰ Testing scheduled email...');
@@ -23,7 +23,7 @@ async function testEmailSending() {
     const scheduledJob = await agenda.schedule(futureDate, 'send-scheduled-advisory-email', {
       emailId: 'test-scheduled-' + Date.now()
     });
-    console.log('✅ Scheduled email job created:', scheduledJob.attrs.name);
+    console.log('Scheduled email job created:', scheduledJob.attrs.name);
     
     // Check job processing
     console.log('🔄 Checking job processing...');

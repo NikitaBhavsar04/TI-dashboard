@@ -40,7 +40,7 @@ async function testEmailWithPatchDetails() {
       
       // Get updated advisory
       advisory = await advisories.findOne({ _id: advisory._id });
-      console.log('✅ Patch details added! Count:', advisory.patchDetails.length);
+      console.log('Patch details added! Count:', advisory.patchDetails.length);
     }
     
     // Now send a test email with this advisory
@@ -53,7 +53,7 @@ async function testEmailWithPatchDetails() {
       customMessage: 'Test email with patch details and metadata sections included'
     });
     
-    console.log('✅ Test email sent with patch details!');
+    console.log('Test email sent with patch details!');
     
     await client.close();
   } catch (error) {

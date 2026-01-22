@@ -53,7 +53,7 @@ def main():
         # Render HTML
         render_html(templates_dir, context, out_html)
         
-        logger.info(f"✅ HTML generated successfully: {out_html}")
+        logger.info(f"HTML generated successfully: {out_html}")
         print(f"SUCCESS: {out_html}")
         sys.exit(0)
         

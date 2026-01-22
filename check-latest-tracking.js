@@ -5,7 +5,7 @@ require('dotenv').config();
 async function checkLatestTracking() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     const db = mongoose.connection.db;
     const trackingCollection = db.collection('emailTracking');
@@ -14,7 +14,7 @@ async function checkLatestTracking() {
     const specificRecord = await trackingCollection.findOne({ trackingId: '9e3f0867-3486-4e36-a3f7-5a77d090deb8' });
     
     if (specificRecord) {
-      console.log('🎯 Found the specific tracking record:');
+      console.log('Found the specific tracking record:');
       console.log(`   Email: ${specificRecord.recipientEmail}`);
       console.log(`   Tracking ID: ${specificRecord.trackingId}`);
       console.log(`   Created: ${specificRecord.createdAt}`);

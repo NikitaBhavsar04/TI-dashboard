@@ -22,7 +22,7 @@ async function testSMTP() {
   try {
     console.log('🔍 Verifying SMTP connection...');
     await transporter.verify();
-    console.log('✅ SMTP authentication successful!');
+    console.log('SMTP authentication successful!');
     
     console.log('📧 Sending test email...');
     const info = await transporter.sendMail({
@@ -33,7 +33,7 @@ async function testSMTP() {
       html: '<h1>SMTP Test - Fresh Auth</h1><p>This is a test email to verify SMTP authentication.</p>'
     });
 
-    console.log('✅ Test email sent successfully!');
+    console.log('Test email sent successfully!');
     console.log('📧 Message ID:', info.messageId);
   } catch (error) {
     console.error('❌ SMTP test failed:', error.message);

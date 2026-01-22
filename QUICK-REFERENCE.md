@@ -44,7 +44,7 @@ cd c:\Users\BAPS.DESKTOP-P2HTS9B\ThreatAdvisory-Automation
 
 | What | Where | Edit? |
 |------|-------|-------|
-| Frontend Config | `.env.local` in `c:\Threat-Advisory` | ✅ Already done |
+| Frontend Config | `.env.local` in `c:\Threat-Advisory` | Already done |
 | Backend Config | `.env` in `c:\Users\BAPS.DESKTOP-P2HTS9B\ThreatAdvisory-Automation` | 🔧 Add API key |
 | Backend API | `api.py` in ThreatAdvisory-Automation | ❌ Don't change |
 | Frontend Modal | `AutoAdvisoryModal.tsx` in Threat-Advisory | ❌ Don't change |
@@ -63,7 +63,7 @@ cd c:\Users\BAPS.DESKTOP-P2HTS9B\ThreatAdvisory-Automation
 
 ---
 
-## ✅ Verification
+## Verification
 
 ```powershell
 # Test backend
@@ -154,14 +154,14 @@ curl http://localhost:3000
 
 ## ✨ Features Enabled
 
-✅ Generate advisories from threat feeds
-✅ Extract CVEs automatically
-✅ Map to MITRE ATT&CK tactics
-✅ Create executive summaries
-✅ Get security recommendations
-✅ Severity classification
+Generate advisories from threat feeds
+Extract CVEs automatically
+Map to MITRE ATT&CK tactics
+Create executive summaries
+Get security recommendations
+Severity classification
 
 ---
 
 **Last Updated**: January 1, 2026
-**Status**: ✅ Ready to Use
+**Status**: Ready to Use

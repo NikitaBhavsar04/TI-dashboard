@@ -9,7 +9,7 @@ const checkEmailStatus = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Get all emails
     const allEmails = await Email.find({}).sort({ createdAt: -1 });
@@ -33,7 +33,7 @@ const checkEmailStatus = async () => {
       console.log(`⏳ Pending emails: ${pendingEmails.length}`);
 
       const sentEmails = await Email.find({ status: 'sent' });
-      console.log(`✅ Sent emails: ${sentEmails.length}`);
+      console.log(`Sent emails: ${sentEmails.length}`);
 
       const failedEmails = await Email.find({ status: 'failed' });
       console.log(`❌ Failed emails: ${failedEmails.length}`);

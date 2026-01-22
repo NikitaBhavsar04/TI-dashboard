@@ -28,7 +28,7 @@ const testCorrectedEmail = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Use the same advisory ID we found earlier
     const advisoryId = '6883112b4610d828d41c557f';
@@ -64,7 +64,7 @@ const testCorrectedEmail = async () => {
     console.log(`\n📊 Final status: ${updatedEmail.status}`);
     
     if (updatedEmail.status === 'sent') {
-      console.log('✅ Test email sent successfully with corrected rich content!');
+      console.log('Test email sent successfully with corrected rich content!');
       console.log('📧 Check your inbox for the properly formatted advisory email');
     } else {
       console.log('❌ Test email failed to send');

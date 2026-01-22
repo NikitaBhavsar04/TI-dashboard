@@ -28,7 +28,7 @@ const testCurrentPending = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Find pending emails
     const pendingEmails = await ScheduledEmail.find({ status: 'pending' });
@@ -37,7 +37,7 @@ const testCurrentPending = async () => {
     if (pendingEmails.length > 0) {
       // Start Agenda
       const agenda = await startAgenda();
-      console.log('✅ Agenda started with debugging');
+      console.log('Agenda started with debugging');
 
       // Process each email immediately to see the logs
       for (const email of pendingEmails) {
@@ -49,7 +49,7 @@ const testCurrentPending = async () => {
         
         try {
           await agenda.now('send-scheduled-email', { emailId: email._id.toString() });
-          console.log(`✅ Queued email for immediate processing`);
+          console.log(`Queued email for immediate processing`);
         } catch (error) {
           console.error(`❌ Failed to queue email:`, error);
         }

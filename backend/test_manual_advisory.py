@@ -19,15 +19,15 @@ def test_opensearch_connection():
         
         # Test connection
         health = os_client.cluster.health()
-        print(f"✅ OpenSearch cluster health: {health.get('status', 'unknown')}")
+        print(f"OpenSearch cluster health: {health.get('status', 'unknown')}")
         
         # Test if raw articles index exists
         if os_client.indices.exists(index=RAW_INDEX):
-            print(f"✅ Raw articles index '{RAW_INDEX}' exists")
+            print(f"Raw articles index '{RAW_INDEX}' exists")
             
             # Get sample count
             count = os_client.count(index=RAW_INDEX)
-            print(f"✅ Raw articles count: {count.get('count', 0)}")
+            print(f"Raw articles count: {count.get('count', 0)}")
             
         else:
             print(f"❌ Raw articles index '{RAW_INDEX}' does not exist")
@@ -65,10 +65,10 @@ def test_manual_advisory_generation():
         
         advisory = generate_advisory_for_article(article_id)
         
-        print(f"✅ Advisory generated successfully!")
-        print(f"✅ Advisory ID: {advisory.get('advisory_id', 'N/A')}")
-        print(f"✅ Title: {advisory.get('title', 'N/A')}")
-        print(f"✅ Criticality: {advisory.get('criticality', 'N/A')}")
+        print(f"Advisory generated successfully!")
+        print(f"Advisory ID: {advisory.get('advisory_id', 'N/A')}")
+        print(f"Title: {advisory.get('title', 'N/A')}")
+        print(f"Criticality: {advisory.get('criticality', 'N/A')}")
         
         return True
         
@@ -90,4 +90,4 @@ if __name__ == "__main__":
     if not test_manual_advisory_generation():
         sys.exit(1)
         
-    print("\n✅ All tests passed!")
+    print("\nAll tests passed!")

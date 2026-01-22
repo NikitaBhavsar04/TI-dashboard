@@ -53,7 +53,7 @@ const migrateAffectedProducts = async () => {
         affectedProducts: affectedProducts
       });
       
-      console.log(`✅ Migrated advisory: ${advisory.title}\n`);
+      console.log(`Migrated advisory: ${advisory.title}\n`);
     }
 
     console.log('Migration completed successfully!');

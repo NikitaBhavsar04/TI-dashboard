@@ -8,7 +8,7 @@ const fixMissingAgendaJob = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Get the pending email
     const ScheduledEmailSchema = new mongoose.Schema({
@@ -55,7 +55,7 @@ const fixMissingAgendaJob = async () => {
     
     if (processResponse.ok) {
       const processResult = await processResponse.json();
-      console.log('✅ Processing result:', processResult);
+      console.log('Processing result:', processResult);
     } else {
       console.log('❌ Processing failed:', await processResponse.text());
     }

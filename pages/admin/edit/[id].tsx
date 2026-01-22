@@ -14,12 +14,10 @@ import {
 import { CyberCard, CyberButton, CyberBadge } from '@/components/ui/cyber-components';
 import { HolographicOverlay, NeonText, TerminalWindow } from '@/components/ui/cyber-effects';
 import HydrationSafe from '@/components/HydrationSafe';
-import { IAdvisory } from '@/models/Advisory';
 import dbConnect from '@/lib/db';
-import Advisory from '@/models/Advisory';
 
 interface EditAdvisoryProps {
-  advisory: IAdvisory;
+  advisory: any;
 }
 
 export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
@@ -584,7 +582,8 @@ export default function EditAdvisory({ advisory }: EditAdvisoryProps) {
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   await dbConnect();
   
-  const advisory = await Advisory.findById(params?.id).lean();
+  // TODO: Replace with OpenSearch fetch logic
+  const advisory = null;
   
   if (!advisory) {
     return {

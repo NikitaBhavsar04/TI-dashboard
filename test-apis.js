@@ -12,7 +12,7 @@ async function testAPIs() {
     const trackingResponse = await fetch(`${baseUrl}/api/emails/tracking?t=test-tracking-id&type=open`);
     
     if (trackingResponse.status === 200) {
-      console.log('✅ Tracking pixel API is responding correctly');
+      console.log('Tracking pixel API is responding correctly');
     } else {
       console.log(`❌ Tracking API returned status: ${trackingResponse.status}`);
     }
@@ -31,7 +31,7 @@ async function testAPIs() {
     });
     
     if (analyticsResponse.status === 401) {
-      console.log('✅ Analytics API correctly requires authentication');
+      console.log('Analytics API correctly requires authentication');
     } else {
       console.log(`⚠️ Analytics API returned status: ${analyticsResponse.status}`);
     }

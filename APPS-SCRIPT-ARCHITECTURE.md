@@ -1,4 +1,4 @@
-# 🎯 Google Apps Script Email Scheduling - Architecture
+# Google Apps Script Email Scheduling - Architecture
 
 ## System Architecture Diagram
 
@@ -67,16 +67,16 @@
 
 | Feature | Google Apps Script | Agenda.js (Current) |
 |---------|-------------------|---------------------|
-| **Requires Server Running** | ❌ No | ✅ Yes (24/7) |
-| **Cloud-based** | ✅ Yes (Google Cloud) | ❌ No (Your server) |
-| **Persistence** | ✅ Survives crashes | ❌ Lost on crash |
-| **Email Method** | ✅ Native Gmail API | ⚠️ SMTP relay |
-| **Deliverability** | ✅ Excellent | ⚠️ Good |
-| **Setup Complexity** | ⚠️ Moderate | ✅ Simple |
-| **Cost** | ✅ Free | ✅ Free |
+| **Requires Server Running** | ❌ No | Yes (24/7) |
+| **Cloud-based** | Yes (Google Cloud) | ❌ No (Your server) |
+| **Persistence** | Survives crashes | ❌ Lost on crash |
+| **Email Method** | Native Gmail API | ⚠️ SMTP relay |
+| **Deliverability** | Excellent | ⚠️ Good |
+| **Setup Complexity** | ⚠️ Moderate | Simple |
+| **Cost** | Free | Free |
 | **Email Quota** | 100/day (Gmail) | SMTP limits |
-| **Reliability** | ✅ Very High | ⚠️ Server-dependent |
-| **Monitoring** | ✅ Apps Script UI | ⚠️ Manual logs |
+| **Reliability** | Very High | ⚠️ Server-dependent |
+| **Monitoring** | Apps Script UI | ⚠️ Manual logs |
 
 ---
 
@@ -133,22 +133,22 @@ Threat-Advisory/
 │   └── Code.gs                          # Apps Script code (deploy to script.google.com)
 │
 ├── pages/api/emails/
-│   ├── send-advisory.js                 # ✅ UPDATED - Main email endpoint
-│   ├── schedule-via-apps-script.js      # ✅ NEW - Direct Apps Script API
-│   ├── cancel-scheduled.js              # ✅ NEW - Cancel scheduled emails
-│   └── check-scheduled-status.js        # ✅ NEW - Check email status
+│   ├── send-advisory.js                 # UPDATED - Main email endpoint
+│   ├── schedule-via-apps-script.js      # NEW - Direct Apps Script API
+│   ├── cancel-scheduled.js              # NEW - Cancel scheduled emails
+│   └── check-scheduled-status.js        # NEW - Check email status
 │
 ├── lib/
-│   ├── appsScriptScheduler.js           # ✅ NEW - Apps Script utility
+│   ├── appsScriptScheduler.js           # NEW - Apps Script utility
 │   └── agenda.js                        # Existing - Fallback scheduler
 │
-├── .env.local                           # ✅ UPDATED - Added APPS_SCRIPT_URL
-├── .env.example                         # ✅ UPDATED - Added Apps Script config
+├── .env.local                           # UPDATED - Added APPS_SCRIPT_URL
+├── .env.example                         # UPDATED - Added Apps Script config
 │
-├── GOOGLE-APPS-SCRIPT-SETUP.md          # ✅ NEW - Complete setup guide
-├── APPS-SCRIPT-ARCHITECTURE.md          # ✅ NEW - This file
+├── GOOGLE-APPS-SCRIPT-SETUP.md          # NEW - Complete setup guide
+├── APPS-SCRIPT-ARCHITECTURE.md          # NEW - This file
 │
-└── test-apps-script.js                  # ✅ NEW - Testing script
+└── test-apps-script.js                  # NEW - Testing script
 ```
 
 ---
@@ -251,7 +251,7 @@ const response = await fetch('/api/emails/check-scheduled-status', {
 
 ---
 
-## 🎯 Best Practices
+## Best Practices
 
 1. **Always include fallback:**
    ```javascript

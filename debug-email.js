@@ -40,7 +40,7 @@ const debugEmail = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Find the most recent sent email
     const recentEmail = await ScheduledEmail.findOne().sort({ createdAt: -1 });
@@ -61,7 +61,7 @@ const debugEmail = async () => {
     const advisory = await Advisory.findById(recentEmail.advisoryId);
     
     if (advisory) {
-      console.log(`✅ Advisory found:`);
+      console.log(`Advisory found:`);
       console.log(`   Title: ${advisory.title}`);
       console.log(`   Severity: ${advisory.severity}`);
       console.log(`   Category: ${advisory.category}`);

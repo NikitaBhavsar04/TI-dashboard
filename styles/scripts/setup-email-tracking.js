@@ -40,9 +40,9 @@ async function createTTLIndexSafely(collection, indexSpec, expireAfterSeconds) {
         console.log(`   🔄 Updating TTL index from ${existingIndex.expireAfterSeconds}s to ${expireAfterSeconds}s`);
         await collection.dropIndex(indexName);
         await collection.createIndex(indexSpec, { expireAfterSeconds });
-        console.log(`   ✅ TTL index updated`);
+        console.log(`   TTL index updated`);
       } else {
-        console.log(`   ✅ TTL index is already correct`);
+        console.log(`   TTL index is already correct`);
       }
     } else {
       throw error;
@@ -56,7 +56,7 @@ async function setupEmailTracking() {
 
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Create indexes for performance
     console.log('📊 Creating database indexes...');
@@ -79,7 +79,7 @@ async function setupEmailTracking() {
       // Handle TTL index specially
       await createTTLIndexSafely(TrackingEvent.collection, { timestamp: 1 }, 7776000); // 90 days
 
-      console.log('✅ Database indexes created successfully');
+      console.log('Database indexes created successfully');
     } catch (indexError) {
       console.log('⚠️  Some indexes may already exist, continuing...');
     }
@@ -207,7 +207,7 @@ async function setupEmailTracking() {
     console.log('\n📈 Email Tracking System Setup Complete!');
     console.log(`   📧 Tracking Records: ${trackingCount}`);
     console.log(`   📊 Tracking Events: ${eventCount}`);
-    console.log('\n🔗 API Endpoints Available:');
+    console.log('\n API Endpoints Available:');
     console.log('   GET  /api/tracking/analytics - Get tracking analytics');
     console.log('   GET  /api/tracking/[trackingId] - Get specific email tracking details');
     console.log('   GET  /api/track/pixel?t=[trackingId] - Tracking pixel endpoint');
@@ -230,7 +230,7 @@ async function cleanupTrackingData() {
     console.log('🧹 Cleaning up old tracking data...\n');
 
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Delete tracking records older than 90 days
     const cutoffDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);

@@ -64,7 +64,7 @@ NODE_ENV=production
 - Monitor deployment in Railway dashboard
 - Check logs for any issues
 
-## 🔗 Your App URLs
+##  Your App URLs
 - **Main App:** `https://your-app-name.railway.app`
 - **Health Check:** `https://your-app-name.railway.app/api/health`
 - **Admin Panel:** `https://your-app-name.railway.app/admin`

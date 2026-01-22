@@ -43,13 +43,13 @@ async function updateAdvisoryFields() {
       }
     );
     
-    console.log('✅ Advisory updated successfully');
+    console.log('Advisory updated successfully');
     console.log('Modified count:', updateResult.modifiedCount);
     
     // Verify the update
     const updatedAdvisory = await db.collection('advisories').findOne({ _id: advisory._id });
-    console.log('✅ Patch details count:', updatedAdvisory.patchDetails.length);
-    console.log('✅ MITRE tactics count:', updatedAdvisory.mitreTactics.length);
+    console.log('Patch details count:', updatedAdvisory.patchDetails.length);
+    console.log('MITRE tactics count:', updatedAdvisory.mitreTactics.length);
     
   } catch (error) {
     console.error('Error updating advisory:', error);

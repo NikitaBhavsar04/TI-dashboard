@@ -81,7 +81,7 @@ foreach ($dir in $directories) {
 
 Write-Host ""
 Write-Host "=====================================================" -ForegroundColor Cyan
-Write-Host "  ✅ Backend Setup Complete!" -ForegroundColor Green
+Write-Host "  Backend Setup Complete!" -ForegroundColor Green
 Write-Host "=====================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow

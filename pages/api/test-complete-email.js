@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       cvss: 8.5,
       cveIds: ['CVE-2025-49715'],
       
-      // ✅ RECOMMENDATIONS SECTION - Guaranteed to show
+      // RECOMMENDATIONS SECTION - Guaranteed to show
       recommendations: [
         'Apply Security Patches Promptly: Immediately update Dynamics 365 FastTrack Implementation Assets to the latest patched version as specified by Microsoft. Ensure all environments, including production and testing, are updated to prevent exploitation. Regularly check Microsoft\'s Security Update Guide for new patches.',
         'Implement Strong Access Controls: Enforce strict access controls using Microsoft Entra ID Conditional Access policies. Require multi-factor authentication (MFA) for all users and limit access to Dynamics 365 resources based on the principle of least privilege. Regularly audit user permissions to identify and remove unnecessary access.',
@@ -71,10 +71,10 @@ export default async function handler(req, res) {
     await agendaInstance.now('send email', {
       recipients: ['mayank@forensiccybertech.com'], // Replace with your test email
       advisory: testAdvisory,
-      customMessage: 'This is a comprehensive test email with ALL THREE SECTIONS: ✅ Recommendations, 🔧 Patch Details, and 📋 Metadata'
+      customMessage: 'This is a comprehensive test email with ALL THREE SECTIONS: Recommendations, 🔧 Patch Details, and 📋 Metadata'
     });
 
-    console.log('✅ Comprehensive test email scheduled with all sections');
+    console.log('Comprehensive test email scheduled with all sections');
     
     res.status(200).json({ 
       message: 'Comprehensive test email sent successfully with all three sections',

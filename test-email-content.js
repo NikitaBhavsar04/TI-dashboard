@@ -41,7 +41,7 @@ const testEmailContent = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Find any existing advisory to test with
     const advisory = await Advisory.findOne();
@@ -50,7 +50,7 @@ const testEmailContent = async () => {
       process.exit(1);
     }
 
-    console.log(`📄 Found advisory: ${advisory.title}`);
+    console.log(` Found advisory: ${advisory.title}`);
     console.log(`📊 Severity: ${advisory.severity}`);
     console.log(`📁 Category: ${advisory.category}`);
 
@@ -85,7 +85,7 @@ const testEmailContent = async () => {
     console.log(`\n📊 Final status: ${updatedEmail.status}`);
     
     if (updatedEmail.status === 'sent') {
-      console.log('✅ Test email sent successfully with proper content!');
+      console.log('Test email sent successfully with proper content!');
     } else {
       console.log('❌ Test email failed to send');
       if (updatedEmail.errorMessage) {

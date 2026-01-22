@@ -445,7 +445,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
               </p>
               <div className="mt-2 px-3 py-1 bg-green-500/20 border border-green-400/50 rounded-lg">
                 <span className="text-green-400 font-rajdhani text-sm font-bold">
-                  ✅ FULL FEATURED VERSION - Version 3.0
+                  FULL FEATURED VERSION - Version 3.0
                 </span>
               </div>
             </div>

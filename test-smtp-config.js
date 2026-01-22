@@ -29,7 +29,7 @@ async function testSMTPConfig() {
     
     // Verify the connection configuration
     await transporter.verify();
-    console.log('✅ SMTP authentication successful!');
+    console.log('SMTP authentication successful!');
 
     console.log('\n📨 Sending test email...');
     
@@ -53,7 +53,7 @@ async function testSMTPConfig() {
       text: 'SMTP Configuration Test Successful! Your email tracking system is ready.'
     });
 
-    console.log('✅ Test email sent successfully!');
+    console.log('Test email sent successfully!');
     console.log(`📧 Message ID: ${info.messageId}`);
     console.log(`📮 Response: ${info.response}`);
 

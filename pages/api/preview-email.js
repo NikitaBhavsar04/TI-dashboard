@@ -1030,7 +1030,7 @@ function generateEmailBody(advisory, customMessage = '') {
                 <table class="mitre-table">
                     <thead>
                         <tr>
-                            <th>🎯 Tactic</th>
+                            <th>Tactic</th>
                             <th>🔢 Technique ID</th>
                             <th>⚙️ Technique Description</th>
                         </tr>
@@ -1069,7 +1069,7 @@ function generateEmailBody(advisory, customMessage = '') {
             <div class="link-panel">
                 <p><strong>📋 For comprehensive threat analysis and detailed information:</strong></p>
                 <a href="${baseUrl}/advisory/${advisory._id}">
-                    📄 View Full Advisory Report
+                     View Full Advisory Report
                 </a>
                 <p style="font-size: 14px; color: #e5e7eb; margin-top: 12px;">
                     🔍 Access complete IOCs, patch details, and additional threat intelligence data

@@ -126,7 +126,7 @@ def preview_advisory_html(
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(html)
 
-    logger.info(f"✅ HTML preview generated: {out_path}")
+    logger.info(f"HTML preview generated: {out_path}")
 
     return out_path
 

@@ -29,7 +29,7 @@ const testCompleteSchedulingSystem = async () => {
     
     const loginData = await loginResponse.json();
     const authToken = loginData.token;
-    console.log('✅ Admin token obtained');
+    console.log('Admin token obtained');
     
     // Create scheduled email via API
     const scheduleResponse = await fetch('http://localhost:3000/api/scheduled-emails', {
@@ -54,7 +54,7 @@ const testCompleteSchedulingSystem = async () => {
     
     const scheduleData = await scheduleResponse.json();
     const emailId = scheduleData.scheduledEmail._id;
-    console.log(`✅ Email scheduled successfully with ID: ${emailId}`);
+    console.log(`Email scheduled successfully with ID: ${emailId}`);
     
     // Step 2: Verify Agenda job was created
     console.log('\n🔍 Step 2: Verifying Agenda job creation...');
@@ -71,7 +71,7 @@ const testCompleteSchedulingSystem = async () => {
     }
     
     const job = agendaJobs[0];
-    console.log(`✅ Agenda job found: ${job.name}`);
+    console.log(`Agenda job found: ${job.name}`);
     console.log(`📅 Next run: ${new Date(job.nextRunAt).toLocaleString()}`);
     
     // Step 3: Wait for automatic processing
@@ -95,10 +95,10 @@ const testCompleteSchedulingSystem = async () => {
     
     if (finalEmail.status === 'sent') {
       console.log('\n🎉 SUCCESS! COMPLETE AUTOMATED SYSTEM WORKS!');
-      console.log('✅ Email was scheduled via web interface');
-      console.log('✅ Agenda job was automatically created');
-      console.log('✅ Email was automatically sent with rich content');
-      console.log('✅ Status was properly updated');
+      console.log('Email was scheduled via web interface');
+      console.log('Agenda job was automatically created');
+      console.log('Email was automatically sent with rich content');
+      console.log('Status was properly updated');
     } else if (finalEmail.status === 'failed') {
       console.log('\n❌ PARTIAL SUCCESS - Email was processed but failed to send');
       console.log(`Error: ${finalEmail.errorMessage}`);

@@ -9,7 +9,7 @@ const testAutomatedScheduling = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Step 1: Create email directly in database
     const ScheduledEmailSchema = new mongoose.Schema({
@@ -45,7 +45,7 @@ const testAutomatedScheduling = async () => {
 
     await testEmail.save();
     const emailId = testEmail._id;
-    console.log(`✅ Email created with ID: ${emailId}`);
+    console.log(`Email created with ID: ${emailId}`);
 
     // Step 2: Create Agenda job via API
     console.log('\n📤 Step 2: Creating Agenda job...');
@@ -56,7 +56,7 @@ const testAutomatedScheduling = async () => {
         headers: { 'Content-Type': 'application/json' }
       });
       const result = await response.json();
-      console.log('✅ Agenda startup result:', result);
+      console.log('Agenda startup result:', result);
     } catch (apiError) {
       console.log('⚠️ API call issue:', apiError.message);
     }
@@ -71,7 +71,7 @@ const testAutomatedScheduling = async () => {
       emailId: emailId.toString() 
     });
     
-    console.log(`✅ Agenda job created for: ${scheduleTime.toLocaleString()}`);
+    console.log(`Agenda job created for: ${scheduleTime.toLocaleString()}`);
 
     // Step 4: Wait for processing
     const waitTime = scheduleTime.getTime() - Date.now() + 30000;
@@ -88,8 +88,8 @@ const testAutomatedScheduling = async () => {
     
     if (finalEmail.status === 'sent') {
       console.log('\n🎉 COMPLETE SUCCESS!');
-      console.log('✅ Email was automatically processed and sent with rich content');
-      console.log('✅ The automated scheduling system is working perfectly!');
+      console.log('Email was automatically processed and sent with rich content');
+      console.log('The automated scheduling system is working perfectly!');
     } else if (finalEmail.status === 'failed') {
       console.log('\n⚠️ PROCESSING ATTEMPTED BUT FAILED');
       console.log(`❌ Error: ${finalEmail.errorMessage}`);

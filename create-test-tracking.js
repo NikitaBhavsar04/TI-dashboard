@@ -5,7 +5,7 @@ require('dotenv').config();
 async function createTestTrackingData() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     const db = mongoose.connection.db;
     const trackingCollection = db.collection('emailTracking');
@@ -98,7 +98,7 @@ async function createTestTrackingData() {
 
     await trackingCollection.insertMany(testTrackingData);
     
-    console.log(`✅ Created ${testTrackingData.length} test tracking records`);
+    console.log(`Created ${testTrackingData.length} test tracking records`);
     console.log('📊 Now you can view analytics at: http://localhost:3000/analytics');
     console.log('');
     console.log('Test data includes:');

@@ -23,7 +23,7 @@ const processOverdueEmail = async () => {
   
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/threat-advisory');
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Define schemas
     const ScheduledEmailSchema = new mongoose.Schema({
@@ -384,7 +384,7 @@ const processOverdueEmail = async () => {
             
             <div class="section">
                 <div class="section-header">
-                    <div class="section-icon">📄</div>
+                    <div class="section-icon"></div>
                     <h2 class="section-title">For Complete Details</h2>
                 </div>
                 <p>For comprehensive threat analysis and detailed information, please visit:</p>
@@ -428,7 +428,7 @@ const processOverdueEmail = async () => {
       sentAt: new Date()
     });
 
-    console.log('✅ EMAIL SENT SUCCESSFULLY WITH RICH CONTENT!');
+    console.log('EMAIL SENT SUCCESSFULLY WITH RICH CONTENT!');
     console.log(`📧 Sent to: ${email.to.join(', ')}`);
     console.log(`📋 Subject: ${email.subject}`);
     console.log(`📊 Content included: Title, Summary, CVE IDs, IOCs, Technical Analysis, References, Tags`);

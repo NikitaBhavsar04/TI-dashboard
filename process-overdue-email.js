@@ -12,7 +12,7 @@ const processOverdueEmail = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Define schemas
     const AdvisorySchema = new mongoose.Schema({}, { strict: false });
@@ -993,7 +993,7 @@ const processOverdueEmail = async () => {
                 <table class="mitre-table">
                     <thead>
                         <tr>
-                            <th>🎯 Tactic</th>
+                            <th>Tactic</th>
                             <th>🔢 Technique ID</th>
                             <th>⚙️ Technique Description</th>
                         </tr>
@@ -1032,7 +1032,7 @@ const processOverdueEmail = async () => {
             <div class="link-panel">
                 <p><strong>📋 For comprehensive threat analysis and detailed information:</strong></p>
                 <a href="${baseUrl}/advisory/${advisory._id}">
-                    📄 View Full Advisory Report
+                     View Full Advisory Report
                 </a>
                 <p style="font-size: 14px; color: #e5e7eb; margin-top: 12px;">
                     🔍 Access complete IOCs, patch details, and additional threat intelligence data
@@ -1087,7 +1087,7 @@ const processOverdueEmail = async () => {
       sentAt: new Date()
     });
 
-    console.log('✅ EMAIL SENT SUCCESSFULLY WITH COMPLETE RICH TEMPLATE!');
+    console.log('EMAIL SENT SUCCESSFULLY WITH COMPLETE RICH TEMPLATE!');
     console.log(`📧 Sent to: ${email.to.join(', ')}`);
     console.log(`📋 Subject: ${email.subject}`);
     console.log(`📊 Rich template included: Metadata grids, CVE tags, MITRE tactics, recommendations, responsive design`);
