@@ -7,10 +7,10 @@ MANUAL ADVISORY GENERATION PIPELINE (SOC-grade)
 """
 
 import datetime
-import os
 from typing import Dict, List
+import os
 
-from opensearchpy import OpenSearch
+from utils.opensearch_client import get_opensearch_client
 
 from utils.common import logger, read_yaml
 from collectors.page import fetch_page_text
@@ -27,36 +27,25 @@ from llm.mbc import extract_mbc
 
 cfg = read_yaml("config.yaml")
 
-OPENSEARCH_HOST = os.getenv("OPENSEARCH_HOST", cfg.get("opensearch", {}).get("host", "localhost"))
-OPENSEARCH_PORT = int(os.getenv("OPENSEARCH_PORT", cfg.get("opensearch", {}).get("port", 9200)))
-OPENSEARCH_USERNAME = os.getenv("OPENSEARCH_USERNAME", cfg.get("opensearch", {}).get("username", ""))
-OPENSEARCH_PASSWORD = os.getenv("OPENSEARCH_PASSWORD", cfg.get("opensearch", {}).get("password", ""))
+RAW_INDEX = os.getenv(
+    "OPENSEARCH_RAW_INDEX",
+    cfg.get("opensearch", {}).get("raw_index", "ti-raw-articles")
+)
 
-RAW_INDEX = cfg.get("opensearch", {}).get("raw_index", "ti-raw-articles")
-ADV_INDEX = cfg.get("opensearch", {}).get("advisory_index", "ti-generated-advisories")
+ADV_INDEX = os.getenv(
+    "OPENSEARCH_ADVISORY_INDEX",
+    cfg.get("opensearch", {}).get("advisory_index", "ti-generated-advisories")
+)
 
 report_cfg = cfg.get("report", {})
 ADVISORY_PREFIX = report_cfg.get("advisory_id_prefix", "SOC-TA")
 TLP_DEFAULT = report_cfg.get("tlp", "AMBER")
 
 # ============================================================
-# OPENSEARCH CLIENT
+# OPENSEARCH CLIENT  ✅ FIXED
 # ============================================================
 
-opensearch_config = {
-    "hosts": [{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}],
-    "use_ssl": False,
-    "verify_certs": False,
-    "http_compress": True,
-    "timeout": 30,
-    "max_retries": 3,
-    "retry_on_timeout": True,
-}
-
-if OPENSEARCH_USERNAME and OPENSEARCH_PASSWORD:
-    opensearch_config["http_auth"] = (OPENSEARCH_USERNAME, OPENSEARCH_PASSWORD)
-
-os_client = OpenSearch(**opensearch_config)
+os_client = get_opensearch_client()
 
 # ============================================================
 # HELPERS
@@ -141,34 +130,20 @@ def generate_advisory_for_article(article_id: str) -> dict:
     )
     iocs = normalize_iocs(iocs_raw)
 
-    logger.info(f"[DEBUG] Normalized IOCs: {iocs}")
-
     # --------------------------------------------------------
-    # LLM Summary (with fallback)
+    # LLM Summary
     # --------------------------------------------------------
-    try:
-        advisory = summarize_item(
-            item={
-                "title": article["title"],
-                "summary": article.get("summary", ""),
-                "link": article["article_url"],
-                "nested_links": article.get("nested_links", []),
-                "cves": article.get("cves", []),
-                "source": article.get("source"),
-            },
-            source_text=source_text,
-        )
-    except Exception as llm_error:
-        logger.warning(f"[LLM] LLM summary failed, using fallback: {llm_error}")
-        advisory = {
+    advisory = summarize_item(
+        item={
             "title": article["title"],
-            "exec_summary": article.get("summary", ""),
-            "threat_type": "Unknown",
-            "affected_product": "Not specified",
-            "vendor": "Unknown",
+            "summary": article.get("summary", ""),
+            "link": article["article_url"],
+            "nested_links": article.get("nested_links", []),
             "cves": article.get("cves", []),
-            "tlp": TLP_DEFAULT
-        }
+            "source": article.get("source"),
+        },
+        source_text=source_text,
+    )
 
     exec_summary_parts = [
         p.strip()
@@ -177,34 +152,19 @@ def generate_advisory_for_article(article_id: str) -> dict:
     ] or ["Summary not available."]
 
     # --------------------------------------------------------
-    # Recommendations / Patch Details (FIXED)
+    # Recommendations
     # --------------------------------------------------------
     try:
-        query_text = f"""
-        {advisory.get("title","")}
-        {advisory.get("exec_summary","")}
-        {' '.join(advisory.get("cves", []))}
-        """
-
+        query_text = advisory.get("exec_summary") or advisory.get("title", "")
         rec_data = get_recommendations(query_text)
-
-        if isinstance(rec_data, dict):
-            if rec_data.get("recommendations"):
-                advisory["recommendations"] = rec_data["recommendations"]
-
-            if rec_data.get("patch_details"):
-                advisory["patch_details"] = rec_data["patch_details"]
-
-    except Exception as e:
-        logger.warning(f"[RECOMMENDER] Failed: {e}")
-        advisory.setdefault(
-            "recommendations",
-            [
-                "Monitor logs for suspicious activity.",
-                "Apply vendor patches and security updates.",
-            ],
-        )
-        advisory.setdefault("patch_details", [])
+        if rec_data:
+            advisory["recommendations"] = rec_data.get("recommendations", [])
+            advisory["patch_details"] = rec_data.get("patch_details", [])
+    except Exception:
+        advisory["recommendations"] = [
+            "Monitor logs for suspicious activity.",
+            "Apply vendor patches and security updates.",
+        ]
 
     patch_details = advisory.get("patch_details") or []
     if isinstance(patch_details, str):
@@ -213,23 +173,17 @@ def generate_advisory_for_article(article_id: str) -> dict:
     # --------------------------------------------------------
     # MITRE + MBC
     # --------------------------------------------------------
-    try:
-        mitre = map_to_tactics(
-            advisory.get("attack_keywords", []),
-            f"{advisory.get('title','')} {advisory.get('exec_summary','')}",
-        )
-    except Exception:
-        mitre = []
+    mitre = map_to_tactics(
+        advisory.get("attack_keywords", []),
+        f"{advisory.get('title','')} {advisory.get('exec_summary','')}",
+    )
 
-    try:
-        mbc = extract_mbc(
-            title=advisory.get("title", ""),
-            threat_type=advisory.get("threat_type", ""),
-            exec_summary=advisory.get("exec_summary", ""),
-            mitre=mitre,
-        )
-    except Exception:
-        mbc = []
+    mbc = extract_mbc(
+        title=advisory.get("title", ""),
+        threat_type=advisory.get("threat_type", ""),
+        exec_summary=advisory.get("exec_summary", ""),
+        mitre=mitre,
+    )
 
     # --------------------------------------------------------
     # CVSS
@@ -282,9 +236,6 @@ def generate_advisory_for_article(article_id: str) -> dict:
         "criticality": final_criticality,
         "threat_type": advisory.get("threat_type"),
 
-        "sectors": advisory.get("sectors", []),
-        "regions": advisory.get("regions", []),
-
         "exec_summary_parts": exec_summary_parts,
 
         "affected_product": advisory.get("affected_product", "Not specified"),
@@ -309,7 +260,7 @@ def generate_advisory_for_article(article_id: str) -> dict:
     }
 
     save_generated_advisory(advisory_doc)
-    logger.info(f"Advisory indexed: {advisory_uid}")
+    logger.info(f"✅ Advisory indexed: {advisory_uid}")
 
     return advisory_doc
 
@@ -329,7 +280,6 @@ if __name__ == "__main__":
         article_id = sys.argv[1]
         advisory = generate_advisory_for_article(article_id)
         print(json.dumps(advisory, indent=2, default=str))
-
     except Exception as e:
         logger.error(f"❌ Error generating advisory: {e}")
         print(f"Error: {e}", file=sys.stderr)
