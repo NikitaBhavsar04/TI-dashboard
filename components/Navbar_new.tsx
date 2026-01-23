@@ -34,7 +34,7 @@ export default function Navbar() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href={isAuthenticated ? "/advisories" : "/"} className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-3 group">
             <div className="p-2 rounded-lg bg-neon-blue/10 border border-neon-blue/20 group-hover:bg-neon-blue/20 transition-all duration-300">
               <Shield className="h-6 w-6 text-neon-blue" />
             </div>
@@ -51,13 +51,6 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-2">
             {/* Public Links */}
-            <Link 
-              href="/advisories" 
-              className="group flex items-center gap-2 px-4 py-2 rounded-lg bg-glass-100 border border-white/10 hover:border-neon-cyan/30 hover:bg-neon-cyan/10 transition-all duration-300 font-rajdhani font-medium text-white/90 hover:text-neon-cyan"
-            >
-              <Activity className="h-4 w-4 group-hover:text-neon-cyan transition-colors duration-300" />
-              INTEL FEED
-            </Link>
 
             {isAuthenticated ? (
               <>
@@ -135,14 +128,6 @@ export default function Navbar() {
         {isMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 mt-2 mx-4">
             <div className="bg-glass-gradient backdrop-blur-glass rounded-xl border border-white/10 shadow-glass p-4 space-y-3">
-              <Link 
-                href="/advisories" 
-                className="flex items-center gap-3 p-3 rounded-lg bg-glass-100 border border-white/10 hover:border-neon-cyan/30 hover:bg-neon-cyan/10 transition-all duration-300 font-rajdhani font-medium text-white"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Activity className="h-5 w-5 text-neon-cyan" />
-                INTEL FEED
-              </Link>
 
               {isAuthenticated ? (
                 <>

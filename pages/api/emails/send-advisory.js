@@ -79,20 +79,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Detect if this is an Eagle Nest advisory (custom ID format) or Intel Feed (MongoDB ObjectId)
-    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(advisoryId);
-    let advisory;
+    // Load Eagle Nest advisory from JSON file
+    const fs = require('fs');
+    const path = require('path');
+    let advisory; // Declare advisory outside try block for broader scope
     
-    if (isValidObjectId) {
-      // Intel Feed advisory - load from MongoDB
-      advisory = await Advisory.findById(advisoryId);
-      if (!advisory) {
-        return res.status(404).json({ message: 'Advisory not found' });
-      }
-    } else {
-      // Eagle Nest advisory - load from JSON file
-      const fs = require('fs');
-      const path = require('path');
       const eagleNestPath = path.resolve(process.cwd(), 'backend', 'workspace', 'eagle_nest', `${advisoryId}.json`);
       
       if (!fs.existsSync(eagleNestPath)) {
@@ -132,7 +123,6 @@ export default async function handler(req, res) {
         console.error('Error parsing Eagle Nest advisory:', err);
         return res.status(500).json({ message: 'Failed to load Eagle Nest advisory' });
       }
-    }
 
     // Process recipients and create email jobs
     const emailJobs = [];
@@ -344,90 +334,104 @@ export default async function handler(req, res) {
     }
 
     for (const emailJob of emailJobs) {
-      try {
-        // Add email body to each job
-        emailJob.body = emailBody;
-        
-        // Add tracking IDs to email job if tracking is enabled
-        if (trackingRecords.length > 0) {
-          emailJob.trackingData = trackingRecords.filter(tr => 
-            emailJob.to.includes(tr.email)
-          );
-          emailJob.enableTracking = true;
-        }
+        try {
+          // Add tracking IDs to email job if tracking is enabled
+          if (trackingRecords.length > 0) {
+            emailJob.trackingData = trackingRecords.filter(tr => 
+              emailJob.to.includes(tr.email)
+            );
+            emailJob.enableTracking = true;
+          }
 
-        // Create scheduled email record
-        const emailDoc = await ScheduledEmail.create({
-          ...emailJob,
-          scheduledDate: scheduledAt,
-          sentAt: undefined, // Don't mark as sent until actually sent
-          trackingEnabled: trackingOptions.enableTracking || false,
-          schedulingMethod: useAppsScript ? 'apps-script' : 'agenda'
-        });
+          // Inject tracking pixel if tracking is enabled and trackingId is available
+          let jobBody = emailBody;
+          if (emailJob.enableTracking && emailJob.trackingData && emailJob.trackingData.length > 0) {
+            // Use the first trackingId for this recipient (should be only one per recipient)
+            const trackingId = emailJob.trackingData[0].trackingId;
+            // TODO: Replace with your actual domain or endpoint
+            const trackingPixelUrl = `https://your-domain.com/api/track?tid=${trackingId}`;
+            const trackingPixel = `<img src=\"${trackingPixelUrl}\" width=\"1\" height=\"1\" style=\"display:none;\" alt=\"\" />`;
+            // Try to inject before </body> or at the end
+            if (jobBody.includes('</body>')) {
+              jobBody = jobBody.replace(/<\/body>/i, `${trackingPixel}</body>`);
+            } else {
+              jobBody += trackingPixel;
+            }
+          }
+          emailJob.body = jobBody;
 
-        if (useAppsScript) {
-          // Use Google Apps Script for reliable cloud-based scheduling
-          try {
-            // Ensure all required fields are present
-            const toEmails = Array.isArray(emailJob.to) ? emailJob.to.join(', ') : emailJob.to;
+          // Create scheduled email record
+          const emailDoc = await ScheduledEmail.create({
+            ...emailJob,
+            scheduledDate: scheduledAt,
+            sentAt: undefined, // Don't mark as sent until actually sent
+            trackingEnabled: trackingOptions.enableTracking || false,
+            schedulingMethod: useAppsScript ? 'apps-script' : 'agenda'
+          });
+
+          if (useAppsScript) {
+            // Use Google Apps Script for reliable cloud-based scheduling
+            try {
+              // Ensure all required fields are present
+              const toEmails = Array.isArray(emailJob.to) ? emailJob.to.join(', ') : emailJob.to;
             
-            if (!toEmails || !emailJob.subject || !emailJob.body) {
-              throw new Error('Missing required email fields');
+              if (!toEmails || !emailJob.subject || !emailJob.body) {
+                throw new Error('Missing required email fields');
+              }
+
+              console.log(`📤 Scheduling via Apps Script for: ${toEmails}`);
+
+              const appsScriptResult = await appsScriptScheduler.scheduleEmail({
+                to: toEmails,
+                subject: emailJob.subject,
+                htmlBody: emailJob.body,
+                scheduledTime: scheduledAt.toISOString(),
+                replyTo: process.env.SMTP_USER,
+                trackingId: emailJob.trackingData?.[0]?.trackingId,
+                advisoryId: advisoryId,
+                clientId: emailJob.clientId
+              });
+
+              // Store Apps Script email ID
+              emailDoc.appsScriptEmailId = appsScriptResult.emailId;
+              await emailDoc.save();
+
+              console.log(`Scheduled via Apps Script: ${appsScriptResult.emailId}`);
+
+            } catch (appsScriptError) {
+              console.error('❌ Apps Script scheduling failed, using Agenda.js instead:', appsScriptError.message);
+              // Fallback to Agenda.js
+              if (!agenda._ready) await agenda.start();
+              await agenda.schedule(scheduledAt, 'send-scheduled-advisory-email', { 
+                emailId: emailDoc._id 
+              });
+              emailDoc.schedulingMethod = 'agenda-fallback';
+              await emailDoc.save();
             }
 
-            console.log(`📤 Scheduling via Apps Script for: ${toEmails}`);
-
-            const appsScriptResult = await appsScriptScheduler.scheduleEmail({
-              to: toEmails,
-              subject: emailJob.subject,
-              htmlBody: emailJob.body,
-              scheduledTime: scheduledAt.toISOString(),
-              replyTo: process.env.SMTP_USER,
-              trackingId: emailJob.trackingData?.[0]?.trackingId,
-              advisoryId: advisoryId,
-              clientId: emailJob.clientId
-            });
-
-            // Store Apps Script email ID
-            emailDoc.appsScriptEmailId = appsScriptResult.emailId;
-            await emailDoc.save();
-
-            console.log(`Scheduled via Apps Script: ${appsScriptResult.emailId}`);
-
-          } catch (appsScriptError) {
-            console.error('❌ Apps Script scheduling failed, using Agenda.js instead:', appsScriptError.message);
-            // Fallback to Agenda.js
-            if (!agenda._ready) await agenda.start();
+          } else if (isScheduled) {
+            // Schedule the email for later using Agenda.js
             await agenda.schedule(scheduledAt, 'send-scheduled-advisory-email', { 
               emailId: emailDoc._id 
             });
-            emailDoc.schedulingMethod = 'agenda-fallback';
-            await emailDoc.save();
+          } else {
+            // Send immediately but still track it
+            await agenda.now('send-scheduled-advisory-email', { 
+              emailId: emailDoc._id 
+            });
           }
 
-        } else if (isScheduled) {
-          // Schedule the email for later using Agenda.js
-          await agenda.schedule(scheduledAt, 'send-scheduled-advisory-email', { 
-            emailId: emailDoc._id 
+          scheduledEmails.push({
+            id: emailDoc._id,
+            to: emailJob.to,
+            clientName: emailJob.clientName || null,
+            method: useAppsScript ? 'apps-script' : 'agenda'
           });
-        } else {
-          // Send immediately but still track it
-          await agenda.now('send-scheduled-advisory-email', { 
-            emailId: emailDoc._id 
-          });
+
+        } catch (error) {
+          errors.push(`Failed to schedule email for ${emailJob.to.join(', ')}: ${error.message}`);
         }
-
-        scheduledEmails.push({
-          id: emailDoc._id,
-          to: emailJob.to,
-          clientName: emailJob.clientName || null,
-          method: useAppsScript ? 'apps-script' : 'agenda'
-        });
-
-      } catch (error) {
-        errors.push(`Failed to schedule email for ${emailJob.to.join(', ')}: ${error.message}`);
       }
-    }
 
     const response = {
       message: `Successfully ${isScheduled ? 'scheduled' : 'queued'} ${scheduledEmails.length} email(s)`,

@@ -2,7 +2,6 @@
 """
 Eagle Nest Email Sender
 Generates HTML from Eagle Nest advisory JSON and sends via email
-Uses same template as Intel Feed advisories
 """
 
 import os
@@ -31,7 +30,7 @@ def load_eagle_nest_advisory(advisory_id: str, workspace: str) -> dict:
 
 
 def convert_to_context(advisory: dict) -> dict:
-    """Convert Eagle Nest JSON to template context format (matching Intel Feed)"""
+    """Convert Eagle Nest JSON to template context format"""
     
     # Executive summary handling
     exec_summary_parts = advisory.get("exec_summary_parts", [])

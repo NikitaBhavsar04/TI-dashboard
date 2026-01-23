@@ -5,6 +5,11 @@ import yaml from 'js-yaml';
 
 const CONFIG_PATH = path.join(process.cwd(), 'backend', 'config.yaml');
 
+interface RssFeedItem {
+  url: string;
+  enabled: boolean;
+}
+
 interface ConfigData {
   run_profile?: string;
   workspace?: string;
@@ -13,7 +18,7 @@ interface ConfigData {
     cve_regex?: string;
   };
   sources?: {
-    rss?: string[];
+    rss?: (string | RssFeedItem)[];
   };
 }
 
@@ -27,7 +32,15 @@ export default async function handler(
       const fileContents = fs.readFileSync(CONFIG_PATH, 'utf8');
       const config = yaml.load(fileContents) as ConfigData;
 
-      const feeds = config?.sources?.rss || [];
+      const rawFeeds = config?.sources?.rss || [];
+      
+      // Normalize feeds to include enabled status
+      const feeds = rawFeeds.map(feed => {
+        if (typeof feed === 'string') {
+          return { url: feed, enabled: true };
+        }
+        return feed;
+      });
 
       return res.status(200).json({ 
         success: true,
@@ -84,8 +97,8 @@ export default async function handler(
         });
       }
 
-      // Add new feed
-      config.sources.rss.push(url);
+      // Add new feed with enabled status
+      config.sources.rss.push({ url, enabled: true });
 
       // Write back to file
       const yamlStr = yaml.dump(config, {
@@ -134,7 +147,10 @@ export default async function handler(
 
       // Find and remove the feed
       const originalLength = config.sources.rss.length;
-      config.sources.rss = config.sources.rss.filter(feed => feed !== url);
+      config.sources.rss = config.sources.rss.filter(feed => {
+        const feedUrl = typeof feed === 'string' ? feed : feed.url;
+        return feedUrl !== url;
+      });
 
       if (config.sources.rss.length === originalLength) {
         return res.status(404).json({ 
@@ -166,8 +182,78 @@ export default async function handler(
     }
   } 
   
+  else if (req.method === 'PATCH') {
+    try {
+      const { url, enabled } = req.body;
+
+      if (!url || typeof url !== 'string') {
+        return res.status(400).json({ 
+          success: false,
+          error: 'URL is required' 
+        });
+      }
+
+      if (typeof enabled !== 'boolean') {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Enabled status is required' 
+        });
+      }
+
+      // Read current config
+      const fileContents = fs.readFileSync(CONFIG_PATH, 'utf8');
+      const config = yaml.load(fileContents) as ConfigData;
+
+      if (!config.sources?.rss) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'No RSS feeds found' 
+        });
+      }
+
+      // Find and update the feed
+      let found = false;
+      config.sources.rss = config.sources.rss.map(feed => {
+        const feedUrl = typeof feed === 'string' ? feed : feed.url;
+        if (feedUrl === url) {
+          found = true;
+          return { url, enabled };
+        }
+        return typeof feed === 'string' ? { url: feed, enabled: true } : feed;
+      });
+
+      if (!found) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'RSS feed not found' 
+        });
+      }
+
+      // Write back to file
+      const yamlStr = yaml.dump(config, {
+        lineWidth: -1,
+        quotingType: '"',
+        forceQuotes: false
+      });
+      
+      fs.writeFileSync(CONFIG_PATH, yamlStr, 'utf8');
+
+      return res.status(200).json({ 
+        success: true,
+        message: `RSS feed ${enabled ? 'enabled' : 'disabled'} successfully`,
+        feeds: config.sources.rss
+      });
+    } catch (error) {
+      console.error('Error toggling RSS feed:', error);
+      return res.status(500).json({ 
+        success: false,
+        error: 'Failed to toggle RSS feed' 
+      });
+    }
+  }
+  
   else {
-    res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
+    res.setHeader('Allow', ['GET', 'POST', 'DELETE', 'PATCH']);
     return res.status(405).json({ 
       success: false,
       error: `Method ${req.method} Not Allowed` 

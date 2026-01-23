@@ -57,23 +57,23 @@ RECOMMENDATION_SYSTEM_PROMPT = """
 You are a SOC security analyst.
 
 STRICT RULES:
-- DO NOT add new recommendations
-- DO NOT generalize or add best practices
-- ONLY rewrite the provided text
-- Preserve technical meaning
-- Output bullet points ONLY
+DO NOT add new recommendations
+DO NOT generalize or add best practices
+ONLY rewrite the provided text
+Preserve technical meaning
+Output bullet points ONLY
 """.strip()
 
 PATCH_SYSTEM_PROMPT = """
 You are a SOC security analyst.
 
 STRICT RULES FOR PATCH DETAILS:
-- DO NOT add new information
-- DO NOT summarize away details
-- DO NOT truncate
-- Preserve ALL versions, CVEs, dates, and vendor instructions
-- Return ONE complete patch instruction as a single paragraph
-- DO NOT use bullet points
+DO NOT add new information
+DO NOT summarize away details
+DO NOT truncate
+Preserve ALL versions, CVEs, dates, and vendor instructions
+Return ONE complete patch instruction as a single paragraph
+DO NOT use bullet points
 """.strip()
 
 # ============================================================
@@ -113,11 +113,11 @@ Rewrite the following patch information into ONE clear, complete,
 SOC-ready patch instruction.
 
 RULES:
-- Do NOT truncate
-- Do NOT split into bullets
-- Do NOT add information
-- Preserve versions, CVEs, dates
-- Return ONE paragraph only
+Do NOT truncate
+Do NOT split into bullets
+Do NOT add information
+Preserve versions, CVEs, dates
+Return ONE paragraph only
 
 INPUT:
 {joined}
@@ -167,9 +167,9 @@ def _refine_recommendations(blocks: List[str]) -> List[str]:
 Rewrite the following recommendations into clean, SOC-ready bullet points.
 
 RULES:
-- Preserve meaning
-- Do NOT add new actions
-- Output bullet points ONLY
+Preserve meaning
+Do NOT add new actions
+Output bullet points ONLY
 
 INPUT:
 {joined}

@@ -1,0 +1,147 @@
+# ============================================
+# AWS Deployment Requirements
+# Threat Advisory Intelligence Platform
+# Python 3.9+
+# ============================================
+
+# ==========================================
+# AWS Services & Cloud Integration
+# ==========================================
+boto3==1.34.162
+botocore==1.34.162
+
+# ==========================================
+# HTTP & Web Scraping
+# ==========================================
+requests==2.32.3
+beautifulsoup4==4.12.3
+readability-lxml==0.8.1
+lxml==5.1.0
+
+# ==========================================
+# RSS Feed Processing
+# ==========================================
+feedparser==6.0.11
+
+# ==========================================
+# OpenSearch Database Client
+# ==========================================
+opensearch-py==2.4.2
+opensearchpy==2.4.2
+
+# ==========================================
+# Telegram Integration
+# ==========================================
+telethon==1.34.0
+cryptg==0.4.0
+
+# ==========================================
+# Environment & Configuration
+# ==========================================
+python-dotenv==1.0.1
+PyYAML==6.0.2
+pydantic==2.8.2
+pydantic-settings==2.3.4
+
+# ==========================================
+# Date & Time Utilities
+# ==========================================
+python-dateutil==2.9.0.post0
+
+# ==========================================
+# Template Rendering & HTML Generation
+# ==========================================
+jinja2==3.1.4
+markdown==3.6
+weasyprint==62.3
+cairocffi==1.6.1
+cffi==1.16.0
+Pillow==10.3.0
+
+# ==========================================
+# LLM & AI Integration
+# ==========================================
+openai==1.35.10
+
+# ==========================================
+# Web Search & MITRE Integration
+# ==========================================
+googlesearch-python==1.2.4
+
+# ==========================================
+# CLI & Progress Bars
+# ==========================================
+tqdm==4.66.5
+
+# ==========================================
+# Security & Cryptography
+# ==========================================
+certifi==2024.7.4
+urllib3==2.2.2
+charset-normalizer==3.3.2
+idna==3.7
+
+# ==========================================
+# Logging & Monitoring
+# ==========================================
+# Built-in logging is used, but you may want to add:
+# sentry-sdk==2.0.0  # For error tracking (optional)
+# python-json-logger==2.0.7  # For structured logging (optional)
+
+# ==========================================
+# Testing (Optional - for development)
+# ==========================================
+# pytest==8.2.2
+# pytest-asyncio==0.23.7
+
+# ==========================================
+# Production Server (if deploying Python app)
+# ==========================================
+# gunicorn==22.0.0  # For WSGI apps
+# uvicorn==0.30.1  # For ASGI apps
+# uvicorn[standard]==0.30.1  # With production extras
+
+# ==========================================
+# Additional Utilities
+# ==========================================
+pytz==2024.1
+six==1.16.0
+
+# ==========================================
+# NOTES FOR AWS DEPLOYMENT:
+# ==========================================
+# 1. For AWS Lambda: Create a deployment package with these dependencies
+#    - Use Amazon Linux 2 or AL2023 compatible wheels
+#    - Consider using AWS Lambda Layers for large dependencies
+#
+# 2. For AWS EC2 / ECS:
+#    - Install system dependencies first:
+#      * sudo yum install -y python3-devel gcc cairo-devel pango-devel gdk-pixbuf2-devel
+#      * For WeasyPrint: libffi-devel
+#
+# 3. For AWS Elastic Beanstalk:
+#    - Ensure .ebextensions/ folder contains required system package configs
+#    - May need to specify platform-specific packages
+#
+# 4. OpenSearch:
+#    - If using AWS OpenSearch Service, ensure security groups allow access
+#    - Use IAM authentication for production
+#
+# 5. Environment Variables Required:
+#    - OPENSEARCH_URL
+#    - OPENSEARCH_AUTH (username:password)
+#    - OPENAI_API_KEY
+#    - TELEGRAM_API_ID
+#    - TELEGRAM_API_HASH
+#    - AWS_ACCESS_KEY_ID (if not using IAM roles)
+#    - AWS_SECRET_ACCESS_KEY (if not using IAM roles)
+#    - AWS_REGION
+#
+# 6. Recommended AWS Services:
+#    - AWS OpenSearch Service (for search/analytics)
+#    - AWS Lambda (for scheduled tasks)
+#    - Amazon ECS/Fargate (for containerized deployment)
+#    - AWS RDS (if using PostgreSQL for user management)
+#    - Amazon S3 (for file storage)
+#    - AWS CloudWatch (for logging)
+#    - AWS Secrets Manager (for sensitive credentials)

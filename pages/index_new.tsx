@@ -31,8 +31,8 @@ export default function Home() {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      // Redirect authenticated users to advisories
-      router.push('/advisories');
+      // Redirect authenticated users to Eagle Nest
+      router.push('/admin/eagle-nest');
     }
   }, [isAuthenticated, loading, router]);
 
@@ -119,11 +119,11 @@ export default function Home() {
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
                 <Link 
-                  href="/advisories"
+                  href="/login"
                   className="group flex items-center gap-3 px-8 py-4 rounded-xl bg-button-gradient border border-neon-blue/30 hover:shadow-button-glow-hover transition-all duration-300 font-rajdhani font-semibold text-white"
                 >
-                  <Activity className="h-5 w-5" />
-                  ACCESS INTEL FEED
+                  <Shield className="h-5 w-5" />
+                  GET STARTED
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
                 </Link>
                 
@@ -224,7 +224,7 @@ export default function Home() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link 
-                  href="/advisories"
+                  href="/login"
                   className="group flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-button-gradient border border-neon-blue/30 hover:shadow-button-glow-hover transition-all duration-300 font-rajdhani font-semibold text-white"
                 >
                   <Shield className="h-5 w-5" />

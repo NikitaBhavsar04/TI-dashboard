@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (data.user.role === 'super_admin' || data.user.role === 'admin') {
         router.push('/admin');
       } else {
-        router.push('/advisories');
+        router.push('/admin/eagle-nest');
       }
     } catch (error) {
       throw error;

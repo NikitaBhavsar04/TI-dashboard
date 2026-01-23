@@ -1,222 +1,307 @@
-run_profile: "daily"
-workspace: "./workspace"
-
+run_profile: daily
+workspace: ./workspace
 filters:
-  keywords: 
-    - "vulnerability"
-    - "exploit"
-    - "zero-day"
-    - "patch"
-    - "cve"
-    - "malware"
-    - "trojan"
-    - "worm"
-    - "spyware"
-    - "backdoor"
-    - "rootkit"
-    - "ransomware"
-    - "phishing"
-    - "spearphishing"
-    - "smishing"
-    - "vishing"
-    - "botnet"
-    - "ddos"
-    - "denial of service"
-    - "supply chain"
-    - "insider threat"
-    - "data breach"
-    - "exfiltration"
-    - "privilege escalation"
-    - "remote code execution"
-    - "injection"
-    - "sql injection"
-    - "xss"
-    - "csrf"
-    - "authentication bypass"
-    - "credential theft"
-    - "brute force"
-    - "password spraying"
-    - "session hijacking"
-    - "man in the middle"
-    - "mitm"
-    - "apt"
-    - "nation-state"
-    - "cyber espionage"
-    - "campaign"
-    - "threat actor"
-    - "hacktivist"
-    - "trojanized"
-    - "loader"
-    - "dropper"
-    - "keylogger"
-    - "info stealer"
-    - "data wiper"
-  cve_regex: '\bCVE-\d{4}-\d{4,7}\b'
-
-
+  keywords:
+    - vulnerability
+    - exploit
+    - zero-day
+    - patch
+    - cve
+    - malware
+    - trojan
+    - worm
+    - spyware
+    - backdoor
+    - rootkit
+    - ransomware
+    - phishing
+    - spearphishing
+    - smishing
+    - vishing
+    - botnet
+    - ddos
+    - denial of service
+    - supply chain
+    - insider threat
+    - data breach
+    - exfiltration
+    - privilege escalation
+    - remote code execution
+    - injection
+    - sql injection
+    - xss
+    - csrf
+    - authentication bypass
+    - credential theft
+    - brute force
+    - password spraying
+    - session hijacking
+    - man in the middle
+    - mitm
+    - apt
+    - nation-state
+    - cyber espionage
+    - campaign
+    - threat actor
+    - hacktivist
+    - trojanized
+    - loader
+    - dropper
+    - keylogger
+    - info stealer
+    - data wiper
+  cve_regex: \bCVE-\d{4}-\d{4,7}\b
 sources:
   rss:
-    - https://feeds.feedburner.com/darkreading/nXMu8p7PkyH
-    - https://thehackernews.com/feeds/posts/default
-    - https://www.tenable.com/sitemap.xml?page=1
-    - https://www.tenable.com/sitemap.xml?page=2
-    - https://www.techrepublic.com/rssfeeds/articles/
-    - https://www.techrepublic.com/sitemap_index.xml
-    - https://krebsonsecurity.com/feed/
-    - https://www.zdnet.com/topic/security/rss.xml
-    - https://feeds.feedburner.com/eset/blog
-    - https://securelist.com/feed/
-    - https://psirtapi.global.sonicwall.com/api/v1/feed/rss.xml
-    - https://research.checkpoint.com/feed/
-    - https://unit42.paloaltonetworks.com/feed/
-    - https://blogs.cisco.com/security/feed
-    - https://www.mcafee.com/blogs/feed/
-    - https://www.crowdstrike.com/blog/feed/
-    - https://threatpost.com/feed/
-    - https://blogs.vmware.com/security/feed/
-    - https://feeds.feedburner.com/TheHackersNews?format=xml
-    - https://isc.sans.edu/rssfeed_full.xml
-    - https://www.troyhunt.com/rss/
-    - https://feeds.feedburner.com/0dayfans/KSk2PzAcRH8
-    - https://www.usom.gov.tr/rss/tehdit.rss
-    - https://www.usom.gov.tr/rss/duyuru.rss
-    - https://www.misp-project.org/feed.xml
-    - https://openphish.com/feed.txt
-    - https://github.com/thehappydinoa/awesome-threat-intel-rss
-    - https://rss.feedspot.com/cyber_security_rss_feeds/
-    - https://www.us-cert.gov/ncas/alerts.xml
-    - https://www.sans.org/webcasts/rss
-    - https://feeds.feedburner.com/TheHackersNews
-    - https://isc.sans.edu/rssfeed.xml
-    - https://feeds.feedburner.com/mandiant/UVARASaYM81
-    - https://www.infosecurity-magazine.com/rss/news/
-    - https://www.cybereason.com/blog/rss.xml
-    - https://blog.qualys.com/feed/
-    - https://www.tenable.com/blog/feed
-    - https://www.blackhillsinfosec.com/feed/
-    - https://www.arbornetworks.com/blog/asert/feed/
-    - https://feeds.feedburner.com/trendmicro/3QBsJEgwMxa
-    - https://www.ghacks.net/feed/
-    - https://www.cshub.com/rss/categories/attacks
-    - https://www.cshub.com/rss/categories/malware
-    - https://www.cshub.com/rss/categories/threat-defense
-    - https://www.cshub.com/rss/categories/data
-    - https://www.schneier.com/tag/cybersecurity/feed/
-    - https://fidelissecurity.com/feed/
-    - https://cyberbuilders.substack.com/feed
-    - https://ventureinsecurity.net/feed
-    - https://feeds.feedburner.com/mattpalmeroncybersecurity
-    - https://davinciforensics.co.za/cybersecurity/feed/
-    - https://www.imperva.com/blog/feed/
-    - https://www.scnsoft.com/blog/category/information-security/atom
-    - https://www.upguard.com/blog/rss.xml
-    - https://blog.pcisecuritystandards.org/rss.xml
-    - https://heimdalsecurity.com/blog/feed/
-    - https://www.cheapsslshop.com/blog/feed
-    - https://cyberhoot.com/category/blog/feed/
-    - https://socprime.com/feed/
-    - https://www.pivotpointsecurity.com/feed/
-    - https://clearnetwork.com/feed/
-    - https://feeds.feedburner.com/GoogleOnlineSecurityBlog
-    - https://www.blackfog.com/feed/
-    - https://www.lastwatchdog.com/feed/
-    - https://any.run/cybersecurity-blog/feed/
-    - https://www.cm-alliance.com/cybersecurity-blog/rss.xml
-    - https://feeds.feedburner.com/dataprivacymanager/41Db9YycvdY
-    - https://www.idsalliance.org/feed/
-    - https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss.xml
-    - https://msrc.microsoft.com/update-guide/rss
-    - https://www.exploitone.com/feed/
-    - https://www.tsfactory.com/forums/blogs/category/infosec-digest/feed/
-    - https://www.cyberpilot.io/cyberpilot-blog/rss.xml
-    - https://www.ignyteplatform.com/feed/
-    - https://www.canarytrap.com/feed/
-    - https://www.secureblink.com/rss-feeds/threat-feed
-    - https://www.virtru.com/blog/rss.xml
-    - https://www.empowerelearning.com/blog/feed/
-    - https://www.cloudbric.com/feed/
-    - https://www.go2bsecure.com/feed/
-    - https://www.theguardian.com/technology/data-computer-security/rss
-    - https://personalprivacyonline.com/feed/
-    - https://www.varutra.com/feed/
-    - https://internetsafetybrigade.org/our-blog/f.atom
-    - https://blogs.quickheal.com/feed/
-    - https://blog.securityinnovation.com/rss.xml
-    - https://blog.entersoftsecurity.com/feed/
-    - https://itega.org/feed/
-    - https://feeds.feedburner.com/ckdiii
-    - https://blog.blackswansecurity.com/feed/
-    - https://www.infinigate.com/uk/news-types/news-press/feed/
-    - https://cyberinsider.com/feed/
-    - https://azu.github.io/github-advisory-database-rss/composer.json
-    - https://azu.github.io/github-advisory-database-rss/go.json
-    - https://azu.github.io/github-advisory-database-rss/maven.json
-    - https://azu.github.io/github-advisory-database-rss/npm.json
-    - https://azu.github.io/github-advisory-database-rss/nuget.json
-    - https://azu.github.io/github-advisory-database-rss/pip.json
-    - https://azu.github.io/github-advisory-database-rss/pub.json
-    - https://azu.github.io/github-advisory-database-rss/rust.json
+    - url: https://thehackernews.com/feeds/posts/default
+      enabled: true
+    - url: https://www.tenable.com/sitemap.xml?page=1
+      enabled: true
+    - url: https://www.tenable.com/sitemap.xml?page=2
+      enabled: true
+    - url: https://www.techrepublic.com/rssfeeds/articles/
+      enabled: true
+    - url: https://www.techrepublic.com/sitemap_index.xml
+      enabled: true
+    - url: https://krebsonsecurity.com/feed/
+      enabled: true
+    - url: https://www.zdnet.com/topic/security/rss.xml
+      enabled: true
+    - url: https://feeds.feedburner.com/eset/blog
+      enabled: true
+    - url: https://securelist.com/feed/
+      enabled: true
+    - url: https://psirtapi.global.sonicwall.com/api/v1/feed/rss.xml
+      enabled: true
+    - url: https://research.checkpoint.com/feed/
+      enabled: true
+    - url: https://unit42.paloaltonetworks.com/feed/
+      enabled: true
+    - url: https://blogs.cisco.com/security/feed
+      enabled: true
+    - url: https://www.mcafee.com/blogs/feed/
+      enabled: true
+    - url: https://www.crowdstrike.com/blog/feed/
+      enabled: true
+    - url: https://threatpost.com/feed/
+      enabled: true
+    - url: https://blogs.vmware.com/security/feed/
+      enabled: true
+    - url: https://feeds.feedburner.com/TheHackersNews?format=xml
+      enabled: true
+    - url: https://isc.sans.edu/rssfeed_full.xml
+      enabled: true
+    - url: https://www.troyhunt.com/rss/
+      enabled: true
+    - url: https://feeds.feedburner.com/0dayfans/KSk2PzAcRH8
+      enabled: true
+    - url: https://www.usom.gov.tr/rss/tehdit.rss
+      enabled: true
+    - url: https://www.usom.gov.tr/rss/duyuru.rss
+      enabled: true
+    - url: https://www.misp-project.org/feed.xml
+      enabled: true
+    - url: https://openphish.com/feed.txt
+      enabled: true
+    - url: https://github.com/thehappydinoa/awesome-threat-intel-rss
+      enabled: true
+    - url: https://rss.feedspot.com/cyber_security_rss_feeds/
+      enabled: true
+    - url: https://www.us-cert.gov/ncas/alerts.xml
+      enabled: true
+    - url: https://www.sans.org/webcasts/rss
+      enabled: true
+    - url: https://feeds.feedburner.com/TheHackersNews
+      enabled: true
+    - url: https://isc.sans.edu/rssfeed.xml
+      enabled: true
+    - url: https://feeds.feedburner.com/mandiant/UVARASaYM81
+      enabled: true
+    - url: https://www.infosecurity-magazine.com/rss/news/
+      enabled: true
+    - url: https://www.cybereason.com/blog/rss.xml
+      enabled: true
+    - url: https://blog.qualys.com/feed/
+      enabled: true
+    - url: https://www.tenable.com/blog/feed
+      enabled: true
+    - url: https://www.blackhillsinfosec.com/feed/
+      enabled: true
+    - url: https://www.arbornetworks.com/blog/asert/feed/
+      enabled: true
+    - url: https://feeds.feedburner.com/trendmicro/3QBsJEgwMxa
+      enabled: true
+    - url: https://www.ghacks.net/feed/
+      enabled: true
+    - url: https://www.cshub.com/rss/categories/attacks
+      enabled: true
+    - url: https://www.cshub.com/rss/categories/malware
+      enabled: true
+    - url: https://www.cshub.com/rss/categories/threat-defense
+      enabled: true
+    - url: https://www.cshub.com/rss/categories/data
+      enabled: true
+    - url: https://www.schneier.com/tag/cybersecurity/feed/
+      enabled: true
+    - url: https://fidelissecurity.com/feed/
+      enabled: true
+    - url: https://cyberbuilders.substack.com/feed
+      enabled: true
+    - url: https://ventureinsecurity.net/feed
+      enabled: true
+    - url: https://feeds.feedburner.com/mattpalmeroncybersecurity
+      enabled: true
+    - url: https://davinciforensics.co.za/cybersecurity/feed/
+      enabled: true
+    - url: https://www.imperva.com/blog/feed/
+      enabled: true
+    - url: https://www.scnsoft.com/blog/category/information-security/atom
+      enabled: true
+    - url: https://www.upguard.com/blog/rss.xml
+      enabled: true
+    - url: https://blog.pcisecuritystandards.org/rss.xml
+      enabled: true
+    - url: https://heimdalsecurity.com/blog/feed/
+      enabled: true
+    - url: https://www.cheapsslshop.com/blog/feed
+      enabled: true
+    - url: https://cyberhoot.com/category/blog/feed/
+      enabled: true
+    - url: https://socprime.com/feed/
+      enabled: true
+    - url: https://www.pivotpointsecurity.com/feed/
+      enabled: true
+    - url: https://clearnetwork.com/feed/
+      enabled: true
+    - url: https://feeds.feedburner.com/GoogleOnlineSecurityBlog
+      enabled: true
+    - url: https://www.blackfog.com/feed/
+      enabled: true
+    - url: https://www.lastwatchdog.com/feed/
+      enabled: true
+    - url: https://any.run/cybersecurity-blog/feed/
+      enabled: true
+    - url: https://www.cm-alliance.com/cybersecurity-blog/rss.xml
+      enabled: true
+    - url: https://feeds.feedburner.com/dataprivacymanager/41Db9YycvdY
+      enabled: true
+    - url: https://www.idsalliance.org/feed/
+      enabled: true
+    - url: https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss.xml
+      enabled: true
+    - url: https://msrc.microsoft.com/update-guide/rss
+      enabled: true
+    - url: https://www.exploitone.com/feed/
+      enabled: true
+    - url: https://www.tsfactory.com/forums/blogs/category/infosec-digest/feed/
+      enabled: true
+    - url: https://www.cyberpilot.io/cyberpilot-blog/rss.xml
+      enabled: true
+    - url: https://www.ignyteplatform.com/feed/
+      enabled: true
+    - url: https://www.canarytrap.com/feed/
+      enabled: true
+    - url: https://www.secureblink.com/rss-feeds/threat-feed
+      enabled: true
+    - url: https://www.virtru.com/blog/rss.xml
+      enabled: true
+    - url: https://www.empowerelearning.com/blog/feed/
+      enabled: true
+    - url: https://www.cloudbric.com/feed/
+      enabled: true
+    - url: https://www.go2bsecure.com/feed/
+      enabled: true
+    - url: https://www.theguardian.com/technology/data-computer-security/rss
+      enabled: true
+    - url: https://personalprivacyonline.com/feed/
+      enabled: true
+    - url: https://www.varutra.com/feed/
+      enabled: true
+    - url: https://internetsafetybrigade.org/our-blog/f.atom
+      enabled: true
+    - url: https://blogs.quickheal.com/feed/
+      enabled: true
+    - url: https://blog.securityinnovation.com/rss.xml
+      enabled: true
+    - url: https://blog.entersoftsecurity.com/feed/
+      enabled: true
+    - url: https://itega.org/feed/
+      enabled: true
+    - url: https://feeds.feedburner.com/ckdiii
+      enabled: true
+    - url: https://blog.blackswansecurity.com/feed/
+      enabled: true
+    - url: https://www.infinigate.com/uk/news-types/news-press/feed/
+      enabled: true
+    - url: https://cyberinsider.com/feed/
+      enabled: true
+    - url: https://azu.github.io/github-advisory-database-rss/composer.json
+      enabled: true
+    - url: https://azu.github.io/github-advisory-database-rss/go.json
+      enabled: true
+    - url: https://azu.github.io/github-advisory-database-rss/maven.json
+      enabled: true
+    - url: https://azu.github.io/github-advisory-database-rss/npm.json
+      enabled: true
+    - url: https://azu.github.io/github-advisory-database-rss/nuget.json
+      enabled: true
+    - url: https://azu.github.io/github-advisory-database-rss/pip.json
+      enabled: true
+    - url: https://azu.github.io/github-advisory-database-rss/pub.json
+      enabled: true
+    - url: https://azu.github.io/github-advisory-database-rss/rust.json
+      enabled: true
+    - url: https://feeds.feedburner.com/darkreading/nXMu8p7PkyH
+      enabled: true
   feedly:
     enabled: false
-    stream_id: "user/%7C%7C%7C/category/global.all"
-
-# Telegram Configuration (non-sensitive settings)
+    stream_id: user/%7C%7C%7C/category/global.all
 telegram:
-  session_name: "telegram_scraper_session"
+  session_name: telegram_scraper_session
   channels:
-    - "IsacaRuSec"
-    - "ICTlive"
-    - "ctinow"
-    - "defcon_news"
-    - "aqinfo"
-    - "bizone_channel"
-    - "threatinteltrends"
-    - "linuxgram"
-    - "cybdetective"
-    - "CyberBankSa"
-    - "hackersarena11"
-    - "HackerS_AsyLum"
-    - "Cyber_Security_Channel"
-    - "topcybersecurity"
+    - IsacaRuSec
+    - ICTlive
+    - ctinow
+    - defcon_news
+    - aqinfo
+    - bizone_channel
+    - threatinteltrends
+    - linuxgram
+    - cybdetective
+    - CyberBankSa
+    - hackersarena11
+    - HackerS_AsyLum
+    - Cyber_Security_Channel
+    - topcybersecurity
   max_messages_per_channel: 100
   message_limit_per_run: 50
   fetch_media: false
   fetch_replies: false
-
-# Reddit Configuration
 reddit:
-  user_agent: "python:cybersecurity-feed:v1.0 (by /u/anonymous)"
+  user_agent: python:cybersecurity-feed:v1.0 (by /u/anonymous)
   subreddits:
-    - "cybersecurity"
-    - "netsec"
-    - "hacking"
-    - "threatintel"
-    - "blueteamsec"
-    - "redteamsec"
-    - "malware"
+    - cybersecurity
+    - netsec
+    - hacking
+    - threatintel
+    - blueteamsec
+    - redteamsec
+    - malware
   max_posts_per_subreddit: 100
   request_timeout: 30
-  auth_url: "https://www.reddit.com/api/v1/access_token"
-  api_base: "https://oauth.reddit.com"
-
-# OpenSearch Configuration
-
-# LLM Configuration
+  auth_url: https://www.reddit.com/api/v1/access_token
+  api_base: https://oauth.reddit.com
 ollama:
   enabled: false
-  host: "http://localhost:11434"
-  model: "llama3:latest"
-
+  host: http://localhost:11434
+  model: llama3:latest
 huggingface:
   enabled: false
-  model: "meta-llama/Llama-3.1-8B-Instruct"
-
+  model: meta-llama/Llama-3.1-8B-Instruct
 openrouter:
   enabled: true
-  model: "mistralai/devstral-2512:free"
-
-# Report Configuration
+  model: mistralai/devstral-2512:free
 report:
-  tlp: "AMBER"
-  advisory_id_prefix: "SOC-TA"
+  tlp: AMBER
+  advisory_id_prefix: SOC-TA
   max_advisories_per_run: 3

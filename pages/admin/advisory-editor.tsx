@@ -12,6 +12,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
+
 export default function AdvisoryEditor() {
   const [advisory, setAdvisory] = useState<any>(null);
   const [saving, setSaving] = useState(false);
@@ -25,62 +26,111 @@ export default function AdvisoryEditor() {
       router.push('/login');
       return;
     }
-    
     if (hasRole('admin')) {
-      loadDraft();
+      const advisory_id = router.query.advisory_id || router.query.id;
+      console.log('[EDITOR] Extracted advisory_id from router.query:', advisory_id, router.query);
+      if (advisory_id) {
+        fetchAdvisoryWithRetry(advisory_id as string);
+      } else {
+        console.warn('[EDITOR] No advisory_id found in router.query:', router.query);
+      }
     }
-  }, [user, hasRole, authLoading, router]);
+    // eslint-disable-next-line
+  }, [user, hasRole, authLoading, router.query]);
 
-  const loadDraft = () => {
-    const draft = localStorage.getItem('draft_advisory');
-    if (draft) {
-      const parsedAdvisory = JSON.parse(draft);
-      console.log('[EDITOR] Loaded draft advisory:', {
-        has_advisory_id: !!parsedAdvisory.advisory_id,
-        advisory_id: parsedAdvisory.advisory_id,
-        title: parsedAdvisory.title,
-        has_created_at: !!parsedAdvisory.created_at,
-        all_fields: Object.keys(parsedAdvisory)
-      });
-      setAdvisory(parsedAdvisory);
-    } else {
-      console.log('[EDITOR] No draft found in localStorage');
-      router.push('/admin/raw-articles');
+  // Retry logic for fetching advisory
+  const fetchAdvisoryWithRetry = async (advisoryId: string, attempts = 0) => {
+    setLoading(true);
+    try {
+      console.log(`[EDITOR] Attempting to fetch advisory (attempt ${attempts + 1}):`, advisoryId);
+      await fetchAdvisory(advisoryId);
+    } catch (err) {
+      console.error(`[EDITOR] Fetch advisory failed (attempt ${attempts + 1}):`, err);
+      if (attempts < 3) {
+        setTimeout(() => fetchAdvisoryWithRetry(advisoryId, attempts + 1), 1000);
+      } else {
+        alert('Failed to load advisory after multiple attempts.');
+        router.push('/admin/raw-articles');
+      }
     }
+  };
+
+  const fetchAdvisory = async (advisoryId: string) => {
+    console.log('[EDITOR] Fetching advisory from API:', `/api/generated-advisory/${advisoryId}`);
+    const res = await fetch(`/api/generated-advisory/${advisoryId}`);
+    console.log('[EDITOR] API response status:', res.status);
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('[EDITOR] API error response:', text);
+      throw new Error('Failed to fetch advisory');
+    }
+    const data = await res.json();
+    console.log('[EDITOR] API response data:', data);
+    // Map OpenSearch data to editor format
+    const src = data._source || data;
+    const mapped = mapAdvisoryData(src);
+    console.log('[EDITOR] Mapped advisory data:', mapped);
+    setAdvisory(mapped);
     setLoading(false);
   };
 
+  // Map OpenSearch advisory data to editor format
+  function mapAdvisoryData(src: any) {
+    // Convert cvss array to object { [cve]: { score, ... } }
+    let cvssObj: any = {};
+    if (Array.isArray(src.cvss)) {
+      src.cvss.forEach((item: any) => {
+        if (item.cve) {
+          cvssObj[item.cve] = {
+            score: item.score,
+            vector: item.vector,
+            criticality: item.criticality,
+            source: item.source
+          };
+        }
+      });
+    } else if (typeof src.cvss === 'object') {
+      cvssObj = src.cvss;
+    }
+    return {
+      ...src,
+      cvss: cvssObj,
+      exec_summary_parts: src.exec_summary_parts || (src.exec_summary ? src.exec_summary.split('\n\n') : []),
+      sectors: src.sectors || [],
+      regions: src.regions || [],
+      cves: src.cves || [],
+      mitre: src.mitre || [],
+      mbc: src.mbc || [],
+      iocs: src.iocs || [],
+      recommendations: src.recommendations || [],
+      patch_details: src.patch_details || [],
+      references: src.references || [],
+    };
+  }
+
   const handleSave = async () => {
     if (!advisory) return;
-
     try {
       setSaving(true);
-      
       console.log('[EDITOR] Saving advisory:', {
         has_advisory_id: !!advisory.advisory_id,
         advisory_id: advisory.advisory_id,
         title: advisory.title
       });
-
       // Ensure advisory has created_at if not present
       const advisoryToSave = {
         ...advisory,
         created_at: advisory.created_at || new Date().toISOString()
       };
-      
       const response = await fetch('/api/eagle-nest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(advisoryToSave)
       });
-
       const data = await response.json();
-
       console.log('[EDITOR] Save response:', data);
-
       if (data.success) {
-        localStorage.removeItem('draft_advisory');
         alert('Advisory saved to Eagle Nest successfully!');
         router.push('/admin/eagle-nest');
       } else {
@@ -102,7 +152,8 @@ export default function AdvisoryEditor() {
           <div className="text-center space-y-4">
             <div className="spinner-neon mx-auto"></div>
             <div className="text-neon-blue font-orbitron text-lg tracking-wider animate-pulse">
-              LOADING EDITOR...
+              Loading advisory from database...<br />
+              <span className="text-xs text-slate-400">If this takes too long, please wait a few seconds or refresh.</span>
             </div>
           </div>
         </div>

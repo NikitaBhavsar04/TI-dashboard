@@ -3,10 +3,17 @@ import os
 import json
 import hashlib
 import logging
+import sys
 from datetime import datetime, timezone
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s [%(levelname)s] %(message)s")
+
+# Explicitly configure logger to use stderr to keep stdout clean for JSON output
+logging.basicConfig(
+    level=LOG_LEVEL, 
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    stream=sys.stderr  # Force all logs to stderr, not stdout
+)
 logger = logging.getLogger("ta-pipeline")
 
 def now_iso() -> str:

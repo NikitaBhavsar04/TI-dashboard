@@ -17,7 +17,7 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href={isAuthenticated ? "/advisories" : "/"} className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <Shield className="h-6 w-6 text-cyan-400" />
             <span className="font-orbitron font-bold text-lg text-white">EaglEye IntelDesk</span>
           </Link>
@@ -27,11 +27,6 @@ function Navbar() {
             <Link href="/" className="flex items-center gap-2 px-4 py-2 text-white">
               <Home className="h-5 w-5 text-cyan-400" />
               <span>HOME</span>
-            </Link>
-            
-            <Link href="/advisories" className="flex items-center gap-2 px-4 py-2 text-white">
-              <Activity className="h-5 w-5 text-cyan-400" />
-              <span>INTEL FEED</span>
             </Link>
 
             {isAuthenticated && isAdmin && (
@@ -79,11 +74,6 @@ function Navbar() {
             <Link href="/" className="flex items-center gap-3 p-3 text-white" onClick={() => setIsMenuOpen(false)}>
               <Home className="h-5 w-5 text-cyan-400" />
               <span>HOME</span>
-            </Link>
-            
-            <Link href="/advisories" className="flex items-center gap-3 p-3 text-white" onClick={() => setIsMenuOpen(false)}>
-              <Activity className="h-5 w-5 text-cyan-400" />
-              <span>INTEL FEED</span>
             </Link>
 
             {isAuthenticated && isAdmin && (

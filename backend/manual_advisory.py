@@ -27,24 +27,17 @@ from llm.mbc import extract_mbc
 
 cfg = read_yaml("config.yaml")
 
-RAW_INDEX = os.getenv(
-    "OPENSEARCH_RAW_INDEX",
-    cfg.get("opensearch", {}).get("raw_index", "ti-raw-articles")
-)
 
-ADV_INDEX = os.getenv(
-    "OPENSEARCH_ADVISORY_INDEX",
-    cfg.get("opensearch", {}).get("advisory_index", "ti-generated-advisories")
-)
+RAW_INDEX = os.getenv("OPENSEARCH_RAW_INDEX", cfg.get("opensearch", {}).get("raw_index", "ti-raw-articles"))
+ADV_INDEX = os.getenv("OPENSEARCH_ADVISORY_INDEX", cfg.get("opensearch", {}).get("advisory_index", "ti-generated-advisories"))
 
 report_cfg = cfg.get("report", {})
 ADVISORY_PREFIX = report_cfg.get("advisory_id_prefix", "SOC-TA")
 TLP_DEFAULT = report_cfg.get("tlp", "AMBER")
 
 # ============================================================
-# OPENSEARCH CLIENT  ✅ FIXED
+# OPENSEARCH CLIENT
 # ============================================================
-
 os_client = get_opensearch_client()
 
 # ============================================================
@@ -152,19 +145,27 @@ def generate_advisory_for_article(article_id: str) -> dict:
     ] or ["Summary not available."]
 
     # --------------------------------------------------------
-    # Recommendations
+    # Recommendations / Patch Details (SAFE, NON-DESTRUCTIVE)
     # --------------------------------------------------------
     try:
-        query_text = advisory.get("exec_summary") or advisory.get("title", "")
+        query_text = f"""
+        {advisory.get("title","")}
+        {advisory.get("exec_summary","")}
+        {' '.join(advisory.get("cves", []))}
+        """
+
         rec_data = get_recommendations(query_text)
-        if rec_data:
-            advisory["recommendations"] = rec_data.get("recommendations", [])
-            advisory["patch_details"] = rec_data.get("patch_details", [])
+
+        if isinstance(rec_data, dict):
+            if rec_data.get("recommendations"):
+                advisory["recommendations"] = rec_data["recommendations"]
+
+            if rec_data.get("patch_details"):
+                advisory["patch_details"] = rec_data["patch_details"]
+
     except Exception:
-        advisory["recommendations"] = [
-            "Monitor logs for suspicious activity.",
-            "Apply vendor patches and security updates.",
-        ]
+        advisory.setdefault("recommendations", [])
+        advisory.setdefault("patch_details", [])
 
     patch_details = advisory.get("patch_details") or []
     if isinstance(patch_details, str):
@@ -185,9 +186,9 @@ def generate_advisory_for_article(article_id: str) -> dict:
         mitre=mitre,
     )
 
-    # --------------------------------------------------------
+    # -------------------------------------------------------
     # CVSS
-    # --------------------------------------------------------
+    # -------------------------------------------------------
     cvss_entries: List[Dict] = []
     highest = None
 
@@ -241,6 +242,9 @@ def generate_advisory_for_article(article_id: str) -> dict:
         "affected_product": advisory.get("affected_product", "Not specified"),
         "vendor": advisory.get("vendor", "Unknown"),
 
+        "sectors": advisory.get("sectors", []),
+        "regions": advisory.get("regions", []),
+
         "cves": advisory.get("cves", []),
         "cvss": cvss_entries,
 
@@ -265,22 +269,37 @@ def generate_advisory_for_article(article_id: str) -> dict:
     return advisory_doc
 
 # ============================================================
+# API WRAPPER
+# ============================================================
+
+def generate_advisory(article_id: str) -> dict:
+    """
+    Wrapper function for API calls.
+    Generates and returns an advisory dict for the given article_id.
+    """
+    return generate_advisory_for_article(article_id)
+
+
+# ============================================================
 # ENTRY POINT
 # ============================================================
 
 if __name__ == "__main__":
     import sys
     import json
-
+    
     if len(sys.argv) != 2:
         print("Usage: manual_advisory.py <raw_article_id>", file=sys.stderr)
         sys.exit(1)
 
     try:
-        article_id = sys.argv[1]
-        advisory = generate_advisory_for_article(article_id)
-        print(json.dumps(advisory, indent=2, default=str))
+        advisory_doc = generate_advisory_for_article(sys.argv[1])
+        # Output ONLY the advisory JSON to stdout for API consumption
+        # All log messages go to stderr via logger
+        json_output = json.dumps(advisory_doc, default=str)
+        print(json_output)
+        sys.stdout.flush()  # Ensure output is sent immediately
     except Exception as e:
-        logger.error(f"❌ Error generating advisory: {e}")
-        print(f"Error: {e}", file=sys.stderr)
+        logger.error(f"Failed to generate advisory: {e}")
+        print(f"Error: {str(e)}", file=sys.stderr)
         sys.exit(1)

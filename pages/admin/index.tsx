@@ -103,16 +103,16 @@ export default function AdminDashboard() {
         });
       }
 
-      // Fetch advisories count
-      const advisoriesResponse = await fetch('/api/advisories', {
+      // Fetch Eagle Nest advisories count
+      const eagleNestResponse = await fetch('/api/eagle-nest', {
         credentials: 'include'
       });
       
-      if (advisoriesResponse.ok) {
-        const advisoriesData = await advisoriesResponse.json();
+      if (eagleNestResponse.ok) {
+        const eagleNestData = await eagleNestResponse.json();
         setStats(prev => ({
           ...prev,
-          totalAdvisories: advisoriesData.length || 0
+          totalAdvisories: eagleNestData.advisories?.length || 0
         }));
       }
     } catch (error) {
@@ -224,10 +224,10 @@ export default function AdminDashboard() {
                     {currentTime.toLocaleTimeString()}
                   </div>
                 </div>
-                <Link href="/advisories">
+                <Link href="/admin/eagle-nest">
                   <button className="flex items-center space-x-2 px-4 py-2 bg-green-500/20 border border-green-400/50 rounded-lg text-green-400 hover:bg-green-500/30 transition-all duration-200 font-rajdhani">
                     <Eye className="h-4 w-4" />
-                    <span>View Site</span>
+                    <span>View Eagle Nest</span>
                   </button>
                 </Link>
                 <button
@@ -360,7 +360,7 @@ export default function AdminDashboard() {
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
                   </button>
                 </Link>
-                <Link href="/advisories">
+                <Link href="/admin/eagle-nest">
                   <button className="w-full flex items-center justify-between p-4 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200 group">
                     <div className="flex items-center space-x-3">
                       <Eye className="h-5 w-5" />

@@ -795,7 +795,7 @@ export default function EagleNestDetail() {
           </div>
         </div>
 
-        {/* Email Modal - Using same component as Intel Feed */}
+        {/* Email Modal */}
         {advisory && emailModalOpen && (
           <EmailModal
             isOpen={emailModalOpen}

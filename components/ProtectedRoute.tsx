@@ -27,7 +27,7 @@ export default function ProtectedRoute({
       }
 
       if ((adminOnly || requireAdmin) && !isAdmin) {
-        router.push('/advisories'); // Redirect non-admin users to advisories
+        router.push('/admin/eagle-nest'); // Redirect non-admin users to Eagle Nest
         return;
       }
     }

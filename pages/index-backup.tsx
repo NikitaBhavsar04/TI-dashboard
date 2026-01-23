@@ -24,7 +24,7 @@ export default function Home() {
   useEffect(() => {
     if (!loading && isAuthenticated) {
       // Redirect authenticated users to advisories
-      router.push('/advisories');
+      router.push('/admin/eagle-nest');
     }
   }, [isAuthenticated, loading, router]);
 
@@ -153,11 +153,11 @@ export default function Home() {
               >
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link 
-                    href="/advisories"
+                    href="/login"
                     className="group flex items-center gap-3 px-8 py-4 rounded-xl bg-button-gradient border border-neon-blue/30 hover:shadow-button-glow-hover transition-all duration-300 font-rajdhani font-semibold text-white"
                   >
                     <Activity className="h-5 w-5" />
-                    ACCESS INTEL FEED
+                    GET STARTED
                     <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
                   </Link>
                 </motion.div>

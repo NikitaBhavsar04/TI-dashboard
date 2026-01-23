@@ -109,10 +109,29 @@ export default function RawArticleDetail() {
 
       const data = await response.json();
 
+      console.log('[RAW-ARTICLE] Full API response:', JSON.stringify(data, null, 2));
+      
       if (data.success && data.advisory) {
-        // Redirect to editor with advisory data
-        localStorage.setItem('draft_advisory', JSON.stringify(data.advisory));
-        router.push(`/admin/advisory-editor?article=${article.id}`);
+        console.log('[RAW-ARTICLE] Advisory object keys:', Object.keys(data.advisory));
+        
+        // Extract advisory_id (not article_id!)
+        const advisoryId = data.advisory.advisory_id || data.advisory.advisoryId;
+        const articleId = data.advisory.article_id;
+        
+        console.log('[RAW-ARTICLE] Extracted IDs:', {
+          advisory_id: advisoryId,
+          article_id: articleId,
+          looking_for: 'advisory_id (SOC-TA-YYYYMMDD-HHMMSS format)'
+        });
+        
+        if (advisoryId) {
+          console.log('[RAW-ARTICLE] ✅ Redirecting with advisory_id:', advisoryId);
+          router.push(`/admin/advisory-editor?advisory_id=${advisoryId}`);
+        } else {
+          console.error('[RAW-ARTICLE] ❌ advisory_id is missing from response');
+          console.error('[RAW-ARTICLE] Full advisory object:', JSON.stringify(data.advisory, null, 2));
+          alert('Advisory generated but advisory_id is missing. Check console for details.');
+        }
       } else {
         alert(`Failed to generate advisory: ${data.error || 'Unknown error'}`);
       }

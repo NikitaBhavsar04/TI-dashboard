@@ -22,7 +22,7 @@ export default function ScheduledEmailsPage() {
     if (!loading && !isAuthenticated) {
       router.push('/login');
     } else if (!loading && isAuthenticated && !isAdmin) {
-      router.push('/advisories');
+      router.push('/admin/eagle-nest');
     }
   }, [isAuthenticated, isAdmin, loading, router]);
 
@@ -94,7 +94,7 @@ export default function ScheduledEmailsPage() {
                 >
                   <ScheduledEmailsManager
                     onEditEmail={handleEditEmail}
-                    onClose={() => router.push('/advisories')}
+                    onClose={() => router.push('/admin/eagle-nest')}
                     onRefresh={handleRefresh}
                     key={refreshTrigger}
                   />
@@ -150,7 +150,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
     if (decoded.role !== 'admin') {
       return {
         redirect: {
-          destination: '/advisories',
+          destination: '/admin/eagle-nest',
           permanent: false,
         },
       };

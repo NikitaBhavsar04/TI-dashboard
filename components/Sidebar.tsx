@@ -96,12 +96,11 @@ const isActive = (path: string) => {
 
 const menuItems = [
     { icon: Home, label: 'Home', path: '/' },
-    { icon: Activity, label: 'Intel Feed', path: '/advisories' },
     ...(isAdmin ? [
-      { icon: Calendar, label: 'Scheduled Emails', path: '/scheduled-emails' },
+      { icon: Rss, label: 'RSS Feeds', path: '/admin/rss-feeds' },
       { icon: Database, label: 'Raw Articles', path: '/admin/raw-articles' },
       { icon: Shield, label: 'Eagle Nest', path: '/admin/eagle-nest' },
-      { icon: Rss, label: 'RSS Feeds', path: '/admin/rss-feeds' },
+      { icon: Calendar, label: 'Scheduled Emails', path: '/scheduled-emails' },
     ] : []),
   ];
 
@@ -110,7 +109,7 @@ const menuItems = [
       {/* Logo/Header */}
       <div className="p-4 border-b border-gray-800/50 relative">
         <Link 
-          href={isAuthenticated ? "/advisories" : "/"} 
+          href="/" 
           className={`flex items-center gap-3 group ${isCollapsed ? 'justify-center' : ''}`}
           onClick={() => setIsMobileOpen(false)}
         >

@@ -29,7 +29,7 @@ export default function Home() {
   useEffect(() => {
     if (!loading && isAuthenticated) {
       // Redirect authenticated users to advisories
-      router.push('/advisories');
+      router.push('/admin/eagle-nest');
     }
   }, [isAuthenticated, loading, router]);
 

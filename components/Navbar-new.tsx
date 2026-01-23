@@ -16,7 +16,6 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'Home', icon: Home, show: true },
-    { href: '/advisories', label: 'Advisories', icon: FileText, show: isAuthenticated },
     { href: '/admin', label: 'Admin', icon: Settings, show: isAdmin },
     { href: '/admin/upload', label: 'Upload', icon: Plus, show: isAdmin },
   ];

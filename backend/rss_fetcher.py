@@ -41,8 +41,12 @@ load_dotenv()
 # CONFIG
 # -------------------------------------------------------------------
 cfg = read_yaml("config.yaml")
-SOURCES = cfg["sources"]["rss"]
-
+# Filter enabled RSS feeds and extract URLs
+SOURCES = [
+    feed["url"] 
+    for feed in cfg["sources"]["rss"] 
+    if feed.get("enabled", True)
+]
 
 INDEX = cfg.get("opensearch", {}).get("index", "ti-raw-articles")
 

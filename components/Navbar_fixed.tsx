@@ -48,17 +48,6 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            <Link 
-              href="/advisories" 
-              className={`group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 font-medium ${
-                router.pathname === '/advisories' 
-                  ? 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20' 
-                  : 'text-gray-300 hover:text-neon-blue hover:bg-neon-blue/5'
-              }`}
-            >
-              <Activity className="h-4 w-4" />
-              INTEL FEED
-            </Link>
 
             {isAuthenticated && isAdmin && (
               <>
@@ -137,14 +126,7 @@ export default function Navbar() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-white/10 bg-glass-dark backdrop-blur-xl">
             <div className="flex flex-col gap-2">
-              <Link 
-                href="/advisories" 
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-neon-blue/10 hover:text-neon-blue transition-all duration-300"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Activity className="h-5 w-5" />
-                INTEL FEED
-              </Link>
+              {/* Removed Intel Feed button */}
               
               {isAuthenticated ? (
                 <>

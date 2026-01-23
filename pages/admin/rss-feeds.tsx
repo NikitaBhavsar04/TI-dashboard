@@ -1,24 +1,30 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Rss, Plus, Trash2, ExternalLink, Loader, Search, CheckCircle, XCircle } from 'lucide-react';
+import { Rss, Plus, Trash2, ExternalLink, Loader, Search, CheckCircle, XCircle, Power } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/router';
 import AnimatedBackground from '../../components/AnimatedBackground';
 
+interface RssFeed {
+  url: string;
+  enabled: boolean;
+}
+
 interface RssFeedData {
-  feeds: string[];
+  feeds: RssFeed[];
 }
 
 export default function RSSFeedsPage() {
   const { isAuthenticated, isAdmin } = useAuth();
   const router = useRouter();
-  const [feeds, setFeeds] = useState<string[]>([]);
+  const [feeds, setFeeds] = useState<RssFeed[]>([]);
   const [loading, setLoading] = useState(true);
   const [newFeed, setNewFeed] = useState('');
   const [adding, setAdding] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [toggling, setToggling] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !isAdmin) {
@@ -60,7 +66,7 @@ export default function RSSFeedsPage() {
     }
 
     // Check for duplicates
-    if (feeds.includes(newFeed.trim())) {
+    if (feeds.some(feed => feed.url === newFeed.trim())) {
       setError('This RSS feed already exists');
       return;
     }
@@ -117,9 +123,36 @@ export default function RSSFeedsPage() {
     }
   };
 
+  const handleToggleFeed = async (url: string, currentEnabled: boolean) => {
+    try {
+      setToggling(url);
+      const response = await fetch('/api/rss-feeds', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, enabled: !currentEnabled })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSuccess(`RSS feed ${!currentEnabled ? 'enabled' : 'disabled'} successfully!`);
+        await loadFeeds();
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(data.error || 'Failed to toggle RSS feed');
+      }
+    } catch (err) {
+      setError('Failed to toggle RSS feed');
+      console.error('Error toggling feed:', err);
+    } finally {
+      setToggling(null);
+    }
+  };
+
   const filteredFeeds = feeds.filter(feed =>
-    feed.toLowerCase().includes(searchQuery.toLowerCase())
+    feed.url.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const activeFeeds = feeds.filter(feed => feed.enabled).length;
 
   if (!isAuthenticated || !isAdmin) {
     return null;
@@ -165,7 +198,7 @@ export default function RSSFeedsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-sm">Active Sources</p>
-                  <p className="text-3xl font-bold text-green-400 mt-1">{feeds.length}</p>
+                  <p className="text-3xl font-bold text-green-400 mt-1">{activeFeeds}</p>
                 </div>
                 <CheckCircle className="h-12 w-12 text-green-400/30" />
               </div>
@@ -275,32 +308,72 @@ export default function RSSFeedsPage() {
             <div className="space-y-3">
               {filteredFeeds.map((feed, index) => (
                 <motion.div
-                  key={feed}
+                  key={feed.url}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 hover:border-orange-500/50 transition-all group"
+                  className={`bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-4 border transition-all group ${
+                    feed.enabled 
+                      ? 'border-gray-700/50 hover:border-orange-500/50' 
+                      : 'border-gray-800/50 opacity-60 hover:opacity-80'
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <Rss className="h-5 w-5 text-orange-400 flex-shrink-0" />
+                      <Rss className={`h-5 w-5 flex-shrink-0 ${
+                        feed.enabled ? 'text-orange-400' : 'text-gray-500'
+                      }`} />
                       <a
-                        href={feed}
+                        href={feed.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-300 hover:text-orange-400 transition-colors truncate flex items-center gap-2 group/link"
+                        className={`transition-colors truncate flex items-center gap-2 group/link ${
+                          feed.enabled 
+                            ? 'text-gray-300 hover:text-orange-400' 
+                            : 'text-gray-500 hover:text-gray-400'
+                        }`}
                       >
-                        <span className="truncate">{feed}</span>
+                        <span className="truncate">{feed.url}</span>
                         <ExternalLink className="h-4 w-4 opacity-0 group-hover/link:opacity-100 transition-opacity flex-shrink-0" />
                       </a>
                     </div>
-                    <button
-                      onClick={() => handleDeleteFeed(feed)}
-                      className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                      title="Remove feed"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {/* Status Badge */}
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        feed.enabled 
+                          ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                          : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                      }`}>
+                        {feed.enabled ? 'Active' : 'Disabled'}
+                      </span>
+                      
+                      {/* Toggle Button */}
+                      <button
+                        onClick={() => handleToggleFeed(feed.url, feed.enabled)}
+                        disabled={toggling === feed.url}
+                        className={`p-2 rounded-lg transition-all ${
+                          feed.enabled
+                            ? 'text-green-400 hover:text-green-300 hover:bg-green-500/10'
+                            : 'text-gray-400 hover:text-gray-300 hover:bg-gray-500/10'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        title={feed.enabled ? 'Disable feed' : 'Enable feed'}
+                      >
+                        {toggling === feed.url ? (
+                          <Loader className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <Power className="h-5 w-5" />
+                        )}
+                      </button>
+                      
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => handleDeleteFeed(feed.url)}
+                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        title="Remove feed"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ))}

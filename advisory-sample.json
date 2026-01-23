@@ -1,0 +1,76 @@
+﻿{
+  "_index" : "ti-generated-advisories",
+  "_id" : "SOC-TA-20260123-064809",
+  "_version" : 1,
+  "_seq_no" : 401,
+  "_primary_term" : 1,
+  "found" : true,
+  "_source" : {
+    "schema_version" : "1.0",
+    "advisory_id" : "SOC-TA-20260123-064809",
+    "article_id" : "4e83fbba5e81ec414c1f4eb40fed224919edfeba",
+    "incident_key" : "CVE::CVE-2025-65002",
+    "title" : "Incorrect Authorization – iRMC S5/S6",
+    "display_title" : "Incorrect Authorization – iRMC S5/S6",
+    "criticality" : "HIGH",
+    "threat_type" : "Authorization Bypass",
+    "exec_summary_parts" : [
+      "The vulnerability in iRMC S5/S6 allows users with non-administrator Redfish roles to escalate privileges when using a 16-character username. This flaw enables unauthorized access to the Web UI or Redfish API, potentially leading to unauthorized configuration changes or data exposure. The issue stems from incorrect authorization checks, which fail to properly validate user permissions under specific conditions.",
+      "Exploitation requires a user account with a 16-character username and non-administrator privileges. The vulnerability does not affect iRMC S4, and the vendor has provided a workaround to limit usernames to 15 characters until a patch is applied. This flaw highlights the importance of input validation and role-based access control in management interfaces.",
+      "Organizations using affected PRIMERGY systems should prioritize applying the vendor's software update or implementing the recommended workaround. Failure to address this vulnerability could result in privilege escalation, leading to unauthorized system modifications or sensitive information disclosure. The vendor has acknowledged the issue and provided mitigation steps to reduce exposure."
+    ],
+    "affected_product" : "Remote Management Controller iRMC S5/S6",
+    "vendor" : "Fsas Technologies Inc.",
+    "sectors" : [
+      "Transportation",
+      "Technology"
+    ],
+    "regions" : [ ],
+    "cves" : [
+      "CVE-2025-65002"
+    ],
+    "cvss" : [
+      {
+        "cve" : "CVE-2025-65002",
+        "score" : 7.5,
+        "vector" : "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+        "criticality" : "HIGH",
+        "source" : null
+      }
+    ],
+    "iocs" : [ ],
+    "mitre" : [
+      {
+        "techniqueId" : "T1068",
+        "tactic" : "Privilege Escalation",
+        "technique" : "Exploitation for Privilege Escalation",
+        "confidence" : 2,
+        "classification" : "primary",
+        "url" : "https://attack.mitre.org/techniques/T1068"
+      },
+      {
+        "techniqueId" : "T1190",
+        "tactic" : "Initial Access",
+        "technique" : "Exploit Public-Facing Application",
+        "confidence" : 1,
+        "classification" : "primary",
+        "url" : "https://attack.mitre.org/techniques/T1190"
+      }
+    ],
+    "mbc" : [ ],
+    "recommendations" : [
+      "Update to the latest software version as per vendor instructions",
+      "Limit usernames to 15 characters as a temporary workaround"
+    ],
+    "patch_details" : [
+      "Update the software to the latest version according to the information provided by the developer. Apply the workaround: Set the username for users registering with iRMC to 15 characters limit."
+    ],
+    "references" : [
+      "https://jvn.jp/en/vu/JVNVU95177764/"
+    ],
+    "tlp" : "AMBER",
+    "status" : "DRAFT",
+    "created_at" : "2026-01-23T06:48:09.742306Z"
+  }
+}
+

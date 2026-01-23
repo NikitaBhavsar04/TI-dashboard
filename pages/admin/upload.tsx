@@ -241,7 +241,7 @@ export default function UploadPage() {
       if (response.ok) {
         const result = await response.json();
         console.log('Successfully created advisory:', result);
-        router.push('/advisories');
+        router.push('/admin/eagle-nest');
       } else {
         const errorData = await response.text();
         console.error('Failed to create advisory. Response:', errorData);

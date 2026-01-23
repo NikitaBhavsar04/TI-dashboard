@@ -1,0 +1,160 @@
+﻿{
+  "ti-generated-advisories" : {
+    "mappings" : {
+      "properties" : {
+        "advisory_id" : {
+          "type" : "keyword"
+        },
+        "affected_product" : {
+          "type" : "text"
+        },
+        "article_id" : {
+          "type" : "keyword"
+        },
+        "created_at" : {
+          "type" : "date"
+        },
+        "criticality" : {
+          "type" : "keyword"
+        },
+        "cves" : {
+          "type" : "keyword"
+        },
+        "cvss" : {
+          "properties" : {
+            "criticality" : {
+              "type" : "keyword"
+            },
+            "cve" : {
+              "type" : "keyword"
+            },
+            "score" : {
+              "type" : "float"
+            },
+            "source" : {
+              "type" : "keyword"
+            },
+            "vector" : {
+              "type" : "keyword"
+            }
+          }
+        },
+        "display_title" : {
+          "type" : "text"
+        },
+        "exec_summary_parts" : {
+          "type" : "text"
+        },
+        "incident_key" : {
+          "type" : "keyword"
+        },
+        "iocs" : {
+          "type" : "nested",
+          "properties" : {
+            "type" : {
+              "type" : "keyword"
+            },
+            "value" : {
+              "type" : "keyword"
+            }
+          }
+        },
+        "mbc" : {
+          "type" : "nested",
+          "properties" : {
+            "behavior" : {
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
+                }
+              }
+            },
+            "confidence" : {
+              "type" : "keyword"
+            },
+            "evidence" : {
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
+                }
+              }
+            },
+            "id" : {
+              "type" : "keyword"
+            },
+            "name" : {
+              "type" : "keyword"
+            },
+            "objective" : {
+              "type" : "keyword"
+            },
+            "url" : {
+              "type" : "keyword"
+            }
+          }
+        },
+        "mitre" : {
+          "type" : "nested",
+          "properties" : {
+            "classification" : {
+              "type" : "keyword"
+            },
+            "confidence" : {
+              "type" : "keyword"
+            },
+            "tactic" : {
+              "type" : "keyword"
+            },
+            "technique" : {
+              "type" : "keyword"
+            },
+            "techniqueId" : {
+              "type" : "keyword"
+            },
+            "url" : {
+              "type" : "keyword"
+            }
+          }
+        },
+        "patch_details" : {
+          "type" : "text"
+        },
+        "recommendations" : {
+          "type" : "text"
+        },
+        "references" : {
+          "type" : "keyword"
+        },
+        "regions" : {
+          "type" : "keyword"
+        },
+        "schema_version" : {
+          "type" : "keyword"
+        },
+        "sectors" : {
+          "type" : "keyword"
+        },
+        "status" : {
+          "type" : "keyword"
+        },
+        "threat_type" : {
+          "type" : "keyword"
+        },
+        "title" : {
+          "type" : "text"
+        },
+        "tlp" : {
+          "type" : "keyword"
+        },
+        "vendor" : {
+          "type" : "keyword"
+        }
+      }
+    }
+  }
+}
+

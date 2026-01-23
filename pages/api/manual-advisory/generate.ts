@@ -166,10 +166,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Parse the advisory from stdout or file
     try {
-      const advisory = JSON.parse(stdout);
+      console.log('[MANUAL-ADVISORY] Raw stdout length:', stdout.length);
+      console.log('[MANUAL-ADVISORY] Raw stdout (first 500 chars):', stdout.substring(0, 500));
+      console.log('[MANUAL-ADVISORY] Raw stdout (last 500 chars):', stdout.substring(Math.max(0, stdout.length - 500)));
+      
+      // Try to extract JSON if there are log messages mixed in
+      let jsonStr = stdout.trim();
+      
+      // If stdout has multiple lines, try to find the JSON object
+      if (jsonStr.includes('\n')) {
+        const lines = jsonStr.split('\n');
+        // Look for a line that starts with {
+        for (const line of lines) {
+          if (line.trim().startsWith('{')) {
+            jsonStr = line.trim();
+            break;
+          }
+        }
+      }
+      
+      console.log('[MANUAL-ADVISORY] Attempting to parse JSON...');
+      const advisory = JSON.parse(jsonStr);
+      console.log('[MANUAL-ADVISORY] ✅ Parsed advisory successfully');
+      console.log('[MANUAL-ADVISORY] Advisory ID from Python:', advisory.advisory_id);
+      
+      const normalized = normalizeAdvisoryFields(advisory);
+      console.log('[MANUAL-ADVISORY] Advisory IDs in normalized:', {
+        advisory_id: normalized.advisory_id,
+        advisoryId: normalized.advisoryId
+      });
+      
       return res.status(200).json({ 
         success: true, 
-        advisory: normalizeAdvisoryFields(advisory) 
+        advisory: normalized
       });
     } catch (parseError) {
       console.error('[MANUAL-ADVISORY] Failed to parse advisory JSON');
