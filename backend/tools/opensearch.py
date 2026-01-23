@@ -1,22 +1,38 @@
 #!/usr/bin/env python3
 
+import os
+from dotenv import load_dotenv
 from opensearchpy import OpenSearch
 from opensearchpy.exceptions import RequestError
 
-OPENSEARCH_HOST = "localhost"
-OPENSEARCH_PORT = 9200
+load_dotenv()
 
 RAW_ARTICLES_INDEX = "raw-articles"
 GENERATED_ADVISORIES_INDEX = "generated-advisories"
 
 
 def get_client() -> OpenSearch:
-    return OpenSearch(
-        hosts=[{"host": OPENSEARCH_HOST, "port": OPENSEARCH_PORT}],
-        http_auth=("admin", "admin"),   # default local creds
-        use_ssl=False,
-        verify_certs=False,
-    )
+    host = os.getenv("OPENSEARCH_HOST", "localhost")
+    port = int(os.getenv("OPENSEARCH_PORT", "9200"))
+    username = os.getenv("OPENSEARCH_USERNAME")
+    password = os.getenv("OPENSEARCH_PASSWORD")
+    
+    # Determine if using SSL based on host
+    if host in {"localhost", "127.0.0.1"}:
+        use_ssl = False
+    else:
+        use_ssl = True
+    
+    client_args = {
+        "hosts": [{"host": host, "port": port}],
+        "use_ssl": use_ssl,
+        "verify_certs": False,
+    }
+    
+    if username and password:
+        client_args["http_auth"] = (username, password)
+    
+    return OpenSearch(**client_args)
 
 
 def create_raw_articles_index(client: OpenSearch):

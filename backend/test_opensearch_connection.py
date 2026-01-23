@@ -1,13 +1,32 @@
 from opensearchpy import OpenSearch
 import sys
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 try:
+    host = os.getenv("OPENSEARCH_HOST", "localhost")
+    port = int(os.getenv("OPENSEARCH_PORT", "9200"))
+    username = os.getenv("OPENSEARCH_USERNAME")
+    password = os.getenv("OPENSEARCH_PASSWORD")
+    
+    # Determine if using SSL based on host
+    if host in {"localhost", "127.0.0.1"}:
+        use_ssl = False
+    else:
+        use_ssl = True
+    
+    http_auth = (username, password) if username and password else None
+    
     client = OpenSearch(
-        hosts=[{"host": "localhost", "port": 9200}],
-        http_auth=None,     # keep None if security disabled
-        use_ssl=False,
+        hosts=[{"host": host, "port": port}],
+        http_auth=http_auth,
+        use_ssl=use_ssl,
         verify_certs=False
     )
+    
+    print(f"Connecting to: {host}:{port} (SSL: {use_ssl})")
 
     # 1️⃣ Ping OpenSearch
     if client.ping():

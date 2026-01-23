@@ -2,11 +2,25 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyToken } from '@/lib/auth';
 import { Client } from '@opensearch-project/opensearch';
 
-// Initialize OpenSearch client
-const osClient = new Client({
-  node: process.env.OPENSEARCH_URL || 'http://localhost:9200',
+// Initialize OpenSearch client with proper credentials
+const host = process.env.OPENSEARCH_HOST || 'localhost';
+const port = process.env.OPENSEARCH_PORT || '9200';
+const username = process.env.OPENSEARCH_USERNAME;
+const password = process.env.OPENSEARCH_PASSWORD;
+
+const isLocalhost = host === 'localhost' || host === '127.0.0.1';
+const scheme = isLocalhost ? 'http' : 'https';
+
+const clientConfig: any = {
+  node: `${scheme}://${host}:${port}`,
   ssl: { rejectUnauthorized: false },
-});
+};
+
+if (username && password) {
+  clientConfig.auth = { username, password };
+}
+
+const osClient = new Client(clientConfig);
 
 const OPENSEARCH_INDEX = 'ti-raw-articles';
 
