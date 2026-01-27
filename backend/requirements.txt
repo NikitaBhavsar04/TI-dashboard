@@ -1,16 +1,39 @@
+# Core Framework
+flask==3.1.2
+flask-cors==6.0.2
+gunicorn==22.0.0
+
+# AWS Services
 boto3==1.34.162
 botocore==1.34.162
+
+# HTTP & Web Scraping
 requests==2.32.3
 feedparser==6.0.11
 beautifulsoup4==4.12.3
+readability-lxml
+
+# Database
+opensearch-py
+
+# Templating & Rendering
 jinja2==3.1.4
 markdown==3.6
 weasyprint==62.3
+
+# Data Validation & Processing
 pydantic==2.8.2
 python-dateutil==2.9.0.post0
 PyYAML==6.0.2
 tqdm==4.66.5
+
+# AI/LLM
 openai
+
+# Utilities
 googlesearch-python
-readability-lxml
-opensearch-py
+python-dotenv==1.0.0
+
+# Testing (Development)
+pytest==7.4.3
+pytest-cov==4.1.0

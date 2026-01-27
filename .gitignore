@@ -3,6 +3,22 @@
 /.pnp
 .pnp.js
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
 # Testing
 /coverage
 
@@ -26,6 +42,11 @@ yarn-error.log*
 .env*.local
 .env
 
+# Backend workspace
+backend/workspace/
+backend/logs/
+backend/*.session
+
 # Vercel
 .vercel
 
@@ -36,6 +57,8 @@ next-env.d.ts
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # OS
 Thumbs.db

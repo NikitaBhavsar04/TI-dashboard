@@ -1,0 +1,252 @@
+/* =========================
+   RESET & BASE STYLES
+========================= */
+
+html,
+body {
+    margin: 0 auto !important;
+    padding: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    background-color: #F5F7FA;
+}
+
+* {
+    -ms-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
+div[style*="margin: 16px 0"] {
+    margin: 0 !important;
+}
+
+table,
+td {
+    mso-table-lspace: 0pt !important;
+    mso-table-rspace: 0pt !important;
+}
+
+table {
+    border-spacing: 0 !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    margin: 0 auto !important;
+}
+
+img {
+    -ms-interpolation-mode: bicubic;
+    border: 0;
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+
+/* =========================
+   GLOBAL CONTAINERS
+========================= */
+
+body {
+    margin: 0;
+    padding: 0 !important;
+    mso-line-height-rule: exactly;
+    background-color: #F5F7FA;
+}
+
+.center-wrapper {
+    width: 100%;
+    background-color: #F5F7FA;
+}
+
+
+/* =========================
+   TYPOGRAPHY
+========================= */
+
+.h1-mobile {
+    font-family: 'Rajdhani', Arial, sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #ffffff;
+    text-transform: uppercase;
+}
+
+.section-title {
+    font-family: 'Rajdhani', Arial, sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #0B1F33;
+    margin: 0;
+}
+
+.sub-title {
+    font-family: 'Rajdhani', Arial, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0B1F33;
+}
+
+.text-body {
+    font-family: 'Roboto', Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #0B2233;
+}
+
+.text-white {
+    color: #ffffff;
+}
+
+
+/* =========================
+   HEADER / HERO
+========================= */
+
+.hero-card {
+    background-color: #0B1F33;
+    background: linear-gradient(135deg, #0B1F33, #1F3A5F);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(11, 31, 51, 0.12);
+    color: #ffffff;
+}
+
+.hero-bg {
+    background-size: cover;
+    background-position: center;
+}
+
+
+/* =========================
+   BADGES
+========================= */
+
+.badge {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 10px 20px;
+    width: 140px;
+}
+
+.badge-label {
+    font-family: 'Rajdhani', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.badge-value {
+    font-family: 'Rajdhani', Arial, sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    color: #ffffff;
+}
+
+
+/* =========================
+   SECTION CARDS
+========================= */
+
+.card {
+    background-color: #ffffff;
+    border: 1px solid #D7DEE8;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(11, 31, 51, 0.06);
+}
+
+.card-dark {
+    background-color: #0B1F33;
+    background: linear-gradient(135deg, #0B1F33, #1F3A5F);
+    color: #ffffff;
+}
+
+.card-divider {
+    height: 6px;
+    width: 60px;
+    border-radius: 99px;
+    background: linear-gradient(to right, #1FA4B8, #2C71C3);
+}
+
+
+/* =========================
+   TABLES
+========================= */
+
+.table-head {
+    background-color: #0E2742;
+    color: #ffffff;
+    font-family: 'Rajdhani', Arial, sans-serif;
+    font-size: 14px;
+    padding: 10px;
+}
+
+.table-row {
+    font-family: 'Roboto', Arial, sans-serif;
+    font-size: 14px;
+    color: #0B2233;
+    padding: 10px;
+    border-bottom: 1px solid #D7DEE8;
+}
+
+.table-row-alt {
+    background-color: #F7FAFD;
+}
+
+
+/* =========================
+   LISTS
+========================= */
+
+ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 6px;
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer-text {
+    font-family: 'Roboto', Arial, sans-serif;
+    font-size: 12px;
+    color: #5F6C7B;
+}
+
+
+/* =========================
+   MOBILE STYLES
+========================= */
+
+@media screen and (max-width: 600px) {
+
+    .mobile-stack {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        direction: ltr !important;
+        text-align: center !important;
+    }
+
+    .mobile-padding {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+
+    .h1-mobile {
+        font-size: 24px !important;
+    }
+
+    .stack-column {
+        width: 100% !important;
+        display: block !important;
+        margin-bottom: 15px !important;
+    }
+}
