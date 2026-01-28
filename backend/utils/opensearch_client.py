@@ -5,20 +5,27 @@ from opensearchpy import OpenSearch
 def get_opensearch_client():
     load_dotenv(override=True)
 
-    host = os.getenv("OPENSEARCH_HOST", "localhost")
-    port = int(os.getenv("OPENSEARCH_PORT", 9200))
-    username = os.getenv("OPENSEARCH_USERNAME")
-    password = os.getenv("OPENSEARCH_PASSWORD")
-
-    # -------------------------------------------------
-    # STRICT RULE BASED ON HOST
-    # -------------------------------------------------
-    if host in {"localhost", "127.0.0.1"}:
-        scheme = "http"
-        use_ssl = False
+    # Prioritize OPENSEARCH_URL for AWS deployments
+    opensearch_url = os.getenv("OPENSEARCH_URL")
+    
+    if opensearch_url:
+        from urllib.parse import urlparse
+        parsed = urlparse(opensearch_url)
+        host = parsed.hostname
+        port = parsed.port or (443 if parsed.scheme == 'https' else 9200)
+        scheme = parsed.scheme
+        use_ssl = scheme == 'https'
     else:
+        host = os.getenv("OPENSEARCH_HOST")
+        port = int(os.getenv("OPENSEARCH_PORT", 9200))
         scheme = "https"
         use_ssl = True
+    
+    if not host:
+        raise ValueError("OPENSEARCH_HOST or OPENSEARCH_URL must be set")
+    
+    username = os.getenv("OPENSEARCH_USERNAME")
+    password = os.getenv("OPENSEARCH_PASSWORD")
 
     client_args = {
         "hosts": [{

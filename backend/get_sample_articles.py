@@ -12,16 +12,25 @@ from opensearchpy import OpenSearch
 load_dotenv()
 
 # Get credentials from environment
-host = os.getenv("OPENSEARCH_HOST", "localhost")
-port = int(os.getenv("OPENSEARCH_PORT", "9200"))
+# Prioritize OPENSEARCH_URL for AWS deployments
+opensearch_url = os.getenv("OPENSEARCH_URL")
+
+if opensearch_url:
+    from urllib.parse import urlparse
+    parsed = urlparse(opensearch_url)
+    host = parsed.hostname
+    port = parsed.port or (443 if parsed.scheme == 'https' else 9200)
+    use_ssl = parsed.scheme == 'https'
+else:
+    host = os.getenv("OPENSEARCH_HOST")
+    port = int(os.getenv("OPENSEARCH_PORT", "9200"))
+    use_ssl = True
+
+if not host:
+    raise ValueError("OPENSEARCH_HOST or OPENSEARCH_URL must be set")
+
 username = os.getenv("OPENSEARCH_USERNAME")
 password = os.getenv("OPENSEARCH_PASSWORD")
-
-# Determine if using SSL based on host
-if host in {"localhost", "127.0.0.1"}:
-    use_ssl = False
-else:
-    use_ssl = True
 
 client_args = {
     "hosts": [{"host": host, "port": port}],

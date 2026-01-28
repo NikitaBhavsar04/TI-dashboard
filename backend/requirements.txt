@@ -12,5 +12,6 @@ PyYAML==6.0.2
 tqdm==4.66.5
 openai
 googlesearch-python
-readability-lxml
+#readability-lxml
+readability-lxml>=0.8
 opensearch-py
