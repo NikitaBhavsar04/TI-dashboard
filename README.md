@@ -1,152 +1,131 @@
-# 🔒 EaglEye IntelDesk INTELLIGENCE PLATFORM
 
-A comprehensive cybersecurity threat advisory platform built with Next.js, featuring real-time threat intelligence, secure authentication, and role-based access control.
+# 🛡️ EaglEye IntelDesk INTELLIGENCE PLATFORM
+
+A comprehensive cybersecurity threat advisory platform built with Next.js (frontend, API, and admin), and Python scripts for automated threat intelligence advisory generation.
+
 
 ## 🚀 Features
 
 ### Core Functionality
-- **📊 Threat Advisory Management**: Create, view, edit, and delete security advisories
-- **🔐 Secure Authentication**: JWT-based authentication with HTTP-only cookies
-- **👥 Role-Based Access Control**: Admin and User roles with different permissions
-- **📱 Responsive Design**: Cyber-themed UI that works on all devices
-- **🗄️ MongoDB Integration**: Secure data storage with proper indexing
+- **Threat Advisory Management**: Create, view, and manage security advisories
+- **Automated Advisory Generation**: Python scripts fetch, analyze, and summarize threat intelligence
+- **Secure Authentication**: JWT-based authentication with HTTP-only cookies
+- **Role-Based Access Control**: Admin and User roles
+- **Responsive Cyber-Themed UI**: Modern, dark, and technical design
+- **MongoDB Integration**: Secure data storage
 
 ### Security Features
-- **🛡️ Protected Routes**: Server-side authentication validation
-- **🔑 Password Security**: bcrypt password hashing
-- **🚪 Session Management**: Secure login/logout with token validation
-- **👨‍💼 Admin Dashboard**: User management and system statistics
-- **🔒 Content Protection**: Authentication required for all advisory viewing
+- Protected routes and server-side authentication
+- Passwords hashed with bcrypt
+- JWT tokens in HTTP-only cookies
+- Input validation and sanitization
 
 ### User Roles
-- **Admin Users**: 
-  - Create, edit, and delete advisories
-  - Manage user accounts
-  - Access admin dashboard
-  - View system statistics
-- **Regular Users**: 
-  - View advisories after authentication
-  - Browse threat intelligence
+- **Admin**: Manage advisories and users, access admin dashboard
+- **User**: View advisories after authentication
+
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 15.4.4, React, TypeScript
-- **Styling**: Tailwind CSS with custom cyber theme
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT tokens, bcryptjs
-- **UI Components**: Custom cyber-themed components
-- **Icons**: Lucide React
+- **Frontend & API**: Next.js (React, TypeScript)
+- **Styling**: Tailwind CSS
+- **Database**: MongoDB (Mongoose ODM)
+- **Authentication**: JWT, bcryptjs
+- **Automation**: Python 3 scripts (backend/)
+- **Containerization**: Docker
 
-## 📦 Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/hackelite01/Threat-Advisory.git
-   cd Threat-Advisory
-   ```
+## 📦 Getting Started
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### 1. Clone the repository
+```bash
+git clone https://github.com/hackelite01/Threat-Advisory.git
+cd Threat-Advisory
+```
 
-3. **Set up environment variables**
-   Create a `.env.local` file in the root directory:
-   ```env
-   MONGODB_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret_key
-   ```
+### 2. Install Node.js dependencies
+```bash
+npm install
+```
 
-4. **Run the development server**
-   ```bash
-   npm run dev
-   ```
+### 3. Set up environment variables
+Create a `.env.local` file in the root directory:
+```env
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+```
 
-5. **Open your browser**
-   Navigate to `http://localhost:3000`
+### 4. Install Python dependencies (for backend scripts)
+```bash
+cd backend
+pip install -r requirements.txt
+```
 
-## 🔧 Configuration
+### 5. Run the development server
+```bash
+npm run dev
+```
+
+### 6. Open your browser
+Go to `http://localhost:3000`
+
+
+## 🔧 Configuration & Usage
 
 ### MongoDB Setup
 1. Create a MongoDB database
 2. Add your connection string to `.env.local`
 3. The application will automatically create the required collections
 
-### Default Admin User
-The system includes seeding for a default admin user:
-- **Email**: admin@threatwatch.com
-- **Password**: admin123
-- **Role**: Admin
+### Python Automation Scripts
+- All automation and advisory generation scripts are in `backend/`
+- Main entry: `backend/generate_advisories.py`
+- Configure feeds and LLM in `backend/config.yaml`
+
+### Running Advisory Generation (Manual)
+```bash
+cd backend
+python generate_advisories.py 1
+```
+
+### Running Advisory Generation (From Frontend)
+- The API route `/api/auto-feed` triggers the Python script and returns results to the frontend.
+
 
 ## 📁 Project Structure
 
-```
-Threat-Advisory/
-├── components/
-│   ├── ui/
-│   │   ├── cyber-components.tsx    # Custom UI components
-│   │   └── cyber-effects.tsx       # Visual effects
-│   ├── AdvisoryCard.tsx            # Advisory display component
-│   ├── Navbar.tsx                  # Navigation component
-│   └── SeverityBadge.tsx           # Severity indicator
-├── contexts/
-│   └── AuthContext.tsx             # Authentication state management
-├── lib/
-│   ├── auth.ts                     # Authentication utilities
-│   ├── db.ts                       # Database connection
-│   └── utils.ts                    # Utility functions
-├── models/
-│   ├── Advisory.ts                 # Advisory data model
-│   └── User.ts                     # User data model
-├── pages/
-│   ├── api/                        # API endpoints
-│   ├── admin/                      # Admin-only pages
-│   ├── advisories/                 # Advisory listing
-│   ├── advisory/                   # Individual advisory pages
-│   ├── login.tsx                   # Authentication page
-│   └── index.tsx                   # Landing page
-└── styles/
-    └── globals.css                 # Global styles
-```
+See `file_map.md` for a detailed file/folder map and working overview.
 
-## 🔐 API Endpoints
 
-### Authentication
-- `POST /api/auth/login` - User authentication
-- `POST /api/auth/logout` - User logout
-- `GET /api/auth/profile` - Get user profile
+## 🔐 API Endpoints (Selected)
 
-### Advisories
-- `GET /api/advisories` - List all advisories
-- `POST /api/advisories` - Create new advisory (Admin only)
-- `GET /api/advisories/[id]` - Get specific advisory
-- `PUT /api/advisories/[id]` - Update advisory (Admin only)
-- `DELETE /api/advisories/[id]` - Delete advisory (Admin only)
+- `/api/auth/login` – User authentication
+- `/api/auth/logout` – User logout
+- `/api/auth/profile` – Get user profile
+- `/api/advisories` – List all advisories
+- `/api/advisories/[id]` – Get or update a specific advisory
+- `/api/auto-feed` – Triggers backend Python script for advisory generation
 
-### Users (Admin only)
-- `GET /api/users` - List all users
-- `POST /api/users` - Create new user
-- `PUT /api/users/[id]` - Update user
-- `DELETE /api/users/[id]` - Delete user
 
 ## 🎨 UI Theme
 
-The platform features a custom cybersecurity-themed design:
-- **Dark cyber aesthetic** with neon accents
-- **Monospace fonts** for technical authenticity
-- **Glitch effects** and holographic overlays
-- **Color scheme**: Cyber blue, green, and red
-- **Terminal-style** windows and components
+- Dark cyber aesthetic with neon accents
+- Monospace fonts, glitch effects, and terminal-style components
+
 
 ## 🚀 Deployment
 
-The application is ready for deployment on platforms like:
-- **Vercel** (recommended for Next.js)
-- **Netlify**
-- **Railway**
-- **Heroku**
+### Docker (Recommended)
 
-Make sure to set your environment variables in your deployment platform.
+Build and run the app with Docker (includes Python for backend scripts):
+```bash
+docker build -t threat-advisory .
+docker run -p 3000:3000 --env-file .env.local threat-advisory
+```
+
+### Vercel/Netlify
+- You can deploy the Next.js frontend to Vercel/Netlify, but backend Python scripts must be run separately (e.g., on a VM or server).
+
 
 ## 🤝 Contributing
 
@@ -156,9 +135,11 @@ Make sure to set your environment variables in your deployment platform.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
 ## 🛡️ Security
 
@@ -168,9 +149,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Protected API endpoints
 - Input validation and sanitization
 
+
 ## 📞 Support
 
 If you encounter any issues or have questions, please open an issue in the GitHub repository.
+
 
 ---
 

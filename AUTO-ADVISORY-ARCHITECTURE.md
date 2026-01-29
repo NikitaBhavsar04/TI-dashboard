@@ -407,6 +407,6 @@ Total Time: ~90 seconds for 3 advisories
 
 ---
 
-**Visual Guide Complete!** 🎨
+**Visual Guide Complete!** 
 
 These diagrams show how all components work together to deliver the Auto Advisory feature.

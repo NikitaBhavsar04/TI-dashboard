@@ -1,17 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Client } from '@opensearch-project/opensearch';
 
-const host = process.env.OPENSEARCH_HOST || 'localhost';
+// Prioritize OPENSEARCH_URL for AWS deployments
+const opensearchUrl = process.env.OPENSEARCH_URL;
+const host = process.env.OPENSEARCH_HOST;
 const port = process.env.OPENSEARCH_PORT || '9200';
 const username = process.env.OPENSEARCH_USERNAME;
 const password = process.env.OPENSEARCH_PASSWORD;
 const index = process.env.OPENSEARCH_ADVISORY_INDEX || 'ti-generated-advisories';
 
-const isLocalhost = host === 'localhost' || host === '127.0.0.1';
-const scheme = isLocalhost ? 'http' : 'https';
+if (!opensearchUrl && !host) {
+  throw new Error('OPENSEARCH_URL or OPENSEARCH_HOST must be set');
+}
+
+const nodeUrl = opensearchUrl || `https://${host}:${port}`;
 
 const clientConfig: any = {
-  node: `${scheme}://${host}:${port}`,
+  node: nodeUrl,
   ssl: { rejectUnauthorized: false },
 };
 

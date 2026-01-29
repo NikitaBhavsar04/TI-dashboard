@@ -1,3 +1,4 @@
+require('dotenv/config')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -9,20 +10,22 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   
-  // ESLint configuration for build
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
-  
   // Production optimizations
   poweredByHeader: false,
   compress: true,
   
   // Image optimization
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
     unoptimized: false,
   },
   

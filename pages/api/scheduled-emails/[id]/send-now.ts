@@ -45,7 +45,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Inject tracking pixel into email body
-    const trackingPixelUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/track-email/${scheduledEmail.trackingId}`;
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+    if (!baseUrl) {
+      return res.status(500).json({ message: 'Application URL not configured' });
+    }
+    const trackingPixelUrl = `${baseUrl}/api/track-email/${scheduledEmail.trackingId}`;
     const trackingPixel = `<img src="${trackingPixelUrl}" width="1" height="1" style="display:block;width:1px;height:1px;" alt="" />`;
     let trackedEmailHtml = emailHtml;
     if (emailHtml.includes('</body>')) {

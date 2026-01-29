@@ -5,8 +5,14 @@ const cron = require('node-cron');
 const fetch = require('node-fetch');
 require('dotenv').config();
 
-// You may need to update this URL if your server runs on a different port or domain
-const PROCESS_URL = 'http://localhost:3000/api/scheduled-emails/process';
+// Use NEXTAUTH_URL or NEXT_PUBLIC_APP_URL from environment
+const BASE_URL = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+
+if (!BASE_URL) {
+  throw new Error('NEXTAUTH_URL or NEXT_PUBLIC_APP_URL environment variable must be set');
+}
+
+const PROCESS_URL = `${BASE_URL}/api/scheduled-emails/process`;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
 
 cron.schedule('* * * * *', async () => {

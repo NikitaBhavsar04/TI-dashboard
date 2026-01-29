@@ -30,7 +30,11 @@ export default async function handler(
       console.log('[RAW-ARTICLES] Script path:', scriptPath);
       console.log('[RAW-ARTICLES] Backend path:', backendPath);
       
-      const python = spawn('python', [scriptPath], {
+      // Detect Python command (python3 on Linux/AWS, python on Windows)
+      const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+      console.log('[RAW-ARTICLES] Using Python command:', pythonCmd);
+      
+      const python = spawn(pythonCmd, [scriptPath], {
         cwd: backendPath,
         env: process.env
       });

@@ -3,16 +3,21 @@ import { verifyToken } from '@/lib/auth';
 import { Client } from '@opensearch-project/opensearch';
 
 // Initialize OpenSearch client with proper credentials
-const host = process.env.OPENSEARCH_HOST || 'localhost';
+const opensearchUrl = process.env.OPENSEARCH_URL;
+const host = process.env.OPENSEARCH_HOST;
 const port = process.env.OPENSEARCH_PORT || '9200';
 const username = process.env.OPENSEARCH_USERNAME;
 const password = process.env.OPENSEARCH_PASSWORD;
 
-const isLocalhost = host === 'localhost' || host === '127.0.0.1';
-const scheme = isLocalhost ? 'http' : 'https';
+if (!opensearchUrl && !host) {
+  throw new Error('OPENSEARCH_URL or OPENSEARCH_HOST must be set in environment variables');
+}
+
+// Use OPENSEARCH_URL if available (AWS deployment), otherwise construct from host/port
+const nodeUrl = opensearchUrl || `https://${host}:${port}`;
 
 const clientConfig: any = {
-  node: `${scheme}://${host}:${port}`,
+  node: nodeUrl,
   ssl: { rejectUnauthorized: false },
 };
 

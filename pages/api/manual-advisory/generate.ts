@@ -83,8 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('[MANUAL-ADVISORY] Backend path:', backendPath);
     console.log('[MANUAL-ADVISORY] Script path:', scriptPath);
     console.log('[MANUAL-ADVISORY] OpenSearch config:', {
-      host: process.env.OPENSEARCH_HOST || 'localhost',
-      port: process.env.OPENSEARCH_PORT || '9200',
+      url: process.env.OPENSEARCH_URL || `https://${process.env.OPENSEARCH_HOST}:${process.env.OPENSEARCH_PORT || '9200'}`,
       username: process.env.OPENSEARCH_USERNAME ? '***' : '(empty)',
       password: process.env.OPENSEARCH_PASSWORD ? '***' : '(empty)'
     });
@@ -95,11 +94,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error(`Python script not found: ${scriptPath}`);
     }
 
-    const python = spawn('python', [scriptPath, articleId], {
+    // Auto-detect python command for platform (use 'python3' for Linux/macOS, 'python' for Windows)
+    let pythonCmd = 'python3';
+    if (process.platform === 'win32') {
+      pythonCmd = 'python';
+    }
+    const python = spawn(pythonCmd, [scriptPath, articleId], {
       cwd: backendPath,
       env: { 
         ...process.env,
-        OPENSEARCH_HOST: process.env.OPENSEARCH_HOST || 'localhost',
+        OPENSEARCH_URL: process.env.OPENSEARCH_URL || '',
+        OPENSEARCH_HOST: process.env.OPENSEARCH_HOST || '',
         OPENSEARCH_PORT: process.env.OPENSEARCH_PORT || '9200',
         OPENSEARCH_USERNAME: process.env.OPENSEARCH_USERNAME || '',
         OPENSEARCH_PASSWORD: process.env.OPENSEARCH_PASSWORD || ''

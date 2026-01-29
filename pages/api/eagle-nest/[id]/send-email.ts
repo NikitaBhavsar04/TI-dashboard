@@ -40,8 +40,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       custom_message: customMessage || ''
     });
 
-    // Spawn Python process
-    const pythonProcess = spawn('python', [scriptPath], {
+    // Auto-detect python command for platform
+    const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+    const pythonProcess = spawn(pythonCmd, [scriptPath], {
       cwd: path.join(process.cwd(), 'backend')
     });
 

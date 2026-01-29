@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: threat-advisory
+    ports:
+      - "3000:3000"
+    environment:
+      # You can set environment variables here or use an env_file
+      # - MONGODB_URI=your_mongodb_connection_string
+      # - JWT_SECRET=your_jwt_secret_key
+    env_file:
+      - .env.local
+    restart: unless-stopped
+    # Uncomment if you want to mount code for live reload in dev (not for prod)
+    # volumes:
+    #   - .:/app
