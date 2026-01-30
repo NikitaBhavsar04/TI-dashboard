@@ -1,14 +1,12 @@
 # Single-container build: build Next in Node, runtime on Python image with Node runtime
 
 # --- Build stage: Next.js ---
-FROM node:18-bullseye-slim AS node_builder
+FROM node:20-bullseye-slim AS node_builder
 WORKDIR /app
-COPY package.json package-lock.json* yarn.lock* ./
+COPY package.json yarn.lock ./
 # Keep base ca-certificates for network ops
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
-RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
-    elif [ -f package-lock.json ]; then npm ci --legacy-peer-deps; \
-    else npm install --legacy-peer-deps; fi
+RUN yarn install --frozen-lockfile --production=false
 COPY next.config.js ./
 COPY components ./components
 COPY contexts ./contexts
@@ -17,7 +15,7 @@ COPY models ./models
 COPY pages ./pages
 COPY public ./public
 COPY styles ./styles
-RUN npm run build
+RUN yarn build
 
 # --- Runtime stage: Python base with Node runtime installed ---
 FROM python:3.9-slim
