@@ -16,6 +16,12 @@ COPY models ./models
 COPY pages ./pages
 COPY public ./public
 COPY styles ./styles
+# Set dummy environment variables for build-time page generation
+# Real values will be provided at runtime via .env.local or docker-compose
+ENV MONGODB_URI="mongodb+srv://threatadvisory:dwoCFLCGxMqXzAKq@threatadvisory.atzvfoo.mongodb.net/?appName=ThreatAdvisory" \
+    NEXTAUTH_URL="http://localhost:3000" \
+    NEXTAUTH_SECRET="build-time-dummy-secret" \
+    JWT_SECRET="build-time-dummy-jwt"
 RUN yarn build
 
 # --- Runtime stage: Python base with Node runtime installed ---
@@ -40,9 +46,8 @@ COPY backend/requirements.txt ./backend/requirements.txt
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir -r ./backend/requirements.txt
 
-# Copy backend and config
+# Copy backend (includes config.yaml inside backend folder)
 COPY backend ./backend
-COPY config.yaml ./
 
 # Copy built frontend artifacts from builder
 COPY --from=node_builder /app/.next ./.next
@@ -51,13 +56,18 @@ COPY --from=node_builder /app/package.json ./package.json
 COPY --from=node_builder /app/node_modules ./node_modules
 COPY --from=node_builder /app/next.config.js ./next.config.js
 
-# Copy project frontend source (some runtime imports may require files)
-COPY components ./components
-COPY contexts ./contexts
-COPY lib ./lib
-COPY models ./models
-COPY pages ./pages
-COPY styles ./styles
+# Copy PostCSS and Tailwind config files
+COPY --from=node_builder /app/postcss.config.js ./postcss.config.js
+COPY --from=node_builder /app/tailwind.config.js ./tailwind.config.js
+COPY --from=node_builder /app/tsconfig.json ./tsconfig.json
+
+# Copy project frontend source from builder (already processed)
+COPY --from=node_builder /app/components ./components
+COPY --from=node_builder /app/contexts ./contexts
+COPY --from=node_builder /app/lib ./lib
+COPY --from=node_builder /app/models ./models
+COPY --from=node_builder /app/pages ./pages
+COPY --from=node_builder /app/styles ./styles
 
 # Supervisor config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf

@@ -21,7 +21,6 @@ import {
   Network,
   AlertTriangle
 } from 'lucide-react';
-import HydrationSafe from '@/components/HydrationSafe';
 
 function Home() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -99,21 +98,19 @@ function Home() {
 
   if (loading) {
     return (
-      <HydrationSafe>
-        <div className="min-h-screen bg-tech-gradient flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="spinner-neon mx-auto"></div>
-            <div className="text-neon-blue font-orbitron text-lg tracking-wider animate-pulse">
-              INITIALIZING SYSTEM...
-            </div>
+      <div className="min-h-screen bg-tech-gradient flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="spinner-neon mx-auto"></div>
+          <div className="text-neon-blue font-orbitron text-lg tracking-wider animate-pulse">
+            INITIALIZING SYSTEM...
           </div>
         </div>
-      </HydrationSafe>
+      </div>
     );
   }
 
   return (
-    <HydrationSafe>
+    <>
       <div className="relative min-h-screen bg-tech-gradient">
         <AnimatedBackground opacity={0.8} />
         <div className="relative z-10">
@@ -280,7 +277,7 @@ function Home() {
         </footer>
         </div>
       </div>
-    </HydrationSafe>
+    </>
   );
 }
 

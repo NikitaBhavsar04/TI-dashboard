@@ -1,4 +1,4 @@
-import '@/styles/globals-new.css';
+import '@/styles/globals.css';
 import type { AppProps } from 'next/app';
 import Sidebar from '@/components/Sidebar';
 import AnimatedBackground from '@/components/AnimatedBackground';

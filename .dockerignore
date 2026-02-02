@@ -1,8 +1,49 @@
+# Dependencies
 node_modules
+
+# Build artifacts (will be copied from builder stage)
 .next
+
+# Python
 __pycache__
 *.pyc
+*.pyo
+*.pyd
+.Python
+
+# Git
 .git
 .gitignore
+.gitattributes
+
+# Environment files
 .env
 .env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+.cache
+*.md
+LICENSE
