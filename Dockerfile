@@ -7,8 +7,9 @@ COPY package.json yarn.lock ./
 # Keep base ca-certificates for network ops
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 RUN yarn install --frozen-lockfile --production=false
-# Copy config files needed for build
+# Copy config files needed for build (including CSS processing configs)
 COPY next.config.js tsconfig.json next-env.d.ts .eslintrc.json* ./
+COPY postcss.config.js tailwind.config.js ./
 COPY components ./components
 COPY contexts ./contexts
 COPY lib ./lib
@@ -36,7 +37,7 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        curl bash ca-certificates build-essential gcc libffi-dev libxml2-dev libxslt1-dev libjpeg-dev zlib1g-dev libpq-dev git supervisor \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
