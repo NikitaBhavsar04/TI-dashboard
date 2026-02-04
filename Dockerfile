@@ -50,6 +50,9 @@ RUN pip install --upgrade pip \
 # Copy backend (includes config.yaml inside backend folder)
 COPY backend ./backend
 
+# Copy root-level templates folder (required for email generation)
+COPY templates ./templates
+
 # Copy built frontend artifacts from builder
 COPY --from=node_builder /app/.next ./.next
 COPY --from=node_builder /app/public ./public

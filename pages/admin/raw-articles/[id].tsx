@@ -4,7 +4,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import HydrationSafe from '@/components/HydrationSafe';
-import AnimatedBackground from '@/components/AnimatedBackground';
 import { 
   ArrowLeft,
   ExternalLink,
@@ -193,8 +192,7 @@ export default function RawArticleDetail() {
 
   return (
     <HydrationSafe>
-      <div className="relative min-h-screen bg-tech-gradient">
-        <AnimatedBackground opacity={0.6} />
+      <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         
         <div className="relative z-10">
           <Head>

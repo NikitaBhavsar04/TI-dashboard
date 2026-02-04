@@ -19,7 +19,7 @@ from typing import List, Dict, Optional, Set
 
 import requests
 from bs4 import BeautifulSoup
-from readability import Document
+from readability.readability import Document
 from opensearchpy import helpers
 from utils.opensearch_client import get_opensearch_client
 from dotenv import load_dotenv

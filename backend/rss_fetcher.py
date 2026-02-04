@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 import requests
 import feedparser
 from bs4 import BeautifulSoup
-from readability import Document
+from readability.readability import Document
 from dateutil import parser as dateparser
 from opensearchpy import helpers
 from utils.opensearch_client import get_opensearch_client

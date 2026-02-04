@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { Calendar } from 'lucide-react';
 import HydrationSafe from '@/components/HydrationSafe';
+import LoadingLogo from '@/components/LoadingLogo';
 import ScheduledEmailsManager from '@/components/ScheduledEmailsManager';
 import EditScheduledEmailModal from '@/components/EditScheduledEmailModal';
 import { verifyToken } from '@/lib/auth';
@@ -46,10 +47,7 @@ export default function ScheduledEmailsPage() {
       {/* Show loading state while checking authentication */}
       {loading && (
         <div className="min-h-screen bg-tech-gradient flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-blue mx-auto mb-4"></div>
-            <div className="text-slate-400 font-rajdhani">Loading...</div>
-          </div>
+          <LoadingLogo message="Loading..." />
         </div>
       )}
 
@@ -73,15 +71,19 @@ export default function ScheduledEmailsPage() {
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                     <div className="mb-6 lg:mb-0">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Calendar className="w-8 h-8 text-violet-400" />
-                        <h1 className="font-orbitron font-bold text-3xl md:text-4xl text-gradient-blue">
-                          Scheduled Emails
-                        </h1>
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-xl backdrop-blur-sm border border-violet-500/30">
+                          <Calendar className="h-10 w-10 text-violet-400" />
+                        </div>
+                        <div>
+                          <h1 className="font-orbitron font-bold text-4xl md:text-5xl bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
+                            Scheduled Emails
+                          </h1>
+                          <p className="font-rajdhani text-lg text-slate-400 mt-2">
+                            Manage and monitor scheduled advisory email notifications
+                          </p>
+                        </div>
                       </div>
-                      <p className="font-rajdhani text-lg text-slate-400 max-w-2xl">
-                        Manage and monitor scheduled advisory email notifications
-                      </p>
                     </div>
                   </div>
                 </motion.div>

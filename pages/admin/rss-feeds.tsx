@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Rss, Plus, Trash2, ExternalLink, Loader, Search, CheckCircle, XCircle, Power } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/router';
-import AnimatedBackground from '../../components/AnimatedBackground';
+import LoadingLogo from '../../components/LoadingLogo';
 
 interface RssFeed {
   url: string;
@@ -159,10 +159,9 @@ export default function RSSFeedsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      <AnimatedBackground />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
       
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -171,13 +170,13 @@ export default function RSSFeedsPage() {
         >
           <div className="flex items-center gap-4 mb-4">
             <div className="p-3 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl backdrop-blur-sm border border-orange-500/30">
-              <Rss className="h-8 w-8 text-orange-400" />
+              <Rss className="h-10 w-10 text-orange-400" />
             </div>
             <div>
-              <h1 className="text-4xl font-orbitron font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
+              <h1 className="font-orbitron font-bold text-4xl md:text-5xl bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
                 RSS Feed Sources
               </h1>
-              <p className="text-gray-400 mt-1">
+              <p className="font-rajdhani text-lg text-slate-400 mt-2">
                 Manage RSS feed sources for threat intelligence gathering
               </p>
             </div>
@@ -295,7 +294,7 @@ export default function RSSFeedsPage() {
         >
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader className="h-8 w-8 animate-spin text-orange-400" />
+              <LoadingLogo message="Loading RSS feeds..." />
             </div>
           ) : filteredFeeds.length === 0 ? (
             <div className="text-center py-20 text-gray-400">

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import UserManagement from '../../components/UserManagement';
+import LoadingLogo from '../../components/LoadingLogo';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
@@ -25,7 +26,7 @@ const AdminUsersPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-cyan-500"></div>
+        <LoadingLogo message="Loading..." />
       </div>
     );
   }

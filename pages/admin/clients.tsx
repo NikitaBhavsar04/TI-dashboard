@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import HydrationSafe from '@/components/HydrationSafe';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import LoadingLogo from '@/components/LoadingLogo';
 import { 
   Plus, 
   Edit, 
@@ -351,10 +351,7 @@ export default function ClientsManagement() {
     return (
       <HydrationSafe>
         <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-blue mx-auto mb-4"></div>
-            <div className="text-slate-400 font-rajdhani">Loading...</div>
-          </div>
+          <LoadingLogo message="Loading..." />
         </div>
       </HydrationSafe>
     );
@@ -366,8 +363,7 @@ export default function ClientsManagement() {
 
   return (
     <HydrationSafe>
-      <div className="relative min-h-screen bg-tech-gradient pt-20">
-        <AnimatedBackground opacity={0.6} />
+      <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-20">
         <div className="relative z-10">
           <Head>
             <title>Client Management - EaglEye IntelDesk</title>
@@ -443,7 +439,7 @@ export default function ClientsManagement() {
         <div className="glass-panel-hover">
           {loading ? (
             <div className="p-8 text-center">
-              <div className="text-slate-400 font-rajdhani">Loading clients...</div>
+              <LoadingLogo message="Loading clients..." />
             </div>
           ) : filteredClients.length === 0 ? (
             <div className="p-8 text-center">

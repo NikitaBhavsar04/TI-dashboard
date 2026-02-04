@@ -3,7 +3,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
-import AnimatedBackground from '@/components/AnimatedBackground';
 import EmailModal from '@/components/EmailModal';
 import { motion } from 'framer-motion';
 import { 
@@ -153,8 +152,7 @@ export default function EagleNestDetail() {
 
   return (
     <HydrationSafe>
-      <div className="relative min-h-screen bg-tech-gradient pt-20">
-        <AnimatedBackground opacity={0.8} />
+      <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-20">
         <div className="relative z-10">
           <Head>
             <title>{advisory.title} - Eagle Nest - EaglEye IntelDesk</title>

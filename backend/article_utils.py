@@ -1,7 +1,7 @@
 import re
 from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
-from readability import Document
+from readability.readability import Document
 
 CVE_RE = re.compile(r"\bCVE-(?:19|20)\d{2}-\d{4,7}\b", re.I)
 

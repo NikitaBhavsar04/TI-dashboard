@@ -2,7 +2,6 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getUserFromRequest } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import ScheduledEmail from '@/models/ScheduledEmail';
-import Advisory from '@/models/Advisory';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -27,51 +26,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       console.log(`📧 Found ${scheduledEmails.length} scheduled emails in database`);
 
-      // Try to populate advisory info for each email
-      const transformedEmails = await Promise.all(scheduledEmails.map(async (email) => {
-        let advisory = null;
-        
-        // Try to fetch advisory info if advisoryId exists
-        if (email.advisoryId) {
-          try {
-            // Check if it's a valid MongoDB ObjectId format (24 hex characters)
-            const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(email.advisoryId.toString());
-            
-            if (isValidObjectId) {
-              const advisoryDoc = await Advisory.findById(email.advisoryId).select('title severity').lean();
-              if (advisoryDoc) {
-                advisory = {
-                  title: advisoryDoc.title,
-                  severity: advisoryDoc.severity
-                };
-              }
-            } else {
-              // This is likely an Eagle Nest advisory with custom ID format
-              // Try to load from JSON file
-              const fs = require('fs');
-              const path = require('path');
-              const eagleNestPath = path.resolve(process.cwd(), 'backend', 'workspace', 'eagle_nest', `${email.advisoryId}.json`);
-              
-              if (fs.existsSync(eagleNestPath)) {
-                const eagleNestData = JSON.parse(fs.readFileSync(eagleNestPath, 'utf8'));
-                advisory = {
-                  title: eagleNestData.title || 'Eagle Nest Advisory',
-                  severity: eagleNestData.severity || 'Unknown'
-                };
-              }
-            }
-          } catch (err) {
-            console.log(`⚠️ Could not find advisory ${email.advisoryId} for email ${email._id}: ${err.message}`);
-          }
-        }
-
+      // Transform emails for client (advisory info would need to be fetched from OpenSearch if needed)
+      const transformedEmails = scheduledEmails.map((email) => {
         return {
           ...email,
           _id: email._id.toString(),
           advisoryId: email.advisoryId?.toString() || email.advisoryId,
-          advisory
+          // Advisory info can be fetched separately on frontend if needed from OpenSearch
+          advisory: null
         };
-      }));
+      });
 
       console.log(`Returning ${transformedEmails.length} scheduled emails`);
 

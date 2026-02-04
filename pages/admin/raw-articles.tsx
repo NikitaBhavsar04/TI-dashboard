@@ -4,18 +4,16 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import HydrationSafe from '@/components/HydrationSafe';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import LoadingLogo from '@/components/LoadingLogo';
 import { 
   ArrowLeft,
   RefreshCw,
-  Download,
+
   ExternalLink,
   Calendar,
   Globe,
-  Tag,
   Hash,
-  AlertTriangle,
-  CheckCircle,
+ 
   Clock,
   FileText,
   Search,
@@ -42,14 +40,32 @@ interface RawArticle {
   status: string;
 }
 
+interface Pagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+  hasPrev: boolean;
+}
+
 export default function RawArticles() {
   const [articles, setArticles] = useState<RawArticle[]>([]);
-  const [filteredArticles, setFilteredArticles] = useState<RawArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1,
+    pageSize: 50,
+    total: 0,
+    totalPages: 0,
+    hasMore: false,
+    hasPrev: false
+  });
+  const [totalArticles, setTotalArticles] = useState(0);
 
   const { user, hasRole, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -65,38 +81,51 @@ export default function RawArticles() {
     }
   }, [user, hasRole, authLoading, router]);
 
+  // Debounce search query
   useEffect(() => {
-    // Filter articles based on search and status
-    let filtered = articles;
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500); // Wait 500ms after user stops typing
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(article =>
-        article.title.toLowerCase().includes(query) ||
-        article.source.toLowerCase().includes(query) ||
-        article.article_text.toLowerCase().includes(query) ||
-        article.cves.some(cve => cve.toLowerCase().includes(query))
-      );
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fetch articles when page, debounced search, or filter changes
+  useEffect(() => {
+    if (hasRole('admin') && user) {
+      fetchArticles();
     }
+  }, [pagination.page, debouncedSearchQuery, filterStatus]);
 
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(article => article.status === filterStatus);
-    }
-
-    setFilteredArticles(filtered);
-  }, [searchQuery, filterStatus, articles]);
-
-  const fetchArticles = async () => {
+  const fetchArticles = async (resetPage = false) => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/raw-articles', {
+      const currentPage = resetPage ? 1 : pagination.page;
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        pageSize: pagination.pageSize.toString(),
+      });
+      
+      if (debouncedSearchQuery) {
+        params.append('search', debouncedSearchQuery);
+      }
+      
+      if (filterStatus && filterStatus !== 'all') {
+        params.append('status', filterStatus);
+      }
+      
+      const response = await fetch(`/api/raw-articles?${params.toString()}`, {
         credentials: 'include'
       });
 
       if (response.ok) {
         const data = await response.json();
         setArticles(data.articles || []);
-        setFilteredArticles(data.articles || []);
+        
+        if (data.pagination) {
+          setPagination(data.pagination);
+          setTotalArticles(data.pagination.total);
+        }
+        
         if (data.lastFetched) {
           setLastFetched(new Date(data.lastFetched));
         }
@@ -120,7 +149,8 @@ export default function RawArticles() {
       
       if (data.success) {
         alert('Articles fetched successfully! Refreshing list...');
-        await fetchArticles();
+        setPagination(prev => ({ ...prev, page: 1 }));
+        await fetchArticles(true);
       } else {
         alert(`Failed to fetch articles: ${data.error}`);
       }
@@ -129,6 +159,28 @@ export default function RawArticles() {
       alert(`Error: ${error.message}`);
     } finally {
       setFetching(false);
+    }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handleFilterChange = (value: string) => {
+    setFilterStatus(value);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const goToNextPage = () => {
+    if (pagination.hasMore) {
+      setPagination(prev => ({ ...prev, page: prev.page + 1 }));
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (pagination.hasPrev) {
+      setPagination(prev => ({ ...prev, page: prev.page - 1 }));
     }
   };
 
@@ -157,12 +209,7 @@ export default function RawArticles() {
     return (
       <HydrationSafe>
         <div className="min-h-screen bg-tech-gradient flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="spinner-neon mx-auto"></div>
-            <div className="text-neon-blue font-orbitron text-lg tracking-wider animate-pulse">
-              LOADING RAW ARTICLES...
-            </div>
-          </div>
+          <LoadingLogo message="LOADING RAW ARTICLES..." />
         </div>
       </HydrationSafe>
     );
@@ -170,8 +217,7 @@ export default function RawArticles() {
 
   return (
     <HydrationSafe>
-      <div className="relative min-h-screen bg-tech-gradient">
-        <AnimatedBackground opacity={0.6} />
+      <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         
         <div className="relative z-10">
           <Head>
@@ -180,20 +226,17 @@ export default function RawArticles() {
 
           {/* Header */}
           <div className="glass-panel border-b border-slate-700/50">
-            <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <Link href="/admin">
-                    <button className="flex items-center space-x-2 px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200">
-                      <ArrowLeft className="h-4 w-4" />
-                      <span className="font-rajdhani">Back</span>
-                    </button>
-                  </Link>
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl backdrop-blur-sm border border-cyan-500/30">
+                    <FileText className="h-10 w-10 text-cyan-400" />
+                  </div>
                   <div>
-                    <h1 className="text-2xl font-orbitron font-bold text-white">
+                    <h1 className="font-orbitron font-bold text-4xl md:text-5xl bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                       Raw Articles Feed
                     </h1>
-                    <p className="text-slate-400 font-rajdhani">
+                    <p className="font-rajdhani text-lg text-slate-400 mt-2">
                       Articles from security sources
                     </p>
                   </div>
@@ -211,7 +254,7 @@ export default function RawArticles() {
             </div>
           </div>
 
-          <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
             
             {/* Stats and Filters */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -219,7 +262,7 @@ export default function RawArticles() {
                 <div className="flex items-center justify-between mb-2">
                   <FileText className="h-6 w-6 text-neon-blue" />
                   <span className="text-2xl font-orbitron font-bold text-white">
-                    {articles.length}
+                    {totalArticles}
                   </span>
                 </div>
                 <div className="text-slate-400 font-rajdhani text-sm">Total Articles</div>
@@ -227,12 +270,12 @@ export default function RawArticles() {
 
               <div className="glass-panel-hover p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <CheckCircle className="h-6 w-6 text-green-400" />
+                  <FileText className="h-6 w-6 text-orange-400" />
                   <span className="text-2xl font-orbitron font-bold text-white">
-                    {articles.filter(a => a.status === 'NEW').length}
+                    {articles.length}
                   </span>
                 </div>
-                <div className="text-slate-400 font-rajdhani text-sm">New Articles</div>
+                <div className="text-slate-400 font-rajdhani text-sm">Showing on Page {pagination.page}</div>
               </div>
 
               <div className="glass-panel-hover p-6">
@@ -242,7 +285,7 @@ export default function RawArticles() {
                     {articles.reduce((sum, a) => sum + (Array.isArray(a.cves) ? a.cves.length : 0), 0)}
                   </span>
                 </div>
-                <div className="text-slate-400 font-rajdhani text-sm">Total CVEs</div>
+                <div className="text-slate-400 font-rajdhani text-sm">CVEs on This Page</div>
               </div>
 
               <div className="glass-panel-hover p-6">
@@ -265,7 +308,7 @@ export default function RawArticles() {
                     type="text"
                     placeholder="Search articles, sources, CVEs..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-neon-blue/50 font-rajdhani"
                   />
                 </div>
@@ -274,7 +317,7 @@ export default function RawArticles() {
                   <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <select
                     value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
+                    onChange={(e) => handleFilterChange(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani appearance-none cursor-pointer"
                   >
                     <option value="all">All Status</option>
@@ -286,23 +329,35 @@ export default function RawArticles() {
               </div>
             </div>
 
+            {/* Pagination Info */}
+            <div className="glass-panel-hover p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="text-slate-400 font-rajdhani">
+                  Showing <span className="text-white font-semibold">{((pagination.page - 1) * pagination.pageSize) + 1}</span> to <span className="text-white font-semibold">{Math.min(pagination.page * pagination.pageSize, totalArticles)}</span> of <span className="text-white font-semibold">{totalArticles}</span> articles
+                </div>
+                <div className="text-slate-400 font-rajdhani">
+                  Page <span className="text-white font-semibold">{pagination.page}</span> of <span className="text-white font-semibold">{pagination.totalPages}</span>
+                </div>
+              </div>
+            </div>
+
             {/* Articles List */}
             <div className="space-y-6">
-              {filteredArticles.length === 0 ? (
+              {articles.length === 0 ? (
                 <div className="glass-panel-hover p-12 text-center">
                   <FileText className="h-16 w-16 text-slate-600 mx-auto mb-4" />
                   <h3 className="text-xl font-orbitron font-bold text-slate-400 mb-2">
                     No Articles Found
                   </h3>
                   <p className="text-slate-500 font-rajdhani mb-6">
-                    {articles.length === 0 
+                    {totalArticles === 0 
                       ? 'Click "Fetch New Articles" to start collecting data'
                       : 'Try adjusting your search or filter criteria'
                     }
                   </p>
                 </div>
               ) : (
-                filteredArticles.map((article) => (
+                articles.map((article) => (
                   <Link key={article.id} href={`/admin/raw-articles/${article.id}`}>
                     <div className="glass-panel-hover p-6 cursor-pointer transition-all duration-200 hover:border-neon-blue/30">
                       <div className="space-y-4">
@@ -386,6 +441,40 @@ export default function RawArticles() {
                 ))
               )}
             </div>
+
+            {/* Pagination Controls */}
+            {articles.length > 0 && (
+              <div className="glass-panel-hover p-6 mt-8">
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={goToPrevPage}
+                    disabled={!pagination.hasPrev || loading}
+                    className="flex items-center space-x-2 px-6 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-rajdhani font-medium"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                    <span>Previous</span>
+                  </button>
+
+                  <div className="text-center">
+                    <div className="text-white font-orbitron font-bold text-lg">
+                      Page {pagination.page} of {pagination.totalPages}
+                    </div>
+                    <div className="text-slate-400 font-rajdhani text-sm mt-1">
+                      {pagination.pageSize} articles per page
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={goToNextPage}
+                    disabled={!pagination.hasMore || loading}
+                    className="flex items-center space-x-2 px-6 py-3 bg-neon-blue/10 border border-neon-blue/30 rounded-lg text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-rajdhani font-medium"
+                  >
+                    <span>Next</span>
+                    <ArrowLeft className="h-5 w-5 rotate-180" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

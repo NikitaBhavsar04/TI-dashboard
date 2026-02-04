@@ -4,7 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import HydrationSafe from '@/components/HydrationSafe';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import LoadingLogo from '@/components/LoadingLogo';
 import { 
   Users, 
   FileText, 
@@ -165,10 +165,7 @@ export default function AdminDashboard() {
     return (
       <HydrationSafe>
         <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-blue mx-auto mb-4"></div>
-            <div className="text-slate-400 font-rajdhani">Loading dashboard...</div>
-          </div>
+          <LoadingLogo message="Loading dashboard..." />
         </div>
       </HydrationSafe>
     );
@@ -190,8 +187,7 @@ export default function AdminDashboard() {
 
   return (
     <HydrationSafe>
-      <div className="relative min-h-screen bg-slate-900">
-        <AnimatedBackground opacity={0.3} />
+      <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="relative z-10 pt-20">
           <Head>
             <title>Admin Dashboard - EaglEye IntelDesk</title>

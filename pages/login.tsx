@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff, User, Lock, Shield, ArrowRight } from 'lucide-react';
 import HydrationSafe from '@/components/HydrationSafe';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import LoadingLogo from '@/components/LoadingLogo';
 import { motion } from 'framer-motion';
 
 export default function Login() {
@@ -42,12 +42,7 @@ export default function Login() {
     return (
       <HydrationSafe>
         <div className="min-h-screen bg-tech-gradient flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="spinner-neon mx-auto"></div>
-            <div className="text-neon-blue font-orbitron text-lg tracking-wider animate-pulse">
-              INITIALIZING SYSTEM...
-            </div>
-          </div>
+          <LoadingLogo message="INITIALIZING SYSTEM..." />
         </div>
       </HydrationSafe>
     );
@@ -55,8 +50,7 @@ export default function Login() {
 
   return (
     <HydrationSafe>
-      <div className="relative min-h-screen bg-tech-gradient flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <AnimatedBackground opacity={0.25} />
+      <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="relative z-10 w-full max-w-md mx-auto">
           <Head>
             <title>Login - EaglEye IntelDesk Intelligence Platform</title>
@@ -72,16 +66,21 @@ export default function Login() {
           >
             {/* Logo */}
             <div className="flex justify-center mb-6">
-              <div className="p-4 rounded-xl bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 hover-glow">
-                <Shield className="w-12 h-12 text-neon-blue animate-pulse-glow" />
+              <div className="relative w-16 h-16 rounded-full overflow-hidden">
+                <img 
+                  src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiCL2GuXkm4vnkAnNz1yA4Kxlg-jjKIOdohivr_s_uCRQ5z1gYjlSJX139c7I-iR-2i3sCVQK3kmP3_ZRvvBezy_m5eB-sX9N3cn42lJbi5PveE90jfqPt4Luc52J6nU1MTIWZGkdBzT76fTVru6Wk8RafSOcgNzPumjNLay5fUxQ_YIihCHQ7Us1_-wVMV/s400/Eagleye-S.png"
+                  alt="EaglEye Logo"
+                  className="w-full h-full object-contain p-2"
+                  style={{ mixBlendMode: 'screen' }}
+                />
               </div>
             </div>
 
             {/* Title */}
-            <h1 className="font-orbitron font-bold text-4xl text-gradient-blue mb-2">
+            <h1 className="font-poppins font-bold text-4xl text-gradient-blue heading-elegant mb-2">
               EaglEye IntelDesk
             </h1>
-            <p className="font-rajdhani text-slate-400 text-lg">
+            <p className="font-inter text-slate-400 text-lg body-elegant">
               Access Intelligence Platform
             </p>
           </motion.div>
@@ -94,10 +93,10 @@ export default function Login() {
           >
             {/* Form Header */}
             <div className="text-center mb-8">
-              <h2 className="font-orbitron font-semibold text-2xl text-slate-100 mb-2">
+              <h2 className="font-poppins font-semibold text-2xl text-slate-100 mb-2 subheading-refined">
                 Secure Access
               </h2>
-              <p className="font-rajdhani text-slate-400">
+              <p className="font-inter text-slate-400 body-elegant">
                 Enter your credentials to continue
               </p>
             </div>
@@ -106,7 +105,7 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email Field */}
               <div>
-                <label className="block font-rajdhani font-medium text-slate-300 mb-2">
+                <label className="block font-poppins font-medium text-slate-300 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
@@ -126,7 +125,7 @@ export default function Login() {
 
               {/* Password Field */}
               <div>
-                <label className="block font-rajdhani font-medium text-slate-300 mb-2">
+                <label className="block font-poppins font-medium text-slate-300 mb-2">
                   Password
                 </label>
                 <div className="relative">
@@ -144,7 +143,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-neon-blue transition-colors duration-300"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-blue-400 transition-colors duration-300"
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" />
@@ -162,7 +161,7 @@ export default function Login() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-red-500/10 border border-red-500/30 rounded-lg p-3"
                 >
-                  <p className="text-red-400 font-rajdhani text-sm">{error}</p>
+                  <p className="text-red-400 font-poppins text-sm">{error}</p>
                 </motion.div>
               )}
 
@@ -170,7 +169,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full btn-neon group ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-full btn-neon group btn-press hover-lift ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isLoading ? (
                   <div className="spinner-neon w-5 h-5"></div>
@@ -188,7 +187,7 @@ export default function Login() {
             <div className="mt-6 text-center">
               <Link
                 href="/"
-                className="font-rajdhani text-slate-400 hover:text-neon-blue transition-colors duration-300"
+                className="font-poppins text-slate-400 hover:text-blue-400 transition-colors duration-300"
               >
                 ← Back to Home
               </Link>
@@ -207,10 +206,6 @@ export default function Login() {
             </p>
           </motion.div>
           </div>
-
-          {/* Background Effects */}
-          <div className="fixed top-1/4 left-1/4 w-96 h-96 bg-neon-blue/5 rounded-full blur-3xl animate-pulse opacity-60 pointer-events-none"></div>
-          <div className="fixed bottom-1/4 right-1/4 w-96 h-96 bg-neon-purple/5 rounded-full blur-3xl animate-pulse opacity-60 pointer-events-none" style={{ animationDelay: '2s' }}></div>
         </div>
       </div>
     </HydrationSafe>

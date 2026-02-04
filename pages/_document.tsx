@@ -4,6 +4,11 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+        {/* Favicon */}
+        <link rel="icon" href="/Eagleye-S.png" type="image/png" />
+        <link rel="shortcut icon" href="/Eagleye-S.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/Eagleye-S.png" />
+        
         {/* Preload Hanken Grotesk font for better performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

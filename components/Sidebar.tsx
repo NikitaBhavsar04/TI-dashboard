@@ -95,7 +95,6 @@ const isActive = (path: string) => {
 };
 
 const menuItems = [
-    { icon: Home, label: 'Home', path: '/' },
     ...(isAdmin ? [
       { icon: Rss, label: 'RSS Feeds', path: '/admin/rss-feeds' },
       { icon: Database, label: 'Raw Articles', path: '/admin/raw-articles' },

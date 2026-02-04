@@ -1,18 +1,16 @@
-import '@/styles/globals.css';
+import '@/styles/globals-new.css';
 import type { AppProps } from 'next/app';
 import Sidebar from '@/components/Sidebar';
-import AnimatedBackground from '@/components/AnimatedBackground';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { AnimatePresence, motion } from 'framer-motion';
+import type { NextRouter } from 'next/router';
 
-export default function App({ Component, pageProps }: AppProps) {
-  const [mounted, setMounted] = useState(false);
-  const router = useRouter();
+function AppContent({ Component, pageProps, router }: AppProps & { router: NextRouter }) {
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    setMounted(true);
-    
     // Start Agenda in development
     if (process.env.NODE_ENV !== 'production') {
       fetch('/api/start-agenda', { method: 'POST' })
@@ -25,42 +23,67 @@ export default function App({ Component, pageProps }: AppProps) {
   // Check if current page is an advisory detail page
   const isAdvisoryDetailPage = router.pathname === '/advisory/[id]';
 
+  // Show sidebar only when authenticated
+  const showSidebar = isAuthenticated && !isAdvisoryDetailPage;
+
+  return (
+    <div className="min-h-screen bg-tech-gradient relative overflow-hidden flex">
+      {/* Enhanced background with parallax effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pointer-events-none parallax-slow"></div>
+      
+      {/* Sidebar Navigation */}
+      {showSidebar && <Sidebar />}
+      
+      {/* Main content with page transitions */}
+      <div className="relative z-10 flex-1">
+        <AnimatePresence mode="wait">
+          <motion.main
+            key={router.pathname}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{
+              duration: 0.4,
+              ease: [0.4, 0, 0.2, 1]
+            }}
+            className="page-transition"
+          >
+            <Component {...pageProps} />
+          </motion.main>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+export default function App(props: AppProps) {
+  const [mounted, setMounted] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   if (!mounted) {
     return (
       <div className="min-h-screen bg-tech-gradient flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-neon-blue border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div className="text-neon-blue font-orbitron text-lg tracking-wider animate-pulse">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-4"
+        >
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="text-blue-400 font-poppins text-lg tracking-wide animate-pulse">
             INITIALIZING SYSTEM...
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-tech-gradient relative overflow-hidden flex">
-        {/* Subtle background texture */}
-        <div className="absolute inset-0 bg-gradient-to-br from-tech-navy/20 via-transparent to-tech-purple/10 pointer-events-none"></div>
-        
-        {/* Animated Background - show on all pages EXCEPT advisory detail page */}
-        {!isAdvisoryDetailPage && <AnimatedBackground />}
-        
-        {/* Sidebar Navigation - show on all pages EXCEPT advisory detail page */}
-        {!isAdvisoryDetailPage && <Sidebar />}
-        
-        {/* Main content */}
-        <div className="relative z-10 flex-1">
-          <main className="transition-all duration-300 ease-in-out">
-            <Component {...pageProps} />
-          </main>
-        </div>
-
-        {/* Ambient glow effects */}
-        <div className="fixed top-0 left-0 w-96 h-96 bg-neon-blue/5 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ zIndex: 2 }}></div>
-        <div className="fixed bottom-0 right-0 w-96 h-96 bg-neon-purple/5 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDelay: '2s', zIndex: 2 }}></div>
-      </div>
+      <AppContent {...props} router={router} />
     </AuthProvider>
   );
 }

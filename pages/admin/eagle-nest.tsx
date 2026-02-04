@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import HydrationSafe from '@/components/HydrationSafe';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import LoadingLogo from '@/components/LoadingLogo';
 import { 
   Search,
   Filter,
@@ -249,8 +249,7 @@ export default function EagleNest() {
 
   return (
     <HydrationSafe>
-      <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-        <AnimatedBackground opacity={0.6} />
+      <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         
         <div className="relative z-10">
           <Head>
@@ -258,7 +257,7 @@ export default function EagleNest() {
           </Head>
 
           {/* Main Container */}
-          <div className="max-w-[1920px] mx-auto px-6 md:px-8 lg:px-12 py-12 space-y-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8 py-12 space-y-8">
             
             {/* Header */}
             <motion.div
@@ -268,12 +267,19 @@ export default function EagleNest() {
               className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0"
             >
               <div className="flex-1">
-                <h1 className="font-orbitron font-bold text-5xl md:text-6xl mb-4 text-amber-400 drop-shadow-[0_0_30px_rgba(251,191,36,0.5)] tracking-wider px-2 py-1 leading-tight">
-                  Eagle Nest
-                </h1>
-                <p className="font-rajdhani text-lg text-slate-300 max-w-3xl mx-auto lg:mx-0">
-                  Manually generated cybersecurity advisories with comprehensive threat intelligence.
-                </p>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl backdrop-blur-sm border border-cyan-500/30 hover-lift">
+                    <Shield className="h-10 w-10 text-cyan-400" />
+                  </div>
+                  <div>
+                    <h1 className="font-poppins font-bold text-4xl md:text-5xl text-cyan-400">
+                      Eagle Nest
+                    </h1>
+                    <p className="font-inter text-lg text-slate-400 mt-2 body-elegant">
+                      Manually generated cybersecurity advisories with comprehensive threat intelligence.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Action Buttons - Dropdown - Top Right */}
@@ -281,11 +287,11 @@ export default function EagleNest() {
                 <button
                   onClick={() => setShowActionsMenu(!showActionsMenu)}
                   className="
-                    px-5 py-2.5 rounded-lg font-rajdhani font-medium text-sm
+                    px-5 py-2.5 rounded-lg font-poppins font-medium text-sm
                     bg-slate-800 backdrop-blur-sm
-                    border-2 border-amber-500/60
-                    text-amber-400 hover:text-amber-300 hover:border-amber-400 hover:bg-slate-700
-                    transition-all duration-200 flex items-center space-x-2
+                    border-2 border-blue-500/60
+                    text-blue-400 hover:text-blue-300 hover:border-blue-400 hover:bg-slate-700
+                    transition-all duration-200 flex items-center space-x-2 btn-press hover-lift
                   "
                 >
                   <span>Actions</span>
@@ -321,8 +327,8 @@ export default function EagleNest() {
                       className="
                         w-full px-4 py-2.5 text-left flex items-center space-x-3
                         text-slate-300 hover:text-amber-300 hover:bg-amber-500/10
-                        transition-all duration-150 font-rajdhani text-sm
-                        border-b border-slate-800/50 hover:border-amber-500/30
+                        transition-all duration-150 font-poppins text-sm
+                        border-b border-slate-800/50 hover:border-blue-500/30
                       "
                     >
                       <RefreshCw className="w-4 h-4" />
@@ -334,9 +340,9 @@ export default function EagleNest() {
                       onClick={() => setShowActionsMenu(false)}
                       className="
                         w-full px-4 py-2.5 text-left flex items-center space-x-3
-                        text-slate-300 hover:text-amber-300 hover:bg-amber-500/10
-                        transition-all duration-150 font-rajdhani text-sm
-                        hover:border-amber-500/30
+                        text-slate-300 hover:text-blue-300 hover:bg-blue-500/10
+                        transition-all duration-150 font-poppins text-sm
+                        hover:border-blue-500/30
                       "
                     >
                       <Plus className="w-4 h-4" />
@@ -365,11 +371,11 @@ export default function EagleNest() {
                     relative group transition-all duration-300
                     backdrop-blur-md bg-gradient-to-br ${stat.bgColor}
                     rounded-xl p-4 border-2 ${stat.borderColor}
-                    shadow-lg ${stat.glowColor} hover:shadow-xl hover:scale-105
+                    shadow-lg ${stat.glowColor} card-hover-glow
                     before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-br 
                     before:from-white/10 before:to-transparent before:opacity-0 
                     before:transition-opacity before:duration-300 hover:before:opacity-100
-                    cursor-pointer
+                    cursor-pointer btn-press
                     ${selectedSeverity === stat.level ? `ring-2 ring-${stat.color}/50 shadow-2xl scale-105` : ''}
                   `}
                 >
@@ -378,10 +384,10 @@ export default function EagleNest() {
                       <stat.icon className={`w-5 h-5 text-${stat.color} drop-shadow-lg`} />
                     </div>
                     <div>
-                      <div className={`font-orbitron font-bold text-xl text-${stat.color} drop-shadow-lg`}>
+                      <div className={`font-poppins font-bold text-xl text-${stat.color} drop-shadow-lg`}>
                         {stat.count}
                       </div>
-                      <div className="font-rajdhani text-sm text-slate-300 opacity-80">
+                      <div className="font-inter text-sm text-slate-300 opacity-80">
                         {stat.level}
                       </div>
                     </div>
@@ -523,12 +529,7 @@ export default function EagleNest() {
             {/* Advisories List */}
             {loading ? (
               <div className="flex items-center justify-center py-20">
-                <div className="text-center space-y-4">
-                  <div className="spinner-neon mx-auto"></div>
-                  <div className="text-amber-400 font-orbitron text-lg tracking-wider animate-pulse">
-                    LOADING ADVISORIES...
-                  </div>
-                </div>
+                <LoadingLogo message="LOADING ADVISORIES..." />
               </div>
             ) : paginatedAdvisories.length === 0 ? (
               <div className="text-center py-20 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl">

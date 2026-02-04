@@ -20,7 +20,7 @@ from urllib.parse import urlparse, urljoin, urlunparse, parse_qsl, urlencode
 
 import requests
 from bs4 import BeautifulSoup
-from readability import Document
+from readability.readability import Document
 from telethon import TelegramClient
 from opensearchpy import helpers
 from utils.opensearch_client import get_opensearch_client
