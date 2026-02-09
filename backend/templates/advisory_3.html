@@ -155,9 +155,9 @@
               {% if mitre %}
                 {% for row in mitre %}
                 <tr style="background:#F8FAFC;">
-                  <td style="padding:16px;border-bottom:1px solid #E2E8F0;color:#1E293B;font-weight:600;">{{ row.tactic or 'N/A' }}</td>
-                  <td style="padding:16px;border-bottom:1px solid #E2E8F0;color:#475569;font-family:'Courier New',monospace;font-weight:600;">{{ row.techniqueId or row.technique_id or 'N/A' }}</td>
-                  <td style="padding:16px;border-bottom:1px solid #E2E8F0;color:#334155;">{{ row.technique or 'N/A' }}</td>
+                  <td style="padding:16px;border-bottom:1px solid #E2E8F0;color:#1E293B;font-weight:600;">{{ row.tactic or row.tacticName or row.name or 'N/A' }}</td>
+                  <td style="padding:16px;border-bottom:1px solid #E2E8F0;color:#475569;font-family:'Courier New',monospace;font-weight:600;">{{ row.id or row.techniqueId or row.technique_id or 'N/A' }}</td>
+                  <td style="padding:16px;border-bottom:1px solid #E2E8F0;color:#334155;">{{ row.technique or (row.techniques[0] if row.techniques else '') or 'N/A' }}</td>
                 </tr>
                 {% endfor %}
               {% else %}

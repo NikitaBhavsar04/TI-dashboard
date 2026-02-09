@@ -217,7 +217,7 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
     filter === 'all' || email.status === filter
   );
 
-  if (!user || user.role !== 'admin') {
+  if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
     return null;
   }
 
@@ -225,8 +225,8 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
     <div className="bg-slate-900 border border-cyan-500/20 rounded-xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Calendar className="h-6 w-6 text-cyan-400" />
-          <h2 className="text-xl font-orbitron font-bold text-white">Scheduled Emails</h2>
+          <Calendar className="h-5 w-5 text-cyan-400" />
+          <h2 className="text-lg font-orbitron font-bold text-white">Scheduled Emails</h2>
         </div>
         
         <div className="flex items-center gap-4">
@@ -265,13 +265,13 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
 
       {loading ? (
         <div className="text-center py-8">
-          <div className="w-8 h-8 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin mx-auto mb-2" />
-          <p className="text-slate-400">Loading scheduled emails...</p>
+          <div className="w-6 h-6 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin mx-auto mb-2" />
+          <p className="text-slate-400 text-sm">Loading scheduled emails...</p>
         </div>
       ) : filteredEmails.length === 0 ? (
         <div className="text-center py-8">
-          <Mail className="h-12 w-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400">No scheduled emails found</p>
+          <Mail className="h-8 w-8 text-slate-600 mx-auto mb-3" />
+          <p className="text-slate-400 text-sm">No scheduled emails found</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -283,14 +283,14 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-white">{email.subject}</h3>
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(email.status)}`}>
+                    <h3 className="font-semibold text-white text-sm">{email.subject}</h3>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(email.status)}`}>
                       {getStatusIcon(email.status)}
                       {email.status.charAt(0).toUpperCase() + email.status.slice(1)}
                     </span>
                     {/* Read Status Indicator */}
                     {email.status === 'sent' && (
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
                         email.isOpened 
                           ? 'text-blue-400 bg-blue-400/10' 
                           : 'text-gray-400 bg-gray-400/10'
@@ -344,7 +344,7 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                   </div>
 
                   {email.errorMessage && (
-                    <div className="text-red-400 text-sm bg-red-900/20 p-2 rounded mb-3">
+                    <div className="text-red-400 text-xs bg-red-900/20 p-2 rounded mb-3">
                       <strong>Error:</strong> {email.errorMessage}
                     </div>
                   )}

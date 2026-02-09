@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import HydrationSafe from '@/components/HydrationSafe';
@@ -40,14 +41,15 @@ export default function EagleNest() {
 
   const { user, hasRole, loading: authLoading } = useAuth();
   const router = useRouter();
+  const toast = useToast();
 
   useEffect(() => {
-    if (!authLoading && (!user || !hasRole('admin'))) {
+    if (!authLoading && (!user || !hasRole('user'))) {
       router.push('/login');
       return;
     }
     
-    if (hasRole('admin')) {
+    if (hasRole('user')) {
       loadAdvisories();
     }
   }, [user, hasRole, authLoading, router]);
@@ -170,13 +172,14 @@ export default function EagleNest() {
       const data = await response.json();
 
       if (data.success) {
+        toast.success('Advisory deleted successfully');        
         loadAdvisories();
       } else {
-        alert(`Failed to delete: ${data.error}`);
+        toast.error(`Failed to delete: ${data.error}`);     
       }
     } catch (error: any) {
       console.error('Error deleting advisory:', error);
-      alert(`Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     }
   };
 
@@ -184,10 +187,10 @@ export default function EagleNest() {
     if (confirm('Are you sure you want to clear the cache?')) {
       try {
         await fetch('/api/clear-cache', { method: 'POST' });
-        alert('Cache cleared successfully');
+        toast.success('Cache cleared successfully');
         loadAdvisories();
       } catch (error) {
-        alert('Failed to clear cache');
+        toast.error('Failed to clear cache');
       }
     }
   };
@@ -257,7 +260,7 @@ export default function EagleNest() {
           </Head>
 
           {/* Main Container */}
-          <div className="w-full px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+          <div className="w-full px-3 sm:px-4 lg:px-6 py-6 space-y-4">
             
             {/* Header */}
             <motion.div
@@ -267,36 +270,37 @@ export default function EagleNest() {
               className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0"
             >
               <div className="flex-1">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="p-3 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl backdrop-blur-sm border border-cyan-500/30 hover-lift">
-                    <Shield className="h-10 w-10 text-cyan-400" />
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl backdrop-blur-sm border border-cyan-500/30">
+                    <Shield className="h-6 w-6 text-cyan-400" />
                   </div>
                   <div>
-                    <h1 className="font-poppins font-bold text-4xl md:text-5xl text-cyan-400">
+                    <h1 className="font-orbitron font-bold text-2xl md:text-3xl bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                       Eagle Nest
                     </h1>
-                    <p className="font-inter text-lg text-slate-400 mt-2 body-elegant">
+                    <p className="font-rajdhani text-base text-slate-400 mt-1">
                       Manually generated cybersecurity advisories with comprehensive threat intelligence.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Action Buttons - Dropdown - Top Right */}
-              <div className="relative actions-dropdown">
-                <button
-                  onClick={() => setShowActionsMenu(!showActionsMenu)}
-                  className="
-                    px-5 py-2.5 rounded-lg font-poppins font-medium text-sm
-                    bg-slate-800 backdrop-blur-sm
-                    border-2 border-blue-500/60
-                    text-blue-400 hover:text-blue-300 hover:border-blue-400 hover:bg-slate-700
-                    transition-all duration-200 flex items-center space-x-2 btn-press hover-lift
-                  "
-                >
-                  <span>Actions</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showActionsMenu ? 'rotate-180' : ''}`} />
-                </button>
+              {/* Action Buttons - Dropdown - Top Right - Admin only */}
+              {hasRole('admin') && (
+                <div className="relative actions-dropdown">
+                  <button
+                    onClick={() => setShowActionsMenu(!showActionsMenu)}
+                    className="
+                      px-4 py-2 rounded-lg font-poppins font-medium text-sm
+                      bg-slate-800 backdrop-blur-sm
+                      border-2 border-blue-500/60
+                      text-blue-400 hover:text-blue-300 hover:border-blue-400 hover:bg-slate-700
+                      transition-all duration-200 flex items-center space-x-2 btn-press hover-lift
+                    "
+                  >
+                    <span>Actions</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showActionsMenu ? 'rotate-180' : ''}`} />
+                  </button>
 
                 {/* Dropdown Menu */}
                 {showActionsMenu && (
@@ -308,7 +312,7 @@ export default function EagleNest() {
                       }}
                       disabled={loading}
                       className={`
-                        w-full px-4 py-2.5 text-left flex items-center space-x-3
+                        w-full px-3 py-2 text-left flex items-center space-x-2
                         text-slate-300 hover:text-amber-300 hover:bg-amber-500/10
                         transition-all duration-150 font-rajdhani text-sm
                         border-b border-slate-800/50 hover:border-amber-500/30
@@ -325,7 +329,7 @@ export default function EagleNest() {
                         setShowActionsMenu(false);
                       }}
                       className="
-                        w-full px-4 py-2.5 text-left flex items-center space-x-3
+                        w-full px-3 py-2 text-left flex items-center space-x-2
                         text-slate-300 hover:text-amber-300 hover:bg-amber-500/10
                         transition-all duration-150 font-poppins text-sm
                         border-b border-slate-800/50 hover:border-blue-500/30
@@ -339,7 +343,7 @@ export default function EagleNest() {
                       href="/admin/raw-articles"
                       onClick={() => setShowActionsMenu(false)}
                       className="
-                        w-full px-4 py-2.5 text-left flex items-center space-x-3
+                        w-full px-3 py-2 text-left flex items-center space-x-2
                         text-slate-300 hover:text-blue-300 hover:bg-blue-500/10
                         transition-all duration-150 font-poppins text-sm
                         hover:border-blue-500/30
@@ -350,7 +354,8 @@ export default function EagleNest() {
                     </Link>
                   </div>
                 )}
-              </div>
+                </div>
+              )}
             </motion.div>
 
             {/* Stats Grid */}
@@ -358,7 +363,7 @@ export default function EagleNest() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8"
+              className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6"
             >
               {severityStats.map((stat, index) => (
                 <motion.div
@@ -370,24 +375,24 @@ export default function EagleNest() {
                   className={`
                     relative group transition-all duration-300
                     backdrop-blur-md bg-gradient-to-br ${stat.bgColor}
-                    rounded-xl p-4 border-2 ${stat.borderColor}
+                    rounded-lg p-3 border-2 ${stat.borderColor}
                     shadow-lg ${stat.glowColor} card-hover-glow
-                    before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-br 
+                    before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-br 
                     before:from-white/10 before:to-transparent before:opacity-0 
                     before:transition-opacity before:duration-300 hover:before:opacity-100
                     cursor-pointer btn-press
                     ${selectedSeverity === stat.level ? `ring-2 ring-${stat.color}/50 shadow-2xl scale-105` : ''}
                   `}
                 >
-                  <div className="relative z-10 flex items-center space-x-3">
-                    <div className={`p-2 rounded-lg bg-gradient-to-br from-${stat.color}/30 to-${stat.color}/10 border border-${stat.color}/20`}>
-                      <stat.icon className={`w-5 h-5 text-${stat.color} drop-shadow-lg`} />
+                  <div className="relative z-10 flex items-center space-x-2">
+                    <div className={`p-1.5 rounded-lg bg-gradient-to-br from-${stat.color}/30 to-${stat.color}/10 border border-${stat.color}/20`}>
+                      <stat.icon className={`w-4 h-4 text-${stat.color} drop-shadow-lg`} />
                     </div>
                     <div>
-                      <div className={`font-poppins font-bold text-xl text-${stat.color} drop-shadow-lg`}>
+                      <div className={`font-poppins font-bold text-lg text-${stat.color} drop-shadow-lg`}>
                         {stat.count}
                       </div>
-                      <div className="font-inter text-sm text-slate-300 opacity-80">
+                      <div className="font-inter text-xs text-slate-300 opacity-80">
                         {stat.level}
                       </div>
                     </div>
@@ -401,7 +406,7 @@ export default function EagleNest() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl p-6 mb-8"
+              className="bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-xl border border-slate-700/50 shadow-2xl p-4 mb-6"
             >
               <div className="space-y-4">
                 {/* Search Bar */}
@@ -412,7 +417,7 @@ export default function EagleNest() {
                     placeholder="Search advisories, products, vendors..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 font-rajdhani"
+                    className="w-full pl-10 pr-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 font-rajdhani text-sm"
                   />
                 </div>
 
@@ -422,12 +427,12 @@ export default function EagleNest() {
                     onClick={() => setShowFilters(!showFilters)}
                     className="
                       relative overflow-hidden group transition-all duration-300
-                      px-6 py-3 rounded-xl font-rajdhani font-semibold w-fit
+                      px-4 py-2 rounded-lg font-rajdhani font-semibold w-fit
                       bg-gradient-to-r from-amber-600/15 to-yellow-600/15
                       border-2 border-amber-500/40 backdrop-blur-md
                       text-amber-300 hover:text-white hover:border-amber-400
                       shadow-lg shadow-amber-500/15 hover:shadow-amber-400/25
-                      hover:scale-105 active:scale-95 flex items-center space-x-2
+                      hover:scale-105 active:scale-95 flex items-center space-x-2 text-sm
                       before:absolute before:inset-0 before:bg-gradient-to-r 
                       before:from-amber-600/25 before:to-yellow-600/25 before:opacity-0 
                       before:transition-opacity before:duration-300 hover:before:opacity-100
@@ -505,7 +510,7 @@ export default function EagleNest() {
                         onClick={clearFilters}
                         className="
                           relative overflow-hidden group transition-all duration-300 w-full
-                          px-6 py-3 rounded-xl font-rajdhani font-semibold
+                          px-4 py-2 rounded-lg font-rajdhani font-semibold text-sm
                           bg-gradient-to-r from-pink-600/20 to-pink-500/20
                           border-2 border-pink-500/30 backdrop-blur-md
                           text-pink-300 hover:text-white hover:border-pink-400
@@ -610,21 +615,24 @@ export default function EagleNest() {
                         </button>
                       </Link>
                       
-                      <button 
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(advisory.advisory_id); }}
-                        className="
-                          p-1.5 md:p-2 rounded-lg
-                          bg-gradient-to-r from-red-600/80 to-red-500/80
-                          border border-red-400/50 backdrop-blur-md
-                          text-white hover:text-red-100
-                          shadow-lg shadow-red-500/20 hover:shadow-red-400/30
-                          transition-all duration-300 hover:scale-110
-                          group/delete
-                        "
-                        title="Delete Advisory"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover/delete:scale-110 transition-transform" />
-                      </button>
+                      {/* Delete button - Admin only */}
+                      {hasRole('admin') && (
+                        <button 
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(advisory.advisory_id); }}
+                          className="
+                            p-1.5 md:p-2 rounded-lg
+                            bg-gradient-to-r from-red-600/80 to-red-500/80
+                            border border-red-400/50 backdrop-blur-md
+                            text-white hover:text-red-100
+                            shadow-lg shadow-red-500/20 hover:shadow-red-400/30
+                            transition-all duration-300 hover:scale-110
+                            group/delete
+                          "
+                          title="Delete Advisory"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover/delete:scale-110 transition-transform" />
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 ))}

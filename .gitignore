@@ -98,3 +98,6 @@ backend/workspace/
 
 # Session files
 *.session
+
+# Archive folder
+archive/

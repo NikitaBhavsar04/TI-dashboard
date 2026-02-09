@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import HydrationSafe from '@/components/HydrationSafe';
 import { 
   ArrowLeft,
@@ -19,6 +20,7 @@ export default function AdvisoryEditor() {
 
   const { user, hasRole, loading: authLoading } = useAuth();
   const router = useRouter();
+  const toast = useToast();
 
   useEffect(() => {
     if (!authLoading && (!user || !hasRole('admin'))) {
@@ -28,10 +30,24 @@ export default function AdvisoryEditor() {
     if (hasRole('admin')) {
       const advisory_id = router.query.advisory_id || router.query.id;
       console.log('[EDITOR] Extracted advisory_id from router.query:', advisory_id, router.query);
+      
       if (advisory_id) {
-        fetchAdvisoryWithRetry(advisory_id as string);
+        const idStr = advisory_id as string;
+        
+        // Validate ID format
+        if (!idStr.includes('-') && idStr.length > 30) {
+          console.error('[EDITOR] ⚠️ This looks like an article ID (hash), not an advisory ID!');
+          console.error('[EDITOR] Article ID format: long hex string (e.g., 0e08fc7810c9e8a64e...)');
+          console.error('[EDITOR] Advisory ID format: SOC-TA-YYYYMMDD-HHMMSS');
+          toast.error(`Invalid ID format! This appears to be an article ID. Advisory IDs should be in format: SOC-TA-YYYYMMDD-HHMMSS`);
+          router.push('/admin/raw-articles');
+          return;
+        }
+        
+        fetchAdvisoryWithRetry(idStr);
       } else {
-        console.warn('[EDITOR] No advisory_id found in router.query:', router.query);
+        console.log('[EDITOR] No advisory_id found - creating blank advisory template');
+        createBlankAdvisory();
       }
     }
     // eslint-disable-next-line
@@ -43,12 +59,13 @@ export default function AdvisoryEditor() {
     try {
       console.log(`[EDITOR] Attempting to fetch advisory (attempt ${attempts + 1}):`, advisoryId);
       await fetchAdvisory(advisoryId);
-    } catch (err) {
+    } catch (err: any) {
       console.error(`[EDITOR] Fetch advisory failed (attempt ${attempts + 1}):`, err);
       if (attempts < 3) {
         setTimeout(() => fetchAdvisoryWithRetry(advisoryId, attempts + 1), 1000);
       } else {
-        alert('Failed to load advisory after multiple attempts.');
+        const errorMsg = err.message || 'Unknown error';
+        toast.error(`Failed to load advisory: ${errorMsg}`);
         router.push('/admin/raw-articles');
       }
     }
@@ -56,17 +73,40 @@ export default function AdvisoryEditor() {
 
   const fetchAdvisory = async (advisoryId: string) => {
     console.log('[EDITOR] Fetching advisory from API:', `/api/generated-advisory/${advisoryId}`);
-    const res = await fetch(`/api/generated-advisory/${advisoryId}`);
-    console.log('[EDITOR] API response status:', res.status);
+    const res = await fetch(`/api/generated-advisory/${advisoryId}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('[EDITOR] API response status:', res.status, res.statusText);
+    
     if (!res.ok) {
-      const text = await res.text();
-      console.error('[EDITOR] API error response:', text);
-      throw new Error('Failed to fetch advisory');
+      let errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+      try {
+        const errorData = await res.json();
+        console.error('[EDITOR] API error response:', errorData);
+        errorMessage = errorData.error || errorData.message || errorMessage;
+        if (errorData.details) {
+          console.error('[EDITOR] Error details:', errorData.details);
+        }
+      } catch (e) {
+        const text = await res.text();
+        console.error('[EDITOR] API error response (text):', text);
+        if (text) errorMessage += ` - ${text}`;
+      }
+      throw new Error(errorMessage);
     }
+    
     const data = await res.json();
     console.log('[EDITOR] API response data:', data);
+    
     // Map OpenSearch data to editor format
     const src = data._source || data;
+    if (!src) {
+      throw new Error('Invalid response format: missing _source or data');
+    }
+    
     const mapped = mapAdvisoryData(src);
     console.log('[EDITOR] Mapped advisory data:', mapped);
     setAdvisory(mapped);
@@ -107,6 +147,39 @@ export default function AdvisoryEditor() {
     };
   }
 
+  // Create a blank advisory template for new advisory creation
+  const createBlankAdvisory = () => {
+    const now = new Date();
+    const timestamp = now.toISOString().split('.')[0].replace(/[-:T]/g, '').slice(0, 15); // Format: YYYYMMDDHHMMSS
+    const advisory_id = `SOC-TA-${timestamp}`;
+
+    const blankAdvisory = {
+      advisory_id: advisory_id,
+      title: '',
+      exec_summary: '',
+      exec_summary_parts: [''],
+      severity: 'Medium',
+      timestamp: now.toISOString(),
+      created_at: now.toISOString(),
+      sectors: [],
+      regions: [],
+      cves: [],
+      cvss: {},
+      mitre: [],
+      mbc: [],
+      iocs: [],
+      recommendations: [],
+      patch_details: [],
+      references: [],
+      sources: [],
+      is_new: true // Flag to indicate this is a new advisory
+    };
+
+    console.log('[EDITOR] Created blank advisory template:', blankAdvisory);
+    setAdvisory(blankAdvisory);
+    setLoading(false);
+  };
+
   const handleSave = async () => {
     if (!advisory) return;
     try {
@@ -114,13 +187,20 @@ export default function AdvisoryEditor() {
       console.log('[EDITOR] Saving advisory:', {
         has_advisory_id: !!advisory.advisory_id,
         advisory_id: advisory.advisory_id,
-        title: advisory.title
+        title: advisory.title,
+        is_new: advisory.is_new
       });
+      
       // Ensure advisory has created_at if not present
       const advisoryToSave = {
         ...advisory,
-        created_at: advisory.created_at || new Date().toISOString()
+        created_at: advisory.created_at || new Date().toISOString(),
+        timestamp: advisory.timestamp || new Date().toISOString()
       };
+      
+      // Remove the is_new flag before saving
+      delete advisoryToSave.is_new;
+      
       const response = await fetch('/api/eagle-nest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -130,15 +210,16 @@ export default function AdvisoryEditor() {
       const data = await response.json();
       console.log('[EDITOR] Save response:', data);
       if (data.success) {
-        alert('Advisory saved to Eagle Nest successfully!');
+        const message = advisory.is_new ? 'New advisory created and saved to Eagle Nest successfully!' : 'Advisory updated and saved to Eagle Nest successfully!';
+        toast.success(message);
         router.push('/admin/eagle-nest');
       } else {
         console.error('[EDITOR] Save failed:', data);
-        alert(`Failed to save: ${data.error}${data.received_fields ? '\nReceived fields: ' + data.received_fields.join(', ') : ''}`);
+        toast.error(`Failed to save: ${data.error}`);
       }
     } catch (error: any) {
       console.error('[EDITOR] Error saving advisory:', error);
-      alert(`Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -168,7 +249,7 @@ export default function AdvisoryEditor() {
         
         <div className="relative z-10">
           <Head>
-            <title>Edit Advisory - EaglEye IntelDesk</title>
+            <title>{advisory.is_new ? 'Create Advisory' : 'Edit Advisory'} - EaglEye IntelDesk</title>
           </Head>
 
           {/* Header */}
@@ -183,8 +264,12 @@ export default function AdvisoryEditor() {
                     </button>
                   </Link>
                   <div>
-                    <h1 className="text-xl font-orbitron font-bold text-white">Advisory Editor</h1>
-                    <p className="text-slate-400 font-rajdhani text-sm">{advisory.advisory_id}</p>
+                    <h1 className="text-xl font-orbitron font-bold text-white">
+                      {advisory.is_new ? 'Create New Advisory' : 'Advisory Editor'}
+                    </h1>
+                    <p className="text-slate-400 font-rajdhani text-sm">
+                      {advisory.is_new ? 'Generate a new threat intelligence advisory' : advisory.advisory_id}
+                    </p>
                   </div>
                 </div>
                 
@@ -201,7 +286,7 @@ export default function AdvisoryEditor() {
                   ) : (
                     <>
                       <CheckCircle className="h-5 w-5" />
-                      <span>Done - Save to Eagle Nest</span>
+                      <span>{advisory.is_new ? 'Create & Save to Eagle Nest' : 'Done - Save to Eagle Nest'}</span>
                     </>
                   )}
                 </button>
@@ -220,7 +305,13 @@ export default function AdvisoryEditor() {
                   value={advisory.advisory_id || ''}
                   disabled
                   className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-400 font-mono"
+                  placeholder={advisory.is_new ? "Auto-generated when saved" : ""}
                 />
+                {advisory.is_new && (
+                  <p className="text-slate-400 text-sm mt-1 font-rajdhani">
+                    Advisory ID will be automatically generated when you save this advisory
+                  </p>
+                )}
               </div>
 
               {/* Title */}
@@ -461,9 +552,8 @@ export default function AdvisoryEditor() {
               </div>
 
               {/* MITRE ATT&CK (Editable) */}
-              {advisory.mitre && advisory.mitre.length > 0 && (
-                <div>
-                  <label className="block text-white font-orbitron font-bold mb-2"> MITRE ATT&CK Framework (Editable)</label>
+              <div>
+                <label className="block text-white font-orbitron font-bold mb-2">⚔️ MITRE ATT&CK Framework</label>
                   <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
                     <table className="w-full">
                       <thead className="bg-green-500/10 border-b border-green-400/30">
@@ -475,7 +565,7 @@ export default function AdvisoryEditor() {
                         </tr>
                       </thead>
                       <tbody>
-                        {advisory.mitre.map((tactic: any, idx: number) => (
+                        {(advisory.mitre || []).map((tactic: any, idx: number) => (
                           <tr key={idx} className="border-b border-slate-700/50 hover:bg-green-500/10 transition-colors">
                             <td className="py-4 px-6">
                               <input
@@ -541,12 +631,10 @@ export default function AdvisoryEditor() {
                     </button>
                   </div>
                 </div>
-              )}
 
               {/* MBC (Editable) */}
-              {advisory.mbc && advisory.mbc.length > 0 && (
-                <div>
-                  <label className="block text-white font-orbitron font-bold mb-2"> Malware Behavior Catalog (MBC) (Editable)</label>
+              <div>
+                <label className="block text-white font-orbitron font-bold mb-2">🦠 Malware Behavior Catalog (MBC)</label>
                   <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
                     <table className="w-full">
                       <thead className="bg-amber-500/10 border-b border-amber-400/30">
@@ -559,7 +647,7 @@ export default function AdvisoryEditor() {
                         </tr>
                       </thead>
                       <tbody>
-                        {advisory.mbc.map((behavior: any, idx: number) => (
+                        {(advisory.mbc || []).map((behavior: any, idx: number) => (
                           <tr key={idx} className="border-b border-slate-700/50 hover:bg-amber-500/10 transition-colors">
                             <td className="py-4 px-6">
                               <input
@@ -641,12 +729,10 @@ export default function AdvisoryEditor() {
                     </button>
                   </div>
                 </div>
-              )}
 
               {/* IOCs (Indicators of Compromise) */}
-              {advisory.iocs && advisory.iocs.length > 0 && (
-                <div>
-                  <label className="block text-white font-orbitron font-bold mb-2">🔍 Indicators of Compromise (IOCs) (Editable)</label>
+              <div>
+                <label className="block text-white font-orbitron font-bold mb-2">🔍 Indicators of Compromise (IOCs)</label>
                   <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
                     <table className="w-full">
                       <thead className="bg-red-500/10 border-b border-red-400/30">
@@ -657,7 +743,7 @@ export default function AdvisoryEditor() {
                         </tr>
                       </thead>
                       <tbody>
-                        {advisory.iocs.map((ioc: any, idx: number) => (
+                        {(advisory.iocs || []).map((ioc: any, idx: number) => (
                           <tr key={idx} className="border-b border-slate-700/50 hover:bg-red-500/10 transition-colors">
                             <td className="py-4 px-6">
                               <select
@@ -720,7 +806,6 @@ export default function AdvisoryEditor() {
                     </button>
                   </div>
                 </div>
-              )}
 
               {/* Recommendations */}
               <div>

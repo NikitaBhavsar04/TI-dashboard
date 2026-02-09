@@ -8,7 +8,10 @@ COPY package.json yarn.lock ./
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 RUN yarn install --frozen-lockfile --production=false
 # Copy config files needed for build (including CSS processing configs)
-COPY next.config.js tsconfig.json next-env.d.ts .eslintrc.json* ./
+COPY next.config.js tsconfig.json .eslintrc.json* ./
+# next-env.d.ts is auto-generated and may not be in git, so we'll create it if needed
+RUN echo '/// <reference types="next" />' > next-env.d.ts && \
+    echo '/// <reference types="next/image-types/global" />' >> next-env.d.ts
 COPY postcss.config.js tailwind.config.js ./
 COPY components ./components
 COPY contexts ./contexts

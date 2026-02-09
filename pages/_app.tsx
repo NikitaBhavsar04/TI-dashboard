@@ -2,6 +2,7 @@ import '@/styles/globals-new.css';
 import type { AppProps } from 'next/app';
 import Sidebar from '@/components/Sidebar';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -83,7 +84,9 @@ export default function App(props: AppProps) {
 
   return (
     <AuthProvider>
-      <AppContent {...props} router={router} />
+      <ToastProvider>
+        <AppContent {...props} router={router} />
+      </ToastProvider>
     </AuthProvider>
   );
 }

@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ message: 'No valid token provided' });
     }
 
-    if (tokenPayload.role !== 'admin') {
+    if (tokenPayload.role !== 'admin' && tokenPayload.role !== 'super_admin') {
       return res.status(403).json({ message: 'Admin access required' });
     }
 

@@ -1,14 +1,23 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdmin, requireAuth } from '@/lib/auth';
 import fs from 'fs';
 import path from 'path';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Check admin authentication
-  try {
-    requireAdmin(req);
-  } catch (e: any) {
-    return res.status(403).json({ success: false, error: 'Admin access required', message: e.message });
+  if (req.method === 'GET') {
+    // Allow all authenticated users to view single advisories
+    try {
+      requireAuth(req, 'user'); // Minimum role: user (allows user, admin, super_admin)
+    } catch (e: any) {
+      return res.status(403).json({ success: false, error: 'Authentication required', message: e.message });
+    }
+  } else {
+    // Require admin access for write operations
+    try {
+      requireAdmin(req);
+    } catch (e: any) {
+      return res.status(403).json({ success: false, error: 'Admin access required', message: e.message });
+    }
   }
 
   if (req.method === 'GET') {

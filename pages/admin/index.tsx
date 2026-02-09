@@ -3,6 +3,8 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
+import { SkeletonStatsCard } from '@/components/Skeleton';
 import HydrationSafe from '@/components/HydrationSafe';
 import LoadingLogo from '@/components/LoadingLogo';
 import { 
@@ -24,7 +26,9 @@ import {
   AlertTriangle,
   BarChart3,
   Clock,
-  Globe
+  Globe,
+  Briefcase,
+  Rss
 } from 'lucide-react';
 
 interface User {
@@ -140,9 +144,9 @@ export default function AdminDashboard() {
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'super_admin':
-        return 'bg-purple-500/20 text-purple-300 border-purple-400/30';
+        return 'bg-red-500/20 text-red-300 border-red-400/30';
       case 'admin':
-        return 'bg-blue-500/20 text-blue-300 border-blue-400/30';
+        return 'bg-orange-500/20 text-orange-300 border-orange-400/30';
       default:
         return 'bg-green-500/20 text-green-300 border-green-400/30';
     }
@@ -187,267 +191,372 @@ export default function AdminDashboard() {
 
   return (
     <HydrationSafe>
-      <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <div className="relative z-10 pt-20">
+      <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        {/* Static Background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute w-96 h-96 bg-blue-500/5 rounded-full blur-3xl top-20 left-10"></div>
+          <div className="absolute w-96 h-96 bg-blue-500/5 rounded-full blur-3xl bottom-20 right-10"></div>
+        </div>
+
+        <div className="relative z-10">
           <Head>
             <title>Admin Dashboard - EaglEye IntelDesk</title>
             <meta name="description" content="IntelDesk Admin Dashboard - Manage Users and System" />
           </Head>
 
-        {/* Header */}
-        <div className="glass-panel border-b border-slate-700/50">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-neon-blue/20 to-purple-600/20 border border-neon-blue/30">
-                  <Shield className="h-6 w-6 text-neon-blue" />
+          {/* Modern Header with Glassmorphism */}
+          <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50 shadow-2xl">
+            <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
+              <div className="flex items-center justify-between">
+                {/* Left: Branding & Welcome */}
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-red-500/20 border border-red-400/30">
+                    <Shield className="h-6 w-6 text-red-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-red-400">
+                      Admin Control Center
+                    </h1>
+                    <p className="text-slate-400 text-sm mt-0.5">
+                      Welcome, <span className="text-blue-400 font-semibold">{user?.username}</span>
+                      {isSuperAdmin && (
+                        <span className="ml-2 px-2 py-0.5 bg-red-500/20 border border-red-400/30 rounded text-red-400 text-xs font-semibold">
+                          SUPER ADMIN
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Right: Actions & Time */}
+                <div className="flex items-center space-x-3">
+                  {/* Live Clock */}
+                  <div className="hidden md:flex items-center space-x-2 px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg">
+                    <Clock className="h-4 w-4 text-blue-400" />
+                    <div className="text-right">
+                      <div className="text-xs text-slate-400">Local Time</div>
+                      <div className="text-sm font-mono text-blue-400 font-semibold">
+                        {currentTime.toLocaleTimeString()}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Quick Actions */}
+                  <Link href="/admin/eagle-nest">
+                    <button className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 rounded-lg text-green-400 hover:from-green-500/30 hover:to-emerald-500/30 transition-all duration-200 shadow-lg hover:shadow-green-500/20">
+                      <Eye className="h-4 w-4" />
+                      <span className="font-medium">Eagle Nest</span>
+                    </button>
+                  </Link>
+                  
+                  <button
+                    onClick={logout}
+                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-red-400/40 rounded-lg text-red-400 hover:from-red-500/30 hover:to-pink-500/30 transition-all duration-200 shadow-lg hover:shadow-red-500/20"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="font-medium">Logout</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="w-full px-4 sm:px-6 lg:px-8 py-8">
+          
+            {/* Enhanced System Status Bar */}
+            <div className="mb-8 p-4 bg-gradient-to-r from-slate-800/60 via-slate-900/60 to-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-2xl shadow-2xl">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center space-x-6">
+                  {/* System Health */}
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <div className={`w-3 h-3 rounded-full ${
+                        stats.systemHealth === 'good' ? 'bg-green-400' : 
+                        stats.systemHealth === 'warning' ? 'bg-yellow-400' : 'bg-red-400'
+                      } animate-pulse`}></div>
+                      <div className={`absolute inset-0 w-3 h-3 rounded-full ${
+                        stats.systemHealth === 'good' ? 'bg-green-400' : 
+                        stats.systemHealth === 'warning' ? 'bg-yellow-400' : 'bg-red-400'
+                      } animate-ping opacity-75`}></div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500">System Status</div>
+                      <div className={`text-sm font-bold ${getSystemHealthColor()}`}>
+                        {stats.systemHealth === 'good' ? '● OPERATIONAL' : 
+                         stats.systemHealth === 'warning' ? '● WARNING' : '● CRITICAL'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="w-px h-10 bg-slate-600"></div>
+                  
+                  {/* Activity Indicator */}
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+                      <Activity className="h-4 w-4 text-blue-400" />
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500">Recent Activity</div>
+                      <div className="text-sm font-bold text-blue-400">{stats.recentActivity} events</div>
+                    </div>
+                  </div>
+                  
+                  <div className="w-px h-10 bg-slate-600"></div>
+                  
+                  {/* Active Users */}
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-500/10 border border-green-400/30 rounded-lg">
+                      <Users className="h-4 w-4 text-green-400" />
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500">Active Now</div>
+                      <div className="text-sm font-bold text-green-400">{stats.activeUsers} users</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="text-xs text-slate-500">
+                  Last updated: {new Date().toLocaleTimeString()}
+                </div>
+              </div>
+            </div>
+            
+            {/* Enhanced Stats Cards with Gradients */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {loading ? (
+                <>
+                  <SkeletonStatsCard />
+                  <SkeletonStatsCard />
+                  <SkeletonStatsCard />
+                  <SkeletonStatsCard />
+                </>
+              ) : (
+                <>
+              {/* Total Users Card */}
+              <div className="stagger-item card-animated backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-red-900/20 border-2 border-red-500/30 rounded-lg p-6 shadow-lg shadow-red-500/20 hover:shadow-red-500/40 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-red-500/30 to-red-500/10 border border-red-400/20 rounded-lg">
+                    <Users className="h-6 w-6 text-red-400" />
+                  </div>
+                  <div className="px-2 py-1 bg-red-500/20 border border-red-400/30 rounded-lg">
+                    <TrendingUp className="h-4 w-4 text-red-400" />
+                  </div>
                 </div>
                 <div>
-                  <h1 className="text-2xl font-orbitron font-bold text-white">
-                    Admin Dashboard
-                  </h1>
-                  <p className="text-slate-400 font-rajdhani">
-                    Welcome back, <span className="text-neon-blue">{user?.username}</span>
-                    {isSuperAdmin && <span className="ml-2 text-purple-400">• Super Admin</span>}
+                  <p className="text-slate-400 text-sm mb-2">Total Users</p>
+                  <p className="text-4xl font-bold text-white mb-1">
+                    {stats.totalUsers}
+                  </p>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                    <p className="text-red-400 text-sm font-medium">
+                      {stats.activeUsers} active
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Advisories Card */}
+              <div className="stagger-item card-animated backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-orange-900/20 border-2 border-orange-500/30 rounded-lg p-6 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-orange-500/30 to-orange-500/10 border border-orange-400/20 rounded-lg">
+                    <FileText className="h-6 w-6 text-orange-400" />
+                  </div>
+                  <div className="px-2 py-1 bg-orange-500/20 border border-orange-400/30 rounded-lg">
+                    <BarChart3 className="h-4 w-4 text-orange-400" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-sm mb-2">Total Advisories</p>
+                  <p className="text-4xl font-bold text-white mb-1">
+                    {stats.totalAdvisories}
+                  </p>
+                  <p className="text-orange-400 text-sm font-medium">
+                    published reports
                   </p>
                 </div>
               </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="text-right mr-4">
-                  <div className="text-slate-400 font-rajdhani text-sm">Current Time</div>
-                  <div className="text-neon-blue font-orbitron text-sm">
-                    {currentTime.toLocaleTimeString()}
+
+              {/* Active Sessions Card */}
+              <div className="stagger-item card-animated backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-green-900/20 border-2 border-green-500/30 rounded-lg p-6 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-green-500/30 to-green-500/10 border border-green-400/20 rounded-lg">
+                    <Activity className="h-6 w-6 text-green-400" />
+                  </div>
+                  <div className="px-2 py-1 bg-green-500/20 border border-green-400/30 rounded-lg">
+                    <Clock className="h-4 w-4 text-green-400" />
                   </div>
                 </div>
-                <Link href="/admin/eagle-nest">
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-green-500/20 border border-green-400/50 rounded-lg text-green-400 hover:bg-green-500/30 transition-all duration-200 font-rajdhani">
-                    <Eye className="h-4 w-4" />
-                    <span>View Eagle Nest</span>
-                  </button>
-                </Link>
-                <button
-                  onClick={logout}
-                  className="flex items-center space-x-2 px-4 py-2 bg-red-500/20 border border-red-400/50 rounded-lg text-red-400 hover:bg-red-500/30 transition-all duration-200 font-rajdhani"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          
-          {/* System Status Bar */}
-          <div className="glass-panel-hover p-4 mb-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className={`w-3 h-3 rounded-full ${stats.systemHealth === 'good' ? 'bg-green-400' : stats.systemHealth === 'warning' ? 'bg-yellow-400' : 'bg-red-400'} animate-pulse`}></div>
-                  <span className="text-slate-400 font-rajdhani">System Status:</span>
-                  <span className={`font-orbitron font-medium ${getSystemHealthColor()}`}>
-                    {stats.systemHealth.toUpperCase()}
-                  </span>
-                </div>
-                <div className="w-px h-6 bg-slate-600"></div>
-                <div className="flex items-center space-x-2">
-                  <Activity className="h-4 w-4 text-neon-blue" />
-                  <span className="text-slate-400 font-rajdhani">Recent Activity:</span>
-                  <span className="text-neon-blue font-orbitron">{stats.recentActivity}</span>
+                <div>
+                  <p className="text-slate-400 text-sm mb-2">Active Sessions</p>
+                  <p className="text-4xl font-bold text-white mb-1">
+                    {stats.activeUsers}
+                  </p>
+                  <p className="text-green-400 text-sm font-medium">
+                    online now
+                  </p>
                 </div>
               </div>
-              <div className="text-slate-400 font-rajdhani text-sm">
-                Last updated: {new Date().toLocaleTimeString()}
-              </div>
-            </div>
-          </div>
-          
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="glass-panel-hover p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-blue-500/20 border border-blue-400/30">
-                  <Users className="h-6 w-6 text-blue-400" />
+
+              {/* System Load Card */}
+              <div className="stagger-item card-animated backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-yellow-900/20 border-2 border-yellow-500/30 rounded-lg p-6 shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/40 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-yellow-500/30 to-yellow-500/10 border border-yellow-400/20 rounded-lg">
+                    <Globe className="h-6 w-6 text-yellow-400" />
+                  </div>
+                  <div className="px-2 py-1 bg-yellow-500/20 border border-yellow-400/30 rounded-lg">
+                    <AlertTriangle className="h-4 w-4 text-yellow-400" />
+                  </div>
                 </div>
-                <TrendingUp className="h-5 w-5 text-green-400" />
-              </div>
-              <div>
-                <p className="text-slate-400 font-rajdhani text-sm mb-1">Total Users</p>
-                <p className="text-2xl font-orbitron font-bold text-white">
-                  {stats.totalUsers}
-                </p>
-                <p className="text-green-400 font-rajdhani text-xs">
-                  {stats.activeUsers} active
-                </p>
-              </div>
-            </div>
-
-            <div className="glass-panel-hover p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-purple-500/20 border border-purple-400/30">
-                  <FileText className="h-6 w-6 text-purple-400" />
+                <div>
+                  <p className="text-slate-400 text-sm mb-2">System Load</p>
+                  <p className="text-4xl font-bold text-white mb-1">
+                    {Math.floor(Math.random() * 30 + 40)}%
+                  </p>
+                  <p className="text-yellow-400 text-sm font-medium">
+                    optimal performance
+                  </p>
                 </div>
-                <BarChart3 className="h-5 w-5 text-green-400" />
               </div>
-              <div>
-                <p className="text-slate-400 font-rajdhani text-sm mb-1">Advisories</p>
-                <p className="text-2xl font-orbitron font-bold text-white">
-                  {stats.totalAdvisories}
-                </p>
-                <p className="text-purple-400 font-rajdhani text-xs">
-                  published
-                </p>
-              </div>
+                </>
+              )}
             </div>
 
-            <div className="glass-panel-hover p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-green-500/20 border border-green-400/30">
-                  <Activity className="h-6 w-6 text-green-400" />
+            {/* Modern Quick Actions Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+              {/* Advisory Management */}
+              <div className="group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl"></div>
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-red-500/20 border border-red-400/30 rounded-lg">
+                        <FileText className="h-5 w-5 text-red-400" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white">Advisories</h3>
+                    </div>
+                  </div>
+                  <p className="text-slate-400 text-sm mb-4">Manage threat intelligence reports and advisories</p>
+                  <div className="space-y-2">
+                    <Link href="/admin/advisory-editor">
+                      <button className="w-full flex items-center justify-between p-3 bg-red-500/10 border border-red-400/30 rounded-lg text-red-400 hover:bg-red-500/20 transition-all duration-200 group">
+                        <div className="flex items-center space-x-2">
+                          <Plus className="h-4 w-4" />
+                          <span className="font-medium text-sm">Create Advisory</span>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</div>
+                      </button>
+                    </Link>
+                    <Link href="/admin/eagle-nest">
+                      <button className="w-full flex items-center justify-between p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 group">
+                        <div className="flex items-center space-x-2">
+                          <Eye className="h-4 w-4" />
+                          <span className="font-medium text-sm">View All</span>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</div>
+                      </button>
+                    </Link>
+                  </div>
                 </div>
-                <Clock className="h-5 w-5 text-blue-400" />
               </div>
-              <div>
-                <p className="text-slate-400 font-rajdhani text-sm mb-1">Active Sessions</p>
-                <p className="text-2xl font-orbitron font-bold text-white">
-                  {stats.activeUsers}
-                </p>
-                <p className="text-green-400 font-rajdhani text-xs">
-                  online now
-                </p>
-              </div>
-            </div>
 
-            <div className="glass-panel-hover p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-yellow-500/20 border border-yellow-400/30">
-                  <Globe className="h-6 w-6 text-yellow-400" />
+              {/* Threat Intelligence */}
+              <div className="group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl"></div>
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-orange-500/20 border border-orange-400/30 rounded-lg">
+                        <Database className="h-5 w-5 text-cyan-400" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white">Intelligence</h3>
+                    </div>
+                  </div>
+                  <p className="text-slate-400 text-sm mb-4">Access raw threat data and RSS feeds</p>
+                  <div className="space-y-2">
+                    <Link href="/admin/raw-articles">
+                      <button className="w-full flex items-center justify-between p-3 bg-orange-500/10 border border-orange-400/30 rounded-lg text-orange-400 hover:bg-orange-500/20 transition-all duration-200 group">
+                        <div className="flex items-center space-x-2">
+                          <Database className="h-4 w-4" />
+                          <span className="font-medium text-sm">Raw Articles</span>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</div>
+                      </button>
+                    </Link>
+                    <Link href="/admin/feeds">
+                      <button className="w-full flex items-center justify-between p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 group">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4" />
+                          <span className="font-medium text-sm">Feeds</span>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</div>
+                      </button>
+                    </Link>
+                  </div>
                 </div>
-                <AlertTriangle className="h-5 w-5 text-yellow-400" />
               </div>
-              <div>
-                <p className="text-slate-400 font-rajdhani text-sm mb-1">System Load</p>
-                <p className="text-2xl font-orbitron font-bold text-white">
-                  {Math.floor(Math.random() * 30 + 40)}%
-                </p>
-                <p className="text-yellow-400 font-rajdhani text-xs">
-                  optimal
-                </p>
-              </div>
-            </div>
-          </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
-            <div className="glass-panel-hover p-6">
-              <h3 className="text-xl font-orbitron font-bold text-white mb-6 flex items-center">
-                <FileText className="h-5 w-5 text-neon-blue mr-3" />
-                Advisory Management
-              </h3>
-              <div className="space-y-4">
-                <Link href="/admin/upload">
-                  <button className="w-full flex items-center justify-between p-4 bg-neon-blue/10 border border-neon-blue/30 rounded-lg text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 group">
+              {/* Client Management */}
+              <div className="group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-green-400/50 transition-all duration-300">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full blur-2xl"></div>
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <Plus className="h-5 w-5" />
-                      <span className="font-rajdhani font-medium">Create New Advisory</span>
+                      <div className="p-2 bg-green-500/20 border border-green-400/30 rounded-lg">
+                        <Mail className="h-5 w-5 text-green-400" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white">Clients</h3>
                     </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
-                  </button>
-                </Link>
-                <Link href="/admin/eagle-nest">
-                  <button className="w-full flex items-center justify-between p-4 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200 group">
-                    <div className="flex items-center space-x-3">
-                      <Eye className="h-5 w-5" />
-                      <span className="font-rajdhani font-medium">View All Advisories</span>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
-                  </button>
-                </Link>
+                  </div>
+                  <p className="text-slate-400 text-sm mb-4">Manage client organizations and emails</p>
+                  <div className="space-y-2">
+                    <Link href="/admin/clients">
+                      <button className="w-full flex items-center justify-between p-3 bg-green-500/10 border border-green-400/30 rounded-lg text-green-400 hover:bg-green-500/20 transition-all duration-200 group">
+                        <div className="flex items-center space-x-2">
+                          <Mail className="h-4 w-4" />
+                          <span className="font-medium text-sm">Manage Clients</span>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</div>
+                      </button>
+                    </Link>
+                    <Link href="/scheduled-emails">
+                      <button className="w-full flex items-center justify-between p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 group">
+                        <div className="flex items-center space-x-2">
+                          <Mail className="h-4 w-4" />
+                          <span className="font-medium text-sm">Email Schedule</span>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</div>
+                      </button>
+                    </Link>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="glass-panel-hover p-6">
-              <h3 className="text-xl font-orbitron font-bold text-white mb-6 flex items-center">
-                <Database className="h-5 w-5 text-cyan-400 mr-3" />
-                Threat Intelligence
-              </h3>
-              <div className="space-y-4">
-                <Link href="/admin/raw-articles">
-                  <button className="w-full flex items-center justify-between p-4 bg-cyan-500/10 border border-cyan-400/30 rounded-lg text-cyan-400 hover:bg-cyan-500/20 transition-all duration-200 group">
+              {/* User Management */}
+              <div className="group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-amber-400/50 transition-all duration-300">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl"></div>
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <Database className="h-5 w-5" />
-                      <span className="font-rajdhani font-medium">Raw Articles Feed</span>
+                      <div className="p-2 bg-amber-500/20 border border-amber-400/30 rounded-lg">
+                        <Users className="h-5 w-5 text-amber-400" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white">Users</h3>
                     </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
-                  </button>
-                </Link>
-                <Link href="/admin/eagle-nest">
-                  <button className="w-full flex items-center justify-between p-4 bg-amber-500/10 border border-amber-400/30 rounded-lg text-amber-400 hover:bg-amber-500/20 transition-all duration-200 group">
-                    <div className="flex items-center space-x-3">
-                      <Shield className="h-5 w-5" />
-                      <span className="font-rajdhani font-medium">Eagle Nest</span>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
-                  </button>
-                </Link>
-                <Link href="/scheduled-emails">
-                  <button className="w-full flex items-center justify-between p-4 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200 group">
-                    <div className="flex items-center space-x-3">
-                      <Clock className="h-5 w-5" />
-                      <span className="font-rajdhani font-medium">Scheduled Emails</span>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            <div className="glass-panel-hover p-6">
-              <h3 className="text-xl font-orbitron font-bold text-white mb-6 flex items-center">
-                <Mail className="h-5 w-5 text-orange-400 mr-3" />
-                Client Management
-              </h3>
-              <div className="space-y-4">
-                <Link href="/admin/clients">
-                  <button className="w-full flex items-center justify-between p-4 bg-orange-500/10 border border-orange-400/30 rounded-lg text-orange-400 hover:bg-orange-500/20 transition-all duration-200 group">
-                    <div className="flex items-center space-x-3">
-                      <Mail className="h-5 w-5" />
-                      <span className="font-rajdhani font-medium">Manage Clients</span>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
-                  </button>
-                </Link>
-                <Link href="/admin/clients">
-                  <button className="w-full flex items-center justify-between p-4 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200 group">
-                    <div className="flex items-center space-x-3">
-                      <Plus className="h-5 w-5" />
-                      <span className="font-rajdhani font-medium">Add New Client</span>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            <div className="glass-panel-hover p-6">
-              <h3 className="text-xl font-orbitron font-bold text-white mb-6 flex items-center">
-                <Users className="h-5 w-5 text-green-400 mr-3" />
-                User Management
-              </h3>
-              <div className="space-y-4">
-                <Link href="/admin/users">
-                  <button className="w-full flex items-center justify-between p-4 bg-green-500/10 border border-green-400/30 rounded-lg text-green-400 hover:bg-green-500/20 transition-all duration-200 group">
-                    <div className="flex items-center space-x-3">
-                      <Users className="h-5 w-5" />
-                      <span className="font-rajdhani font-medium">Manage Users</span>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
-                  </button>
-                </Link>
+                  </div>
+                  <p className="text-slate-400 text-sm mb-4">Manage platform users and permissions</p>
+                  <div className="space-y-2">
+                    <Link href="/admin/users">
+                      <button className="w-full flex items-center justify-between p-3 bg-amber-500/10 border border-amber-400/30 rounded-lg text-amber-400 hover:bg-amber-500/20 transition-all duration-200 group">
+                        <div className="flex items-center space-x-2">
+                          <Users className="h-4 w-4" />
+                          <span className="font-medium text-sm">Manage Users</span>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</div>
+                      </button>
+                    </Link>
                 {isSuperAdmin && (
-                  <button className="w-full flex items-center justify-between p-4 bg-purple-500/10 border border-purple-400/30 rounded-lg text-purple-400 hover:bg-purple-500/20 transition-all duration-200 group">
+                  <button className="w-full flex items-center justify-between p-4 bg-red-500/10 border border-red-400/30 rounded-lg text-red-400 hover:bg-red-500/20 transition-all duration-200 group">
                     <div className="flex items-center space-x-3">
                       <Settings className="h-5 w-5" />
                       <span className="font-rajdhani font-medium">System Settings</span>
@@ -455,68 +564,106 @@ export default function AdminDashboard() {
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
                   </button>
                 )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Recent Users Overview */}
-          <div className="glass-panel-hover p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-orbitron font-bold text-white flex items-center">
-                <Users className="h-5 w-5 text-neon-blue mr-3" />
-                Recent Users
-              </h3>
-              <Link href="/admin/users">
-                <button className="text-neon-blue hover:text-white transition-colors font-rajdhani">
-                  View All →
-                </button>
-              </Link>
-            </div>
+            {/* Enhanced Recent Users Table */}
+            <div className="backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-slate-800/60 to-slate-900/60">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-500/20 border border-blue-400/30 rounded-lg">
+                      <Users className="h-5 w-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">Recent Users</h3>
+                      <p className="text-slate-400 text-sm">Latest registered accounts</p>
+                    </div>
+                  </div>
+                  <Link href="/admin/users">
+                    <button className="flex items-center space-x-2 px-4 py-2 bg-blue-500/10 border border-blue-400/30 rounded-lg text-blue-400 hover:bg-blue-500/20 transition-all duration-200 group">
+                      <span className="font-medium text-sm">View All</span>
+                      <div className="group-hover:translate-x-1 transition-transform">→</div>
+                    </button>
+                  </Link>
+                </div>
+              </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b border-slate-600/50">
-                  <tr className="text-left">
-                    <th className="px-4 py-3 text-slate-400 font-rajdhani text-sm uppercase tracking-wider">User</th>
-                    <th className="px-4 py-3 text-slate-400 font-rajdhani text-sm uppercase tracking-wider">Role</th>
-                    <th className="px-4 py-3 text-slate-400 font-rajdhani text-sm uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-slate-400 font-rajdhani text-sm uppercase tracking-wider">Created</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.slice(0, 5).map((userData) => (
-                    <tr key={userData._id} className="border-b border-slate-700/50 hover:bg-slate-800/30 transition-all duration-200">
-                      <td className="px-4 py-4">
-                        <div>
-                          <div className="font-orbitron font-medium text-white">{userData.username}</div>
-                          <div className="text-slate-400 font-rajdhani text-sm">{userData.email}</div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs border ${getRoleColor(userData.role)}`}>
-                          {getRoleIcon(userData.role)}
-                          <span>{userData.role.replace('_', ' ').toUpperCase()}</span>
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs border ${
-                          userData.isActive 
-                            ? 'bg-green-500/20 text-green-300 border-green-400/30' 
-                            : 'bg-red-500/20 text-red-300 border-red-400/30'
-                        }`}>
-                          {userData.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-slate-400 font-rajdhani text-sm">
-                        {new Date(userData.createdAt).toLocaleDateString()}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-800/50 border-b border-slate-700/50">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">User Details</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Role</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Registered</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {users.slice(0, 5).map((userData, index) => (
+                      <tr key={userData._id} className="hover:bg-slate-700/20 transition-all duration-200 group">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-600/20 border border-blue-400/30">
+                              <span className="text-blue-400 font-bold text-sm">
+                                {userData.username.substring(0, 2).toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="font-semibold text-white text-sm">{userData.username}</div>
+                              <div className="text-slate-400 text-sm">{userData.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-medium border ${getRoleColor(userData.role)}`}>
+                            {getRoleIcon(userData.role)}
+                            <span>{userData.role.replace('_', ' ').toUpperCase()}</span>
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              userData.isActive ? 'bg-green-400' : 'bg-red-400'
+                            } animate-pulse`}></div>
+                            <span className={`text-sm font-medium ${
+                              userData.isActive ? 'text-green-400' : 'text-red-400'
+                            }`}>
+                              {userData.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-slate-300 text-sm font-medium">
+                            {new Date(userData.createdAt).toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric', 
+                              year: 'numeric' 
+                            })}
+                          </div>
+                          <div className="text-slate-500 text-xs">
+                            {new Date(userData.createdAt).toLocaleTimeString('en-US', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {users.length === 0 && (
+                <div className="p-12 text-center">
+                  <Users className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+                  <p className="text-slate-400 text-sm">No users found</p>
+                </div>
+              )}
             </div>
-          </div>
-        </div>
+          </main>
         </div>
       </div>
     </HydrationSafe>

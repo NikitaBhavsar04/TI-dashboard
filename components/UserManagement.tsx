@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import AnimatedBackground from './AnimatedBackground';
 import { 
   Plus, 
   Edit, 
@@ -172,8 +171,15 @@ const UserManagement: React.FC = () => {
   };
 
   const handleDeleteUser = async (userId: string, userToDelete: User) => {
-    if (!isSuperAdmin) {
-      alert('Only super administrators can delete users');
+    // Check permissions: admin can delete 'user' role, super_admin can delete anyone
+    if (!hasRole('admin')) {
+      alert('Admin privileges required to delete users');
+      return;
+    }
+
+    // Admins cannot delete other admins or super admins
+    if (!isSuperAdmin && (userToDelete.role === 'admin' || userToDelete.role === 'super_admin')) {
+      alert('Only super administrators can delete admin or super admin accounts');
       return;
     }
 
@@ -240,9 +246,9 @@ const UserManagement: React.FC = () => {
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'super_admin':
-        return 'bg-purple-500/20 text-purple-300 border-purple-400/30';
+        return 'bg-red-500/20 text-red-300 border-red-400/30';
       case 'admin':
-        return 'bg-blue-500/20 text-blue-300 border-blue-400/30';
+        return 'bg-orange-500/20 text-orange-300 border-orange-400/30';
       default:
         return 'bg-green-500/20 text-green-300 border-green-400/30';
     }
@@ -261,8 +267,12 @@ const UserManagement: React.FC = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-slate-900">
-      <AnimatedBackground opacity={0.6} />
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      {/* Static Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute w-96 h-96 bg-blue-500/5 rounded-full blur-3xl top-20 left-10"></div>
+        <div className="absolute w-96 h-96 bg-purple-500/5 rounded-full blur-3xl bottom-20 right-10"></div>
+      </div>
       <div className="relative z-10 pt-20 p-6">
         <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -353,11 +363,12 @@ const UserManagement: React.FC = () => {
                           >
                             <Edit className="h-4 w-4" />
                           </button>
-                          {isSuperAdmin && u._id !== user?.id && (
+                          {/* Admin can delete 'user' role, Super Admin can delete anyone */}
+                          {u._id !== user?.id && (isSuperAdmin || (hasRole('admin') && u.role === 'user')) && (
                             <button
                               onClick={() => handleDeleteUser(u._id, u)}
                               className="p-2 bg-red-500/20 border border-red-400/50 rounded-lg text-red-400 hover:bg-red-500/30 transition-all duration-200"
-                              title="Delete user (Super Admin only)"
+                              title={isSuperAdmin ? "Delete user" : "Delete user (Admin can delete user role)"}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -376,7 +387,7 @@ const UserManagement: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-panel-hover max-w-md w-full">
+          <div className="glass-panel-hover max-w-md w-full max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Header */}

@@ -7,6 +7,31 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontSize: {
+        'xs': '0.875rem',     // 14px (minimum)
+        'sm': '0.875rem',     // 14px
+        'base': '1rem',       // 16px (base)
+        'lg': '1.125rem',     // 18px
+        'xl': '1.25rem',      // 20px
+        '2xl': '1.5rem',      // 24px
+        '3xl': '1.875rem',    // 30px
+        '4xl': '2.25rem',     // 36px
+        '5xl': '3rem',        // 48px
+      },
+      spacing: {
+        '0.5': '0.125rem',
+        '1': '0.25rem',
+        '1.5': '0.375rem',
+        '2': '0.5rem',
+        '2.5': '0.625rem',
+        '3': '0.75rem',
+        '3.5': '0.875rem',
+        '4': '1rem',
+        '5': '1.25rem',
+        '6': '1.5rem',
+        '7': '1.75rem',
+        '8': '2rem',
+      },
       fontFamily: {
         'sans': ['Hanken Grotesk', 'Helvetica', 'Arial', 'sans-serif'],
         'primary': ['Hanken Grotesk', 'Helvetica', 'Arial', 'sans-serif'],

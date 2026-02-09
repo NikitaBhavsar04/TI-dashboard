@@ -60,7 +60,7 @@ sources:
     - url: https://www.tenable.com/sitemap.xml?page=2
       enabled: true
     - url: https://www.techrepublic.com/rssfeeds/articles/
-      enabled: true
+      enabled: false
     - url: https://www.techrepublic.com/sitemap_index.xml
       enabled: true
     - url: https://krebsonsecurity.com/feed/
@@ -257,36 +257,59 @@ sources:
     enabled: false
     stream_id: user/%7C%7C%7C/category/global.all
 telegram:
+  enabled: true
   session_name: telegram_scraper_session
   channels:
-    - IsacaRuSec
-    - ICTlive
-    - ctinow
-    - defcon_news
-    - aqinfo
-    - bizone_channel
-    - threatinteltrends
-    - linuxgram
-    - cybdetective
-    - CyberBankSa
-    - hackersarena11
-    - HackerS_AsyLum
-    - Cyber_Security_Channel
-    - topcybersecurity
+    - channel: IsacaRuSec
+      enabled: false
+    - channel: ICTlive
+      enabled: false
+    - channel: ctinow
+      enabled: true
+    - channel: defcon_news
+      enabled: true
+    - channel: aqinfo
+      enabled: true
+    - channel: bizone_channel
+      enabled: true
+    - channel: threatinteltrends
+      enabled: true
+    - channel: linuxgram
+      enabled: true
+    - channel: cybdetective
+      enabled: true
+    - channel: CyberBankSa
+      enabled: true
+    - channel: hackersarena11
+      enabled: true
+    - channel: HackerS_AsyLum
+      enabled: true
+    - channel: Cyber_Security_Channel
+      enabled: true
+    - channel: topcybersecurity
+      enabled: true
   max_messages_per_channel: 100
   message_limit_per_run: 50
   fetch_media: false
   fetch_replies: false
 reddit:
+  enabled: true
   user_agent: python:cybersecurity-feed:v1.0 (by /u/anonymous)
   subreddits:
-    - cybersecurity
-    - netsec
-    - hacking
-    - threatintel
-    - blueteamsec
-    - redteamsec
-    - malware
+    - subreddit: cybersecurity
+      enabled: false
+    - subreddit: netsec
+      enabled: false
+    - subreddit: hacking
+      enabled: true
+    - subreddit: threatintel
+      enabled: true
+    - subreddit: blueteamsec
+      enabled: true
+    - subreddit: redteamsec
+      enabled: true
+    - subreddit: malware
+      enabled: true
   max_posts_per_subreddit: 100
   request_timeout: 30
   auth_url: https://www.reddit.com/api/v1/access_token

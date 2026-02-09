@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
     
-    if (decoded.role !== 'admin') {
+    if (decoded.role !== 'admin' && decoded.role !== 'super_admin') {
       return res.status(403).json({ message: 'Admin access required' });
     }
 

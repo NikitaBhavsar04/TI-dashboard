@@ -65,8 +65,8 @@ export default function Login() {
             className="text-center"
           >
             {/* Logo */}
-            <div className="flex justify-center mb-6">
-              <div className="relative w-16 h-16 rounded-full overflow-hidden">
+            <div className="flex justify-center mb-4">
+              <div className="relative w-40 h-40 rounded-full overflow-hidden">
                 <img 
                   src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiCL2GuXkm4vnkAnNz1yA4Kxlg-jjKIOdohivr_s_uCRQ5z1gYjlSJX139c7I-iR-2i3sCVQK3kmP3_ZRvvBezy_m5eB-sX9N3cn42lJbi5PveE90jfqPt4Luc52J6nU1MTIWZGkdBzT76fTVru6Wk8RafSOcgNzPumjNLay5fUxQ_YIihCHQ7Us1_-wVMV/s400/Eagleye-S.png"
                   alt="EaglEye Logo"
@@ -77,10 +77,10 @@ export default function Login() {
             </div>
 
             {/* Title */}
-            <h1 className="font-poppins font-bold text-4xl text-gradient-blue heading-elegant mb-2">
+            <h1 className="font-poppins font-bold text-2xl text-gradient-blue heading-elegant mb-1.5">
               EaglEye IntelDesk
             </h1>
-            <p className="font-inter text-slate-400 text-lg body-elegant">
+            <p className="font-inter text-slate-400 text-base body-elegant">
               Access Intelligence Platform
             </p>
           </motion.div>
@@ -89,34 +89,34 @@ export default function Login() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="glass-card p-8 hover-glow"
+            className="glass-card p-6 hover-glow"
           >
             {/* Form Header */}
-            <div className="text-center mb-8">
-              <h2 className="font-poppins font-semibold text-2xl text-slate-100 mb-2 subheading-refined">
+            <div className="text-center mb-6">
+              <h2 className="font-poppins font-semibold text-xl text-slate-100 mb-1.5 subheading-refined">
                 Secure Access
               </h2>
-              <p className="font-inter text-slate-400 body-elegant">
+              <p className="font-inter text-slate-400 body-elegant text-sm">
                 Enter your credentials to continue
               </p>
             </div>
 
             {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email Field */}
               <div>
-                <label className="block font-poppins font-medium text-slate-300 mb-2">
+                <label className="block font-poppins font-medium text-slate-300 mb-1.5 text-sm">
                   Email Address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-slate-400" />
+                    <User className="h-4 w-4 text-slate-400" />
                   </div>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="input-glass pl-10 w-full"
+                    className="input-glass pl-9 w-full"
                     placeholder="admin@forensiccybertech.com"
                     required
                   />
@@ -125,18 +125,18 @@ export default function Login() {
 
               {/* Password Field */}
               <div>
-                <label className="block font-poppins font-medium text-slate-300 mb-2">
+                <label className="block font-poppins font-medium text-slate-300 mb-1.5 text-sm">
                   Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-slate-400" />
+                    <Lock className="h-4 w-4 text-slate-400" />
                   </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="input-glass pl-10 pr-10 w-full"
+                    className="input-glass pl-9 pr-10 w-full"
                     placeholder="Enter your password"
                     required
                   />
@@ -146,9 +146,9 @@ export default function Login() {
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-blue-400 transition-colors duration-300"
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
+                      <EyeOff className="h-4 w-4" />
                     ) : (
-                      <Eye className="h-5 w-5" />
+                      <Eye className="h-4 w-4" />
                     )}
                   </button>
                 </div>
@@ -159,9 +159,9 @@ export default function Login() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-red-500/10 border border-red-500/30 rounded-lg p-3"
+                  className="bg-red-500/10 border border-red-500/30 rounded-lg p-2.5"
                 >
-                  <p className="text-red-400 font-poppins text-sm">{error}</p>
+                  <p className="text-red-400 font-poppins text-xs">{error}</p>
                 </motion.div>
               )}
 
@@ -172,26 +172,16 @@ export default function Login() {
                 className={`w-full btn-neon group btn-press hover-lift ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isLoading ? (
-                  <div className="spinner-neon w-5 h-5"></div>
+                  <div className="spinner-neon w-4 h-4"></div>
                 ) : (
                   <>
-                    <Lock className="w-5 h-5 group-hover:drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] transition-all duration-300" />
+                    <Lock className="w-4 h-4 group-hover:drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] transition-all duration-300" />
                     <span>Access Platform</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-300" />
                   </>
                 )}
               </button>
             </form>
-
-            {/* Back to Home */}
-            <div className="mt-6 text-center">
-              <Link
-                href="/"
-                className="font-poppins text-slate-400 hover:text-blue-400 transition-colors duration-300"
-              >
-                ← Back to Home
-              </Link>
-            </div>
           </motion.div>
 
           {/* Security Notice */}

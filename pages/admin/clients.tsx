@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import HydrationSafe from '@/components/HydrationSafe';
@@ -42,6 +43,7 @@ interface ClientFormData {
 export default function ClientsManagement() {
   const { user, hasRole, canViewEmails, loading: authLoading } = useAuth();
   const router = useRouter();
+  const toast = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -101,7 +103,7 @@ export default function ClientsManagement() {
       setEditingClient(client);
       setFormData({
         name: client.name,
-        emails: [...client.emails],
+        emails: Array.isArray(client.emails) ? [...client.emails] : [''],
         description: client.description || '',
         isActive: client.isActive
       });
@@ -155,7 +157,7 @@ export default function ClientsManagement() {
     // Validate form
     const validEmails = formData.emails.filter(email => email.trim());
     if (!formData.name.trim() || validEmails.length === 0) {
-      alert('Please provide a client name and at least one email address');
+      toast.error('Please provide a client name and at least one email address');
       return;
     }
 
@@ -163,7 +165,7 @@ export default function ClientsManagement() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const invalidEmails = validEmails.filter(email => !emailRegex.test(email));
     if (invalidEmails.length > 0) {
-      alert(`Invalid email addresses: ${invalidEmails.join(', ')}`);
+      toast.error(`Invalid email addresses: ${invalidEmails.join(', ')}`);
       return;
     }
 
@@ -187,15 +189,15 @@ export default function ClientsManagement() {
       const result = await response.json();
 
       if (response.ok) {
-        alert(result.message);
+        toast.success(result.message);
         handleCloseModal();
         fetchClients();
       } else {
-        alert(`Error: ${result.message}`);
+        toast.error(`Error: ${result.message}`);
       }
     } catch (error) {
       console.error('Error saving client:', error);
-      alert('Failed to save client. Please try again.');
+      toast.error('Failed to save client. Please try again.');
     }
   };
 
@@ -212,14 +214,14 @@ export default function ClientsManagement() {
       const result = await response.json();
 
       if (response.ok) {
-        alert(result.message);
+        toast.success(result.message);
         fetchClients();
       } else {
-        alert(`Error: ${result.message}`);
+        toast.error(`Error: ${result.message}`);
       }
     } catch (error) {
       console.error('Error deleting client:', error);
-      alert('Failed to delete client. Please try again.');
+      toast.error('Failed to delete client. Please try again.');
     }
   };
 
@@ -229,7 +231,7 @@ export default function ClientsManagement() {
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith('.csv')) {
-      alert('Please select a CSV file');
+      toast.error('Please select a CSV file');
       return;
     }
 
@@ -275,7 +277,8 @@ export default function ClientsManagement() {
           const existingClient = clients.find(c => c.name.toLowerCase() === clientName.toLowerCase());
           if (existingClient) {
             // Merge emails and remove duplicates
-            existingClient.emails = [...new Set([...existingClient.emails, ...emails])];
+            const existingEmails = Array.isArray(existingClient.emails) ? existingClient.emails : [];
+            existingClient.emails = [...new Set([...existingEmails, ...emails])];
           } else {
             clients.push({ name: clientName, emails: [...new Set(emails)] });
           }
@@ -323,11 +326,13 @@ export default function ClientsManagement() {
       }
 
       // Show results
-      let message = `Successfully imported ${successCount} clients.`;
-      if (errors.length > 0) {
-        message += `\n\nErrors:\n${errors.join('\n')}`;
+      if (successCount > 0) {
+        toast.success(`Successfully imported ${successCount} clients`);
       }
-      alert(message);
+      if (errors.length > 0) {
+        toast.error(`Import completed with errors. Check console for details.`);
+        console.error('Import errors:', errors);
+      }
 
       // Refresh clients list and close modal
       fetchClients();
@@ -335,7 +340,7 @@ export default function ClientsManagement() {
 
     } catch (error) {
       console.error('CSV import error:', error);
-      alert('Failed to import CSV. Please try again.');
+      toast.error('Failed to import CSV. Please try again.');
     } finally {
       setCsvImporting(false);
     }
@@ -764,7 +769,7 @@ John Doe,john@personal.com`}
                         <div key={index} className="bg-slate-800/50 rounded p-3">
                           <div className="text-white font-rajdhani font-medium">{client.name}</div>
                           <div className="text-slate-300 font-rajdhani text-sm">
-                            {client.emails.join(', ')}
+                            {Array.isArray(client.emails) ? client.emails.join(', ') : 'No emails'}
                           </div>
                         </div>
                       ))}

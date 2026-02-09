@@ -62,8 +62,23 @@ export const requireAuth = (req: NextApiRequest, requiredRole?: 'super_admin' | 
     throw new Error('Authentication required');
   }
   
-  if (requiredRole && user.role !== 'super_admin' && user.role !== requiredRole) {
-    throw new Error('Insufficient permissions');
+  // Role hierarchy: super_admin (3) > admin (2) > user (1)
+  const getRoleLevel = (role: string) => {
+    switch (role) {
+      case 'super_admin': return 3;
+      case 'admin': return 2;  
+      case 'user': return 1;
+      default: return 0;
+    }
+  };
+  
+  if (requiredRole) {
+    const userLevel = getRoleLevel(user.role);
+    const requiredLevel = getRoleLevel(requiredRole);
+    
+    if (userLevel < requiredLevel) {
+      throw new Error('Insufficient permissions');
+    }
   }
   
   return user;

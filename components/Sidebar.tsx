@@ -75,7 +75,7 @@ const TooltipPortal: React.FC<{ content: string; children: React.ReactNode }> = 
 };
 
 function Sidebar() {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout, hasRole } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -94,14 +94,21 @@ const isActive = (path: string) => {
   return router.pathname === path;
 };
 
+// Role-based menu items
 const menuItems = [
-    ...(isAdmin ? [
-      { icon: Rss, label: 'RSS Feeds', path: '/admin/rss-feeds' },
-      { icon: Database, label: 'Raw Articles', path: '/admin/raw-articles' },
-      { icon: Shield, label: 'Eagle Nest', path: '/admin/eagle-nest' },
-      { icon: Calendar, label: 'Scheduled Emails', path: '/scheduled-emails' },
-    ] : []),
-  ];
+  // User role - only Eagle Nest
+  ...(hasRole('user') && !isAdmin ? [
+    { icon: Shield, label: 'Eagle Nest', path: '/admin/eagle-nest' },
+  ] : []),
+  
+  // Admin and Super Admin roles - all items
+  ...(isAdmin ? [
+    { icon: Rss, label: 'Feeds', path: '/admin/feeds' },
+    { icon: Database, label: 'Raw Articles', path: '/admin/raw-articles' },
+    { icon: Shield, label: 'Eagle Nest', path: '/admin/eagle-nest' },
+    { icon: Calendar, label: 'Scheduled Emails', path: '/scheduled-emails' },
+  ] : []),
+];
 
   const SidebarContent = () => (
     <>
@@ -190,8 +197,8 @@ const menuItems = [
       {/* User & Logout */}
       {isAuthenticated && (
         <div className="border-t border-gray-800/50 p-4 space-y-3" style={{ flexShrink: 0 }}>
-          {/* Admin Panel (User icon) */}
-          {isAdmin && (
+          {/* Admin Panel (User icon) - Only for admin and super_admin */}
+          {hasRole('admin') && (
             isCollapsed ? (
               <TooltipPortal content="Admin Panel">
                 <Link href="/admin" onClick={() => setIsMobileOpen(false)} className="w-full flex items-center justify-center p-3 rounded-lg bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 text-blue-400 hover:text-white transition-all duration-300">

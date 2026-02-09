@@ -40,12 +40,12 @@ export default function EagleNestDetail() {
   const { id } = router.query;
 
   useEffect(() => {
-    if (!authLoading && (!user || !hasRole('admin'))) {
+    if (!authLoading && (!user || !hasRole('user'))) {
       router.push('/login');
       return;
     }
     
-    if (hasRole('admin') && id) {
+    if (hasRole('user') && id) {
       loadAdvisory();
     }
   }, [user, hasRole, authLoading, router, id]);
@@ -191,7 +191,7 @@ export default function EagleNestDetail() {
                     </div>
                   </div>
                   <img 
-                    src="/Eagleye-S.png" 
+                    src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiCL2GuXkm4vnkAnNz1yA4Kxlg-jjKIOdohivr_s_uCRQ5z1gYjlSJX139c7I-iR-2i3sCVQK3kmP3_ZRvvBezy_m5eB-sX9N3cn42lJbi5PveE90jfqPt4Luc52J6nU1MTIWZGkdBzT76fTVru6Wk8RafSOcgNzPumjNLay5fUxQ_YIihCHQ7Us1_-wVMV/s400/Eagleye-S.png" 
                     alt="EagleEye" 
                     className="h-10 w-auto"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
@@ -214,13 +214,16 @@ export default function EagleNestDetail() {
                 </button>
 
                 <div className="flex items-center space-x-3">
-                  <button 
-                    onClick={handleEmailClick}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg transition-all duration-300 hover:scale-105 shadow-lg"
-                  >
-                    <Mail className="h-4 w-4 text-white" />
-                    <span className="text-white font-rajdhani font-medium">Send Email</span>
-                  </button>
+                  {/* Send Email button - Admin only */}
+                  {hasRole('admin') && (
+                    <button 
+                      onClick={handleEmailClick}
+                      className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg transition-all duration-300 hover:scale-105 shadow-lg"
+                    >
+                      <Mail className="h-4 w-4 text-white" />
+                      <span className="text-white font-rajdhani font-medium">Send Email</span>
+                    </button>
+                  )}
 
                   <button 
                     onClick={() => copyToClipboard(JSON.stringify(advisory, null, 2), 'json')}

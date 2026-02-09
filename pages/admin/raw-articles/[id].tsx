@@ -67,7 +67,10 @@ export default function RawArticleDetail() {
 
       if (response.ok) {
         const data = await response.json();
-        const foundArticle = data.articles.find((a: RawArticle) => a.id === id);
+        // Check both _id and id fields to support all article types (RSS, Reddit, Telegram)
+        const foundArticle = data.articles.find((a: any) => 
+          a._id === id || a.id === id
+        );
         
         if (foundArticle) {
           setArticle(foundArticle);
@@ -124,8 +127,16 @@ export default function RawArticleDetail() {
         });
         
         if (advisoryId) {
-          console.log('[RAW-ARTICLE] ✅ Redirecting with advisory_id:', advisoryId);
-          router.push(`/admin/advisory-editor?advisory_id=${advisoryId}`);
+          // Validate that we have a proper advisory_id format
+          if (advisoryId.includes('SOC-') || advisoryId.includes('-')) {
+            console.log('[RAW-ARTICLE] ✅ Redirecting with advisory_id:', advisoryId);
+            router.push(`/admin/advisory-editor?advisory_id=${advisoryId}`);
+          } else {
+            console.error('[RAW-ARTICLE] ⚠️ Invalid advisory_id format:', advisoryId);
+            console.error('[RAW-ARTICLE] Expected format: SOC-TA-YYYYMMDD-HHMMSS');
+            console.error('[RAW-ARTICLE] Received:', advisoryId);
+            alert(`Invalid advisory ID format: ${advisoryId}\n\nExpected format: SOC-TA-YYYYMMDD-HHMMSS\n\nThis might be an article ID instead of an advisory ID. Check console for details.`);
+          }
         } else {
           console.error('[RAW-ARTICLE] ❌ advisory_id is missing from response');
           console.error('[RAW-ARTICLE] Full advisory object:', JSON.stringify(data.advisory, null, 2));

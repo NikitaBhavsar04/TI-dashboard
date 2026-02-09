@@ -12,7 +12,7 @@ import EditScheduledEmailModal from '@/components/EditScheduledEmailModal';
 import { verifyToken } from '@/lib/auth';
 
 export default function ScheduledEmailsPage() {
-  const { isAdmin, isAuthenticated, loading } = useAuth();
+  const { hasRole, isAuthenticated, loading, user } = useAuth();
   const router = useRouter();
   const [editEmailModalOpen, setEditEmailModalOpen] = useState(false);
   const [editingEmailData, setEditingEmailData] = useState<any>(null);
@@ -22,10 +22,10 @@ export default function ScheduledEmailsPage() {
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push('/login');
-    } else if (!loading && isAuthenticated && !isAdmin) {
+    } else if (!loading && isAuthenticated && user && !hasRole('admin')) {
       router.push('/admin/eagle-nest');
     }
-  }, [isAuthenticated, isAdmin, loading, router]);
+  }, [isAuthenticated, loading, router, user, hasRole]);
 
   const handleEditEmail = (email: any) => {
     setEditingEmailData(email);
@@ -52,7 +52,7 @@ export default function ScheduledEmailsPage() {
       )}
 
       {/* Show content only if authenticated and admin */}
-      {!loading && isAuthenticated && isAdmin && (
+      {!loading && isAuthenticated && hasRole('admin') && (
         <>
           <div className="relative min-h-screen bg-tech-gradient pt-8 pb-12 w-full overflow-x-hidden">
             <div className="relative z-10 w-full">
@@ -72,14 +72,14 @@ export default function ScheduledEmailsPage() {
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                     <div className="mb-6 lg:mb-0">
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-xl backdrop-blur-sm border border-violet-500/30">
-                          <Calendar className="h-10 w-10 text-violet-400" />
+                        <div className="p-2 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-xl backdrop-blur-sm border border-violet-500/30">
+                          <Calendar className="h-6 w-6 text-violet-400" />
                         </div>
                         <div>
-                          <h1 className="font-orbitron font-bold text-4xl md:text-5xl bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
+                          <h1 className="font-orbitron font-bold text-2xl md:text-3xl bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
                             Scheduled Emails
                           </h1>
-                          <p className="font-rajdhani text-lg text-slate-400 mt-2">
+                          <p className="font-rajdhani text-base text-slate-400 mt-1">
                             Manage and monitor scheduled advisory email notifications
                           </p>
                         </div>
@@ -148,8 +148,8 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
       };
     }
 
-    // Check if user is admin
-    if (decoded.role !== 'admin') {
+    // Check if user is admin or super_admin
+    if (decoded.role !== 'admin' && decoded.role !== 'super_admin') {
       return {
         redirect: {
           destination: '/admin/eagle-nest',

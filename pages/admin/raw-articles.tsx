@@ -3,22 +3,198 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
+import { SkeletonStatsCard } from '@/components/Skeleton';
 import HydrationSafe from '@/components/HydrationSafe';
 import LoadingLogo from '@/components/LoadingLogo';
 import { 
   ArrowLeft,
   RefreshCw,
-
   ExternalLink,
   Calendar,
   Globe,
   Hash,
- 
   Clock,
   FileText,
   Search,
   Filter
 } from 'lucide-react';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 interface RawArticle {
   id: string;
@@ -68,6 +244,7 @@ export default function RawArticles() {
   const [totalArticles, setTotalArticles] = useState(0);
 
   const { user, hasRole, loading: authLoading } = useAuth();
+  const toast = useToast();
   const router = useRouter();
 
   useEffect(() => {
@@ -148,15 +325,15 @@ export default function RawArticles() {
       const data = await response.json();
       
       if (data.success) {
-        alert('Articles fetched successfully! Refreshing list...');
+        toast.success('Articles fetched successfully! Refreshing list...');
         setPagination(prev => ({ ...prev, page: 1 }));
         await fetchArticles(true);
       } else {
-        alert(`Failed to fetch articles: ${data.error}`);
+        toast.error(`Failed to fetch articles: ${data.error}`);
       }
     } catch (error: any) {
       console.error('Error running fetcher:', error);
-      alert(`Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     } finally {
       setFetching(false);
     }
@@ -224,127 +401,199 @@ export default function RawArticles() {
             <title>Raw Articles - EaglEye IntelDesk</title>
           </Head>
 
-          {/* Header */}
-          <div className="glass-panel border-b border-slate-700/50">
-            <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+          {/* Modern Sticky Header */}
+          <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50 shadow-2xl">
+            <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl backdrop-blur-sm border border-cyan-500/30">
-                    <FileText className="h-10 w-10 text-cyan-400" />
+                {/* Left: Title & Description */}
+                <div className="flex items-center space-x-4">
+                  <div className="p-2 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl backdrop-blur-sm border border-cyan-500/30">
+                    <FileText className="h-6 w-6 text-cyan-400" />
                   </div>
                   <div>
-                    <h1 className="font-orbitron font-bold text-4xl md:text-5xl bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                    <h1 className="font-orbitron font-bold text-2xl md:text-3xl bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                       Raw Articles Feed
                     </h1>
-                    <p className="font-rajdhani text-lg text-slate-400 mt-2">
-                      Articles from security sources
+                    <p className="font-rajdhani text-base text-slate-400 mt-1">
+                      Real-time threat intelligence from security sources
                     </p>
                   </div>
                 </div>
                 
+                {/* Right: Action Button */}
                 <button
                   onClick={runFetcher}
                   disabled={fetching}
-                  className="flex items-center space-x-2 px-6 py-3 bg-neon-blue/10 border border-neon-blue/30 rounded-lg text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-rajdhani font-medium"
+                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-400/40 rounded-lg text-cyan-400 hover:from-cyan-500/30 hover:to-blue-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-cyan-500/20 font-medium text-sm"
                 >
-                  <RefreshCw className={`h-5 w-5 ${fetching ? 'animate-spin' : ''}`} />
-                  <span>{fetching ? 'Fetching...' : 'Fetch New Articles'}</span>
+                  <RefreshCw className={`h-4 w-4 ${fetching ? 'animate-spin' : ''}`} />
+                  <span>{fetching ? 'Fetching Articles...' : 'Fetch New Articles'}</span>
                 </button>
               </div>
             </div>
-          </div>
+          </header>
 
-          <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+          <main className="w-full px-4 sm:px-6 lg:px-8 py-8">
             
-            {/* Stats and Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="glass-panel-hover p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <FileText className="h-6 w-6 text-neon-blue" />
-                  <span className="text-2xl font-orbitron font-bold text-white">
-                    {totalArticles}
-                  </span>
-                </div>
-                <div className="text-slate-400 font-rajdhani text-sm">Total Articles</div>
+            {/* Enhanced Stats Cards with Stagger Animation */}
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <CardSkeleton />
+                <CardSkeleton />
+                <CardSkeleton />
+                <CardSkeleton />
               </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                {/* Total Articles */}
+                <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-cyan-900/20 border-2 border-cyan-500/30 rounded-lg p-4 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 card-hover-enhanced">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-slate-400 text-sm">Total Articles</p>
+                    <div className="p-2 bg-gradient-to-br from-cyan-500/30 to-cyan-500/10 border border-cyan-500/20 rounded-lg">
+                      <FileText className="h-4 w-4 text-cyan-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white mb-1">
+                      {totalArticles}
+                    </p>
+                    <p className="text-cyan-400 text-xs">
+                      in database
+                    </p>
+                  </div>
+                </div>
 
-              <div className="glass-panel-hover p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <FileText className="h-6 w-6 text-orange-400" />
-                  <span className="text-2xl font-orbitron font-bold text-white">
+                {/* Current Page */}
+                <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-orange-900/20 border-2 border-orange-500/30 rounded-lg p-4 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 card-hover-enhanced">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-slate-400 text-sm">Current Page</p>
+                    <div className="p-2 bg-gradient-to-br from-orange-500/30 to-orange-500/10 border border-orange-500/20 rounded-lg">
+                      <FileText className="h-4 w-4 text-orange-400" />
+                    </div>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-white mb-1">
                     {articles.length}
-                  </span>
+                  </p>
+                  <p className="text-orange-400 text-xs">
+                    showing page {pagination.page}
+                  </p>
                 </div>
-                <div className="text-slate-400 font-rajdhani text-sm">Showing on Page {pagination.page}</div>
               </div>
 
-              <div className="glass-panel-hover p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <Hash className="h-6 w-6 text-purple-400" />
-                  <span className="text-2xl font-orbitron font-bold text-white">
+              {/* CVEs Count */}
+              <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-purple-900/20 border-2 border-purple-500/30 rounded-lg p-4 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 card-hover-enhanced">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-slate-400 text-sm">CVEs Detected</p>
+                  <div className="p-2 bg-gradient-to-br from-purple-500/30 to-purple-500/10 border border-purple-500/20 rounded-lg">
+                    <Hash className="h-4 w-4 text-purple-400" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-white mb-1">
                     {articles.reduce((sum, a) => sum + (Array.isArray(a.cves) ? a.cves.length : 0), 0)}
-                  </span>
+                  </p>
+                  <p className="text-purple-400 text-xs">
+                    on this page
+                  </p>
                 </div>
-                <div className="text-slate-400 font-rajdhani text-sm">CVEs on This Page</div>
               </div>
 
-              <div className="glass-panel-hover p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <Clock className="h-6 w-6 text-orange-400" />
+              {/* Last Fetched */}
+              <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-green-900/20 border-2 border-green-500/30 rounded-lg p-4 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 card-hover-enhanced">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-slate-400 text-sm">Last Fetched</p>
+                  <div className="p-2 bg-gradient-to-br from-green-500/30 to-green-500/10 border border-green-500/20 rounded-lg">
+                    <Clock className="h-4 w-4 text-green-400" />
+                  </div>
                 </div>
-                <div className="text-slate-400 font-rajdhani text-xs">Last Fetched</div>
-                <div className="text-white font-rajdhani text-xs">
-                  {lastFetched ? formatDate(lastFetched.toISOString()) : 'Never'}
+                <div>
+                  <p className="text-white text-lg font-semibold mb-1">
+                    {lastFetched ? new Date(lastFetched).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never'}
+                  </p>
+                  <p className="text-green-400 text-xs">
+                    {lastFetched ? new Date(lastFetched).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'No data yet'}
+                  </p>
                 </div>
               </div>
             </div>
+            )}
 
-            {/* Search and Filter */}
-            <div className="glass-panel-hover p-6 mb-8">
+            {/* Professional Search & Filter Section */}
+            <div className="backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 mb-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-500/20 border border-blue-400/30 rounded-lg">
+                    <Search className="h-5 w-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Search & Filter</h3>
+                    <p className="text-slate-400 text-sm">Find specific articles or filter by status</p>
+                  </div>
+                </div>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Search articles, sources, CVEs..."
                     value={searchQuery}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-neon-blue/50 font-rajdhani"
+                    className="w-full pl-12 pr-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all text-sm"
                   />
                 </div>
 
                 <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <select
                     value={filterStatus}
                     onChange={(e) => handleFilterChange(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani appearance-none cursor-pointer"
+                    className="w-full pl-12 pr-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all appearance-none cursor-pointer text-sm"
+                    title="Filter by status"
                   >
                     <option value="all">All Status</option>
                     <option value="NEW">New</option>
                     <option value="PROCESSED">Processed</option>
                     <option value="REJECTED">Rejected</option>
                   </select>
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Pagination Info */}
-            <div className="glass-panel-hover p-4 mb-6">
+            {/* Enhanced Pagination Info */}
+            <div className="backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 mb-6">
               <div className="flex items-center justify-between">
-                <div className="text-slate-400 font-rajdhani">
-                  Showing <span className="text-white font-semibold">{((pagination.page - 1) * pagination.pageSize) + 1}</span> to <span className="text-white font-semibold">{Math.min(pagination.page * pagination.pageSize, totalArticles)}</span> of <span className="text-white font-semibold">{totalArticles}</span> articles
+                <div className="flex items-center space-x-2">
+                  <div className="px-3 py-1 bg-cyan-500/10 border border-cyan-400/30 rounded-lg">
+                    <span className="text-slate-400 text-sm">Showing</span>
+                    <span className="text-white font-bold mx-1">{((pagination.page - 1) * pagination.pageSize) + 1}</span>
+                    <span className="text-slate-400 text-sm">to</span>
+                    <span className="text-white font-bold mx-1">{Math.min(pagination.page * pagination.pageSize, totalArticles)}</span>
+                    <span className="text-slate-400 text-sm">of</span>
+                    <span className="text-cyan-400 font-bold ml-1">{totalArticles}</span>
+                    <span className="text-slate-400 text-sm ml-1">articles</span>
+                  </div>
                 </div>
-                <div className="text-slate-400 font-rajdhani">
-                  Page <span className="text-white font-semibold">{pagination.page}</span> of <span className="text-white font-semibold">{pagination.totalPages}</span>
+                <div className="px-3 py-1 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+                  <span className="text-slate-400 text-sm">Page</span>
+                  <span className="text-white font-bold mx-1">{pagination.page}</span>
+                  <span className="text-slate-400 text-sm">of</span>
+                  <span className="text-blue-400 font-bold ml-1">{pagination.totalPages}</span>
                 </div>
               </div>
             </div>
 
             {/* Articles List */}
-            <div className="space-y-6">
+            <div className="space-y-3">
               {articles.length === 0 ? (
-                <div className="glass-panel-hover p-12 text-center">
+                <div className="glass-panel-hover p-8 text-center">
                   <FileText className="h-16 w-16 text-slate-600 mx-auto mb-4" />
                   <h3 className="text-xl font-orbitron font-bold text-slate-400 mb-2">
                     No Articles Found
@@ -357,27 +606,30 @@ export default function RawArticles() {
                   </p>
                 </div>
               ) : (
-                articles.map((article) => (
-                  <Link key={article.id} href={`/admin/raw-articles/${article.id}`}>
-                    <div className="glass-panel-hover p-6 cursor-pointer transition-all duration-200 hover:border-neon-blue/30">
-                      <div className="space-y-4">
+                articles.map((article) => {
+                  // Use _id if id is not available (for RSS feeds)
+                  const articleId = (article as any)._id || article.id;
+                  return (
+                  <Link key={articleId} href={`/admin/raw-articles/${articleId}`}>
+                    <div className="glass-panel-hover p-4 cursor-pointer transition-all duration-200 hover:border-neon-blue/30">
+                      <div className="space-y-2">
                         {/* Header */}
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <span className={`px-3 py-1 rounded-lg text-xs font-rajdhani font-medium border ${getStatusColor(article.status)}`}>
+                            <div className="flex items-center space-x-2 mb-1.5">
+                              <span className={`px-2 py-0.5 rounded-lg text-xs font-rajdhani font-medium border ${getStatusColor(article.status)}`}>
                                 {article.status}
                               </span>
-                              <span className="text-slate-500 font-rajdhani text-sm flex items-center">
-                                <Globe className="h-3 w-3 mr-1" />
+                              <span className="text-slate-500 font-rajdhani text-xs flex items-center">
+                                <Globe className="h-2.5 w-2.5 mr-1" />
                                 {article.source}
                               </span>
-                              <span className="text-slate-500 font-rajdhani text-sm flex items-center">
-                                <Calendar className="h-3 w-3 mr-1" />
+                              <span className="text-slate-500 font-rajdhani text-xs flex items-center">
+                                <Calendar className="h-2.5 w-2.5 mr-1" />
                                 {formatDate(article.published_dt)}
                               </span>
                             </div>
-                            <h3 className="text-xl font-orbitron font-bold text-white mb-2">
+                            <h3 className="text-base font-orbitron font-bold text-white mb-1.5">
                               {article.title}
                             </h3>
                           </div>
@@ -387,29 +639,29 @@ export default function RawArticles() {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="flex items-center space-x-2 px-4 py-2 bg-neon-blue/10 border border-neon-blue/30 rounded-lg text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 font-rajdhani text-sm"
+                            className="flex items-center space-x-1.5 px-3 py-1.5 bg-neon-blue/10 border border-neon-blue/30 rounded-lg text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 font-rajdhani text-xs"
                           >
-                            <ExternalLink className="h-4 w-4" />
+                            <ExternalLink className="h-3.5 w-3.5" />
                             <span>View</span>
                           </a>
                         </div>
 
                         {/* Article Text Preview */}
-                        <p className="text-slate-400 font-rajdhani text-sm line-clamp-3">
+                        <p className="text-slate-400 font-rajdhani text-xs line-clamp-2">
                           {article.article_text}
                         </p>
 
                         {/* CVEs and Links */}
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-3">
                             {article.cves.length > 0 && (
-                              <div className="flex items-center space-x-2">
-                                <Hash className="h-4 w-4 text-purple-400" />
-                                <div className="flex flex-wrap gap-2">
+                              <div className="flex items-center space-x-1.5">
+                                <Hash className="h-3 w-3 text-purple-400" />
+                                <div className="flex flex-wrap gap-1">
                                   {article.cves.slice(0, 5).map((cve) => (
                                     <span
                                       key={cve}
-                                      className="px-2 py-1 bg-purple-500/20 border border-purple-400/30 rounded text-purple-300 text-xs font-rajdhani"
+                                      className="px-1.5 py-0.5 bg-purple-500/20 border border-purple-400/30 rounded text-purple-300 text-xs font-rajdhani"
                                     >
                                       {cve}
                                     </span>
@@ -424,42 +676,43 @@ export default function RawArticles() {
                             )}
 
                             {article.nested_links.length > 0 && (
-                              <div className="flex items-center space-x-2 text-slate-500 font-rajdhani text-sm">
-                                <ExternalLink className="h-4 w-4" />
+                              <div className="flex items-center space-x-1.5 text-slate-500 font-rajdhani text-xs">
+                                <ExternalLink className="h-3 w-3" />
                                 <span>{article.nested_links.length} nested links</span>
                               </div>
                             )}
                           </div>
 
-                          <span className="text-neon-blue font-rajdhani text-sm">
+                          <span className="text-neon-blue font-rajdhani text-xs">
                             Click to view full article →
                           </span>
                         </div>
                       </div>
                     </div>
                   </Link>
-                ))
+                  );
+                })
               )}
             </div>
 
             {/* Pagination Controls */}
             {articles.length > 0 && (
-              <div className="glass-panel-hover p-6 mt-8">
+              <div className="glass-panel-hover p-3 mt-4">
                 <div className="flex items-center justify-between">
                   <button
                     onClick={goToPrevPage}
                     disabled={!pagination.hasPrev || loading}
-                    className="flex items-center space-x-2 px-6 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-rajdhani font-medium"
+                    className="flex items-center space-x-2 px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-rajdhani font-medium text-sm"
                   >
-                    <ArrowLeft className="h-5 w-5" />
+                    <ArrowLeft className="h-4 w-4" />
                     <span>Previous</span>
                   </button>
 
                   <div className="text-center">
-                    <div className="text-white font-orbitron font-bold text-lg">
+                    <div className="text-white font-orbitron font-bold text-base">
                       Page {pagination.page} of {pagination.totalPages}
                     </div>
-                    <div className="text-slate-400 font-rajdhani text-sm mt-1">
+                    <div className="text-slate-400 font-rajdhani text-xs mt-0.5">
                       {pagination.pageSize} articles per page
                     </div>
                   </div>
@@ -467,15 +720,15 @@ export default function RawArticles() {
                   <button
                     onClick={goToNextPage}
                     disabled={!pagination.hasMore || loading}
-                    className="flex items-center space-x-2 px-6 py-3 bg-neon-blue/10 border border-neon-blue/30 rounded-lg text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-rajdhani font-medium"
+                    className="flex items-center space-x-2 px-4 py-2 bg-neon-blue/10 border border-neon-blue/30 rounded-lg text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-rajdhani font-medium text-sm"
                   >
                     <span>Next</span>
-                    <ArrowLeft className="h-5 w-5 rotate-180" />
+                    <ArrowLeft className="h-4 w-4 rotate-180" />
                   </button>
                 </div>
               </div>
             )}
-          </div>
+          </main>
         </div>
       </div>
     </HydrationSafe>
