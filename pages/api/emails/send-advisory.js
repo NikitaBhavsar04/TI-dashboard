@@ -9,36 +9,30 @@ import mongoose from 'mongoose';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { Client as OpenSearchClient } from '@opensearch-project/opensearch';
+
+// Initialize OpenSearch client
+const opensearchUrl = process.env.OPENSEARCH_URL;
+const host = process.env.OPENSEARCH_HOST;
+const port = process.env.OPENSEARCH_PORT || '9200';
+const username = process.env.OPENSEARCH_USERNAME;
+const password = process.env.OPENSEARCH_PASSWORD;
+
+const nodeUrl = opensearchUrl || `https://${host}:${port}`;
+
+const clientConfig = {
+  node: nodeUrl,
+  ssl: { rejectUnauthorized: false }
+};
+
+if (username && password) {
+  clientConfig.auth = { username, password };
+}
+
+const osClient = new OpenSearchClient(clientConfig);
+const ADVISORY_INDEX = 'ti-generated-advisories';
 
 const { generateAdvisory4EmailTemplate } = require('../../../lib/advisory4TemplateGenerator');
-
-// Helper function to read workspace HTML file
-function readWorkspaceHTML(htmlFileName) {
-  try {
-    if (!htmlFileName) return null;
-    
-    const workspacePath = path.resolve(process.cwd(), 'backend', 'workspace', htmlFileName);
-    const workspaceRoot = path.resolve(process.cwd(), 'backend', 'workspace');
-    
-    // Security check
-    if (!workspacePath.startsWith(workspaceRoot)) {
-      console.error('Security violation: Path outside workspace');
-      return null;
-    }
-    
-    if (!fs.existsSync(workspacePath)) {
-      console.error(`HTML file not found: ${workspacePath}`);
-      return null;
-    }
-    
-    const htmlContent = fs.readFileSync(workspacePath, 'utf8');
-    console.log(`Successfully read workspace HTML file: ${htmlFileName}`);
-    return htmlContent;
-  } catch (error) {
-    console.error(`Error reading workspace HTML file:`, error);
-    return null;
-  }
-}
 
 const { agenda } = require('../../../lib/agenda');
 const appsScriptScheduler = require('../../../lib/appsScriptScheduler');
@@ -67,6 +61,8 @@ export default async function handler(req, res) {
       recipients, // Array of { type: 'client' | 'individual' | 'csv_bulk', id?: string, emails?: string[] }
       subject,
       customMessage,
+      cc = [], // CC email addresses
+      bcc = [], // BCC email addresses
       scheduledDate,
       scheduledTime,
       isScheduled = false,
@@ -79,50 +75,40 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Load Eagle Nest advisory from JSON file
-    const fs = require('fs');
-    const path = require('path');
-    let advisory; // Declare advisory outside try block for broader scope
+    // Load advisory from OpenSearch
+    let advisory;
     
-      const eagleNestPath = path.resolve(process.cwd(), 'backend', 'workspace', 'eagle_nest', `${advisoryId}.json`);
+    try {
+      console.log('[SEND-ADVISORY] Fetching advisory from OpenSearch:', advisoryId);
       
-      if (!fs.existsSync(eagleNestPath)) {
-        return res.status(404).json({ message: 'Eagle Nest advisory not found' });
+      // Fetch advisory from OpenSearch
+      const response = await osClient.get({
+        index: ADVISORY_INDEX,
+        id: advisoryId
+      });
+
+      if (!response.body._source) {
+        return res.status(404).json({ message: 'Advisory not found in OpenSearch' });
       }
+
+      const advisoryData = response.body._source;
+      console.log('[SEND-ADVISORY] Advisory loaded from OpenSearch');
       
-      try {
-        const eagleNestData = JSON.parse(fs.readFileSync(eagleNestPath, 'utf8'));
-        
-        // Check if HTML file exists in backend/workspace/ or backend/workspace/email_cache/
-        let htmlFileName = null;
-        const workspacePath = path.resolve(process.cwd(), 'backend', 'workspace');
-        const emailCachePath = path.resolve(process.cwd(), 'backend', 'workspace', 'email_cache');
-        
-        // Search in workspace root first
-        let htmlFiles = fs.readdirSync(workspacePath).filter(f => f.startsWith(advisoryId) && f.endsWith('.html'));
-        
-        if (htmlFiles.length === 0 && fs.existsSync(emailCachePath)) {
-          // Search in email_cache folder
-          htmlFiles = fs.readdirSync(emailCachePath).filter(f => f.startsWith(advisoryId) && f.endsWith('.html'));
-          if (htmlFiles.length > 0) {
-            htmlFileName = `email_cache/${htmlFiles[0]}`; // Include subfolder path
-            console.log(`📧 Found Eagle Nest HTML file in cache: ${htmlFileName}`);
-          }
-        } else if (htmlFiles.length > 0) {
-          htmlFileName = htmlFiles[0]; // Use the first matching HTML file
-          console.log(`📧 Found Eagle Nest HTML file: ${htmlFileName}`);
-        }
-        
-        // Use raw Eagle Nest data - template generator handles all field name variations
-        advisory = {
-          ...eagleNestData, // Spread all original fields
-          _id: advisoryId, // Ensure _id is set
-          htmlFileName: htmlFileName // Add HTML filename if found
-        };
-      } catch (err) {
-        console.error('Error parsing Eagle Nest advisory:', err);
-        return res.status(500).json({ message: 'Failed to load Eagle Nest advisory' });
-      }
+      // Use OpenSearch data - template generator will handle all field name variations
+      advisory = {
+        ...advisoryData,
+        _id: advisoryId
+      };
+      
+      console.log('📧 Will generate HTML template dynamically from OpenSearch data');
+      
+    } catch (err) {
+      console.error('[SEND-ADVISORY] Error fetching advisory from OpenSearch:', err);
+      return res.status(500).json({ 
+        message: 'Failed to load advisory from OpenSearch',
+        error: err.message 
+      });
+    }
 
     // Process recipients and create email jobs
     const emailJobs = [];
@@ -136,8 +122,8 @@ export default async function handler(req, res) {
           advisoryId,
           createdBy: decoded.userId,
           status: 'pending', // Always start as pending, mark as sent after successful delivery
-          cc: [],
-          bcc: []
+          cc: cc || [],
+          bcc: bcc || []
         };
 
         if (recipient.type === 'client') {
@@ -228,39 +214,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // Generate email body - prioritize workspace HTML file if available
-    let emailBody;
-    
-    if (advisory.htmlFileName) {
-      console.log(`📧 Attempting to use workspace HTML file: ${advisory.htmlFileName}`);
-      const workspaceHTML = readWorkspaceHTML(advisory.htmlFileName);
-      
-      if (workspaceHTML) {
-        // If custom message is provided, inject it into the HTML
-        if (customMessage) {
-          // Insert custom message after the header section
-          const customMessageHTML = `
-            <tr>
-              <td style="padding: 20px 30px; background-color: rgba(5, 150, 105, 0.8);">
-                <h3 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 700; color: #ffffff;">📢 Message from Security Team</h3>
-                <p style="margin: 0; font-size: 14px; color: #ecfdf5; line-height: 1.5;">${customMessage.replace(/\n/g, '<br>')}</p>
-              </td>
-            </tr>
-          `;
-          // Try to inject after the first closing </tr> tag or at the beginning of body
-          emailBody = workspaceHTML.replace(/(<\/tr>)/, `$1${customMessageHTML}`);
-        } else {
-          emailBody = workspaceHTML;
-        }
-        console.log(`Using workspace HTML file for email body`);
-      } else {
-        console.log(`⚠️ Workspace HTML file not found, falling back to advisory_4 template`);
-        emailBody = generateAdvisory4EmailTemplate(advisory, customMessage);
-      }
-    } else {
-      console.log(`📧 No workspace HTML file specified, using advisory_4 template`);
-      emailBody = generateAdvisory4EmailTemplate(advisory, customMessage);
-    }
+    // Generate email body dynamically from OpenSearch data
+    console.log('📧 Generating HTML template from OpenSearch advisory data');
+    const emailBody = generateAdvisory4EmailTemplate(advisory, customMessage);
 
     // Initialize tracking if enabled
     let trackingRecords = [];
@@ -381,12 +337,22 @@ export default async function handler(req, res) {
 
               console.log(`📤 Scheduling via Apps Script for: ${toEmails}`);
 
+              // Prepare CC and BCC for Apps Script
+              const ccEmails = emailJob.cc && emailJob.cc.length > 0 
+                ? (Array.isArray(emailJob.cc) ? emailJob.cc.join(', ') : emailJob.cc)
+                : null;
+              const bccEmails = emailJob.bcc && emailJob.bcc.length > 0 
+                ? (Array.isArray(emailJob.bcc) ? emailJob.bcc.join(', ') : emailJob.bcc)
+                : null;
+
               const appsScriptResult = await appsScriptScheduler.scheduleEmail({
                 to: toEmails,
                 subject: emailJob.subject,
                 htmlBody: emailJob.body,
                 scheduledTime: scheduledAt.toISOString(),
                 replyTo: process.env.SMTP_USER,
+                cc: ccEmails,
+                bcc: bccEmails,
                 trackingId: emailJob.trackingData?.[0]?.trackingId,
                 advisoryId: advisoryId,
                 clientId: emailJob.clientId

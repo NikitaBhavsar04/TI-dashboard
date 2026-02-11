@@ -218,10 +218,11 @@ export default function EagleNestDetail() {
                   {hasRole('admin') && (
                     <button 
                       onClick={handleEmailClick}
-                      className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg transition-all duration-300 hover:scale-105 shadow-lg"
+                      className="relative flex items-center space-x-2 px-5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 hover:border-emerald-400/50 rounded-lg transition-all duration-300 hover:scale-105 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-400/40 backdrop-blur-sm group overflow-hidden"
                     >
-                      <Mail className="h-4 w-4 text-white" />
-                      <span className="text-white font-rajdhani font-medium">Send Email</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-300/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700"></div>
+                      <Mail className="h-4 w-4 text-emerald-300 group-hover:text-emerald-200 relative z-10 transition-colors duration-300" />
+                      <span className="text-emerald-300 group-hover:text-emerald-200 font-rajdhani font-semibold relative z-10 transition-colors duration-300">Send Email</span>
                     </button>
                   )}
 

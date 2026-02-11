@@ -43,6 +43,12 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
   const [subject, setSubject] = useState('');
   const [customMessage, setCustomMessage] = useState('');
   
+  // CC and BCC fields
+  const [ccEmails, setCcEmails] = useState<string[]>(['']);
+  const [bccEmails, setBccEmails] = useState<string[]>(['']);
+  const [showCC, setShowCC] = useState(false);
+  const [showBCC, setShowBCC] = useState(false);
+  
   // CSV Upload states
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvEmails, setCsvEmails] = useState<string[]>([]);
@@ -123,6 +129,32 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
       const currentEmails = Array.isArray(prev) ? prev : [''];
       return currentEmails.map((e, i) => i === index ? email : e);
     });
+  };
+
+  // CC email management
+  const addCcEmail = () => {
+    setCcEmails(prev => [...prev, '']);
+  };
+
+  const removeCcEmail = (index: number) => {
+    setCcEmails(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateCcEmail = (index: number, email: string) => {
+    setCcEmails(prev => prev.map((e, i) => i === index ? email : e));
+  };
+
+  // BCC email management
+  const addBccEmail = () => {
+    setBccEmails(prev => [...prev, '']);
+  };
+
+  const removeBccEmail = (index: number) => {
+    setBccEmails(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateBccEmail = (index: number, email: string) => {
+    setBccEmails(prev => prev.map((e, i) => i === index ? email : e));
   };
 
   // CSV Upload Functions
@@ -250,11 +282,17 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
         }];
       }
 
+      // Filter and add CC/BCC emails
+      const validCcEmails = ccEmails.filter(e => e.trim());
+      const validBccEmails = bccEmails.filter(e => e.trim());
+
       const payload = {
         advisoryId: advisory._id,
         recipients,
         subject,
         customMessage,
+        cc: validCcEmails.length > 0 ? validCcEmails : undefined,
+        bcc: validBccEmails.length > 0 ? validBccEmails : undefined,
         trackingOptions: {
           enableTracking,
           ...trackingOptions
@@ -474,9 +512,31 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
             {/* Individual Email Input */}
             {sendMethod === 'individual' && (
               <div>
-                <label className="block text-slate-400 font-rajdhani text-sm mb-3">
-                  Email Addresses
-                </label>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-slate-400 font-rajdhani text-sm">
+                    To: Email Addresses
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    {!showCC && (
+                      <button
+                        type="button"
+                        onClick={() => setShowCC(true)}
+                        className="text-neon-blue hover:text-neon-blue/80 font-rajdhani text-sm"
+                      >
+                        + CC
+                      </button>
+                    )}
+                    {!showBCC && (
+                      <button
+                        type="button"
+                        onClick={() => setShowBCC(true)}
+                        className="text-neon-blue hover:text-neon-blue/80 font-rajdhani text-sm"
+                      >
+                        + BCC
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <div className="space-y-3">
                   {Array.isArray(individualEmails) && individualEmails.map((email, index) => (
                     <div key={index} className="flex items-center space-x-2">
@@ -507,6 +567,108 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
                     <span className="font-rajdhani font-medium">Add Email</span>
                   </button>
                 </div>
+
+                {/* CC Field */}
+                {showCC && (
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-slate-400 font-rajdhani text-sm">
+                        CC (Carbon Copy)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCC(false);
+                          setCcEmails(['']);
+                        }}
+                        className="text-red-400 hover:text-red-300 font-rajdhani text-xs"
+                      >
+                        Remove CC
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {ccEmails.map((email, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => updateCcEmail(index, e.target.value)}
+                            placeholder="cc@example.com"
+                            className="flex-1 px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50"
+                          />
+                          {ccEmails.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeCcEmail(index)}
+                              className="p-2 bg-red-500/20 border border-red-400/50 rounded-lg text-red-400 hover:bg-red-500/30 transition-all duration-200"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addCcEmail}
+                        className="flex items-center space-x-2 px-3 py-1.5 bg-neon-blue/20 border border-neon-blue/50 rounded-lg text-neon-blue hover:bg-neon-blue/30 transition-all duration-200 text-sm"
+                      >
+                        <Plus className="h-3 w-3" />
+                        <span className="font-rajdhani font-medium">Add CC</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* BCC Field */}
+                {showBCC && (
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-slate-400 font-rajdhani text-sm">
+                        BCC (Blind Carbon Copy)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowBCC(false);
+                          setBccEmails(['']);
+                        }}
+                        className="text-red-400 hover:text-red-300 font-rajdhani text-xs"
+                      >
+                        Remove BCC
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {bccEmails.map((email, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => updateBccEmail(index, e.target.value)}
+                            placeholder="bcc@example.com"
+                            className="flex-1 px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50"
+                          />
+                          {bccEmails.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeBccEmail(index)}
+                              className="p-2 bg-red-500/20 border border-red-400/50 rounded-lg text-red-400 hover:bg-red-500/30 transition-all duration-200"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addBccEmail}
+                        className="flex items-center space-x-2 px-3 py-1.5 bg-neon-blue/20 border border-neon-blue/50 rounded-lg text-neon-blue hover:bg-neon-blue/30 transition-all duration-200 text-sm"
+                      >
+                        <Plus className="h-3 w-3" />
+                        <span className="font-rajdhani font-medium">Add BCC</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
