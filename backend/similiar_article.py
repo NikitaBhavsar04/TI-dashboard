@@ -1,7 +1,13 @@
 import sys
 import json
 import logging
+import os
 from typing import List, Dict, Any
+from dotenv import load_dotenv
+
+# Load environment variables from project root
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(project_root, '.env'))
 
 from utils.opensearch_client import get_opensearch_client
 

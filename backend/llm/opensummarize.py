@@ -421,29 +421,63 @@ def call_llm(prompt: str, max_tokens: int = 2200) -> str:
     if not api_key:
         raise RuntimeError("OPENROUTER_API_KEY environment variable not set in .env file")
 
-    client = OpenAI(
-        base_url=OPENROUTER_BASE,
-        api_key=api_key,
-        default_headers={
-            "HTTP-Referer": "https://your-soc-platform.local",
-            "X-Title": "Threat Intelligence Pipeline",
-        },
+    import httpx
+    
+    # Smart development environment detection
+    is_development = (
+        os.getenv('NODE_ENV') == 'development' or
+        os.getenv('DISABLE_SSL_VERIFY') == 'true' or
+        os.getenv('VERCEL') is None and  # Not on Vercel (production platform)
+        ('localhost' in os.getcwd() or 'venv' in os.getcwd() or 'Scripts' in os.environ.get('PATH', ''))
     )
+    
+    # Try with SSL verification first
+    ssl_verify = not is_development
+    
+    def make_request(verify_ssl=True):
+        http_client = httpx.Client(verify=verify_ssl)
+        client = OpenAI(
+            base_url=OPENROUTER_BASE,
+            api_key=api_key,
+            http_client=http_client,
+            default_headers={
+                "HTTP-Referer": "https://your-soc-platform.local",
+                "X-Title": "Threat Intelligence Pipeline",
+            },
+        )
 
+        return client.chat.completions.create(
+            model=OPENROUTER_MODEL,
+            messages=[
+                {"role": "system", "content": "You are a threat intelligence analyst."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
+            max_tokens=max_tokens,
+            response_format={"type": "json_object"},
+        )
+    
     logger.info(f"[LLM] Using OpenRouter model: {OPENROUTER_MODEL}")
-
-    resp = client.chat.completions.create(
-        model=OPENROUTER_MODEL,
-        messages=[
-            {"role": "system", "content": "You are a threat intelligence analyst."},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=0.2,
-        max_tokens=max_tokens,
-        response_format={"type": "json_object"},
-    )
-
-    return (resp.choices[0].message.content or "").strip()
+    if is_development:
+        logger.info("[LLM] Development environment detected, SSL verification disabled")
+    
+    try:
+        resp = make_request(verify_ssl=ssl_verify)
+        return (resp.choices[0].message.content or "").strip()
+        
+    except Exception as e:
+        # Always try SSL fallback for any SSL-related error
+        if 'ssl' in str(e).lower() or 'certificate' in str(e).lower() or 'connection' in str(e).lower():
+            logger.warning(f"[LLM] SSL/Connection error detected, retrying without SSL verification: {e}")
+            try:
+                resp = make_request(verify_ssl=False)
+                return (resp.choices[0].message.content or "").strip()
+            except Exception as retry_e:
+                logger.error(f"[LLM] Failed even without SSL verification: {retry_e}")
+                raise retry_e
+        else:
+            logger.error(f"[LLM] Request failed: {e}")
+            raise e
 
 
 # ============================================================

@@ -6,6 +6,7 @@ Simple version using only requests library
 import requests
 import json
 import logging
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -24,7 +25,9 @@ class MITRETAXIIConnector:
     No external TAXII dependencies needed.
     """
     
-    def __init__(self, discovery_url: str, api_root: str, cache_dir: Path):
+    def __init__(self, discovery_url: str = "https://cti-taxii.mitre.org/taxii2/", 
+                 api_root: str = "https://cti-taxii.mitre.org/taxii2", 
+                 cache_dir: Path = None):
         """
         Initialize the TAXII connector.
         
@@ -35,10 +38,34 @@ class MITRETAXIIConnector:
         """
         self.discovery_url = discovery_url
         self.api_root = api_root
-        self.cache_dir = cache_dir
         
-        # Create requests session
+        # Set default cache directory if not provided
+        if cache_dir is None:
+            self.cache_dir = Path("backend/data/mitre_cache")
+        else:
+            self.cache_dir = cache_dir
+        
+        # Ensure cache directory exists
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Smart development environment detection
+        is_development = (
+            os.getenv('NODE_ENV') == 'development' or
+            os.getenv('DISABLE_SSL_VERIFY') == 'true' or
+            os.getenv('VERCEL') is None and  # Not on Vercel (production platform)
+            ('localhost' in os.getcwd() or 'venv' in os.getcwd() or 'Scripts' in os.environ.get('PATH', ''))
+        )
+        
+        # Create requests session with SSL handling
         self.session = requests.Session()
+        
+        # Configure SSL verification based on environment
+        if is_development:
+            self.session.verify = False
+            logger.info("[TAXII] Development environment detected, SSL verification disabled")
+        else:
+            self.session.verify = True
+            logger.info("[TAXII] Production environment, SSL verification enabled")
         
         # Set required headers for TAXII 2.1
         self.session.headers.update({
@@ -69,8 +96,18 @@ class MITRETAXIIConnector:
             logger.info("Testing connection to MITRE TAXII 2.1 server...")
             logger.info(f"Endpoint: {self.discovery_url}")
             
-            # Test discovery endpoint
-            response = self.session.get(self.discovery_url, timeout=15)
+            # Test discovery endpoint with SSL fallback
+            response = None
+            try:
+                response = self.session.get(self.discovery_url, timeout=15)
+            except requests.exceptions.SSLError as e:
+                logger.warning(f"[TAXII] SSL error, retrying without verification: {e}")
+                original_verify = self.session.verify
+                self.session.verify = False
+                try:
+                    response = self.session.get(self.discovery_url, timeout=15)
+                finally:
+                    self.session.verify = original_verify
             
             if response.status_code == 200:
                 data = response.json()
@@ -173,9 +210,20 @@ class MITRETAXIIConnector:
             if limit:
                 params['limit'] = limit
             
-            # Fetch data
+            # Fetch data with SSL fallback
             logger.info(f"  Fetching objects...")
-            response = self.session.get(url, params=params, timeout=120)
+            response = None
+            try:
+                response = self.session.get(url, params=params, timeout=120)
+            except requests.exceptions.SSLError as e:
+                logger.warning(f"[TAXII] SSL error, retrying without verification: {e}")
+                original_verify = self.session.verify
+                self.session.verify = False
+                try:
+                    response = self.session.get(url, params=params, timeout=120)
+                finally:
+                    self.session.verify = original_verify
+            
             response.raise_for_status()
             
             data = response.json()
@@ -225,16 +273,22 @@ class MITRETAXIIConnector:
                 "objects": []
             }
     
-    def get_techniques(self, data: Dict) -> List[Dict]:
+    def get_techniques(self, use_cache: bool = True) -> List[Dict]:
         """
-        Extract ATT&CK techniques from fetched data.
+        Get ATT&CK techniques from the MITRE collection.
         
         Args:
-            data: Dictionary containing STIX objects
+            use_cache: Whether to use cached data if available
             
         Returns:
             List of extracted techniques
         """
+        # MITRE collection ID for Enterprise ATT&CK
+        enterprise_collection_id = "x-mitre-collection--23aa0df3-2713-4b17-bd07-9b1b0ace6d9c"
+        
+        # Fetch the collection data
+        data = self.fetch_collection(enterprise_collection_id, use_cache=use_cache)
+        
         techniques = []
         
         for obj in data.get('objects', []):
@@ -259,7 +313,8 @@ class MITRETAXIIConnector:
                     description = description[:200] + "..."
                 
                 technique = {
-                    "id": external_id,
+                    "external_id": external_id,
+                    "id": external_id,  # alias for compatibility
                     "name": obj.get('name', 'N/A'),
                     "description": description,
                     "tactics": tactics,

@@ -9,6 +9,11 @@ MANUAL ADVISORY GENERATION PIPELINE (SOC-grade)
 import datetime
 from typing import Dict, List
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from project root
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(project_root, '.env'))
 
 from utils.opensearch_client import get_opensearch_client
 
@@ -179,37 +184,55 @@ def generate_advisory_for_article(article_id: str) -> dict:
         f"{advisory.get('title','')} {advisory.get('exec_summary','')}",
     )
 
-    mbc = extract_mbc(
-        title=advisory.get("title", ""),
-        threat_type=advisory.get("threat_type", ""),
-        exec_summary=advisory.get("exec_summary", ""),
-        mitre=mitre,
-    )
+    logger.info("[MBC] Starting malware behavior analysis...")
+    try:
+        mbc = extract_mbc(
+            title=advisory.get("title", ""),
+            threat_type=advisory.get("threat_type", ""),
+            exec_summary=advisory.get("exec_summary", ""),
+            mitre=mitre,
+        )
+        logger.info(f"[MBC] Extracted {len(mbc)} behaviors")
+    except Exception as e:
+        logger.error(f"[MBC] Failed to extract behaviors: {e}")
+        mbc = []
 
     # -------------------------------------------------------
     # CVSS
     # -------------------------------------------------------
+    logger.info("[CVSS] Starting CVE scoring analysis...")
     cvss_entries: List[Dict] = []
     highest = None
 
-    for cve in advisory.get("cves", []):
-        cvss = fetch_cvss(cve)
-        if not cvss:
-            continue
+    cves_to_process = advisory.get("cves", [])
+    logger.info(f"[CVSS] Processing {len(cves_to_process)} CVEs: {cves_to_process}")
 
-        entry = {
-            "cve": cve,
-            "score": cvss.get("score"),
-            "vector": cvss.get("vector"),
-            "criticality": cvss.get("criticality"),
-            "source": cvss.get("source"),
-        }
-        cvss_entries.append(entry)
+    for cve in cves_to_process:
+        logger.info(f"[CVSS] Fetching score for {cve}")
+        try:
+            cvss = fetch_cvss(cve)
+            if not cvss:
+                logger.warning(f"[CVSS] No data returned for {cve}")
+                continue
 
-        if not highest or entry["score"] > highest["score"]:
-            highest = entry
+            entry = {
+                "cve": cve,
+                "score": cvss.get("score"),
+                "vector": cvss.get("vector"),
+                "criticality": cvss.get("criticality"),
+                "source": cvss.get("source"),
+            }
+            cvss_entries.append(entry)
+            logger.info(f"[CVSS] Successfully processed {cve}: score={entry['score']}, criticality={entry['criticality']}")
 
+            if not highest or (entry["score"] and entry["score"] > (highest.get("score") or 0)):
+                highest = entry
+        except Exception as e:
+            logger.error(f"[CVSS] Failed to process {cve}: {e}")
+
+    logger.info(f"[CVSS] Processed {len(cvss_entries)} CVE entries")
     final_criticality = highest["criticality"] if highest else "MEDIUM"
+    logger.info(f"[CVSS] Final criticality: {final_criticality}")
 
     # --------------------------------------------------------
     # References
