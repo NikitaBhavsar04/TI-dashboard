@@ -46,7 +46,13 @@ PHONE_NUMBER = os.getenv("TELEGRAM_PHONE_NUMBER")
 
 tg_cfg = cfg.get("telegram", {})
 SESSION_NAME = tg_cfg.get("session_name", "telegram_scraper_session")
-TELEGRAM_CHANNELS = tg_cfg.get("channels", [])
+# Filter enabled channels and extract names
+channels_config = tg_cfg.get("channels", [])
+TELEGRAM_CHANNELS = [
+    ch["channel"] if isinstance(ch, dict) else ch
+    for ch in channels_config
+    if isinstance(ch, str) or (isinstance(ch, dict) and ch.get("enabled", True))
+]
 MESSAGE_LIMIT_PER_RUN = tg_cfg.get("message_limit_per_run", 50)
 
 DAYS_BACK = 10
@@ -57,7 +63,9 @@ if not API_ID or not API_HASH or not PHONE_NUMBER:
     raise RuntimeError("[CONFIG ERROR] Missing Telegram credentials in .env")
 
 if not TELEGRAM_CHANNELS:
-    raise RuntimeError("[TELEGRAM] No channels configured in config.yaml")
+    raise RuntimeError("[TELEGRAM] No channels configured or all disabled")
+
+logger.info(f"[TELEGRAM] Enabled channels: {TELEGRAM_CHANNELS}")
 
 # -------------------------------------------------------------------
 # OPENSEARCH CLIENT
@@ -117,16 +125,25 @@ def incident_doc_id(incident_key: str) -> str:
 
 def incident_exists(incident_key: str) -> bool:
     try:
+        # Check if index exists first
+        if not os_client.indices.exists(index=INDEX):
+            logger.info(f"[TELEGRAM] Index '{INDEX}' does not exist, will be created on first insert")
+            return False
         return os_client.exists(index=INDEX, id=incident_doc_id(incident_key))
-    except Exception:
+    except Exception as e:
+        logger.debug(f"[TELEGRAM] incident_exists check failed: {e}")
         return False
 
 def url_exists(url_hash: str) -> bool:
     q = {"size": 0, "query": {"term": {"id": url_hash}}}
     try:
+        # Check if index exists first
+        if not os_client.indices.exists(index=INDEX):
+            return False
         r = os_client.search(index=INDEX, body=q, request_timeout=5)
         return r["hits"]["total"]["value"] > 0
-    except Exception:
+    except Exception as e:
+        logger.debug(f"[TELEGRAM] url_exists check failed: {e}")
         return False
 
 # -------------------------------------------------------------------

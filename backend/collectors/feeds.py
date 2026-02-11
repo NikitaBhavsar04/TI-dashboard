@@ -37,7 +37,7 @@ TRACKING_PARAMS = {
 # KEYWORDS (CONTENT-BASED TRIAGE)
 # ============================================================
 
-# 🚫 HARD DROP — never allowed
+# HARD DROP — never allowed
 HARD_NEGATIVE_KEYWORDS = {
     "best practice", "best practices",
     "how to", "guide", "tutorial",

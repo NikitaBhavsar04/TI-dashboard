@@ -13,8 +13,10 @@ if (!opensearchUrl && !host) {
   throw new Error('OPENSEARCH_URL or OPENSEARCH_HOST must be set in environment variables');
 }
 
-// Use OPENSEARCH_URL if available (AWS deployment), otherwise construct from host/port
-const nodeUrl = opensearchUrl || `https://${host}:${port}`;
+// Auto-detect protocol: use http for localhost, https for cloud
+const isLocalhost = host === 'localhost' || host === '127.0.0.1';
+const protocol = isLocalhost ? 'http' : 'https';
+const nodeUrl = opensearchUrl || `${protocol}://${host}:${port}`;
 
 const clientConfig: any = {
   node: nodeUrl,

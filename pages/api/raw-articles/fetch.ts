@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyToken } from '@/lib/auth';
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,6 +19,17 @@ export default async function handler(
     if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'super_admin')) {
       return res.status(403).json({ error: 'Forbidden: Admin access required' });
     }
+
+    // Only allow POST requests
+    if (req.method !== 'POST') {
+      res.setHeader('Allow', ['POST']);
+      return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    }
+
+    try {
+      const backendPath = path.join(process.cwd(), 'backend');
+      const scriptPath = path.join(backendPath, 'all_feeds.py');
+
       // Resolve the best Python executable to use. Priority:
       // 1. process.env.PYTHON_EXECUTABLE (explicit)
       // 2. active virtualenv via VIRTUAL_ENV
@@ -74,18 +86,6 @@ export default async function handler(
         cwd: backendPath,
         env: childEnv
       });
-      const env = { ...process.env } as NodeJS.ProcessEnv;
-      if (process.platform === 'win32' && pythonCmd === venvWin) {
-        // Prepend venv Scripts to PATH so installed packages are found
-        env.PATH = `${path.join(process.cwd(), 'venv', 'Scripts')};${env.PATH}`;
-      } else if (process.platform !== 'win32' && pythonCmd === venvPosix) {
-        env.PATH = `${path.join(process.cwd(), 'venv', 'bin')}:${env.PATH}`;
-      }
-
-      const python = spawn(pythonCmd, [scriptPath], {
-        cwd: backendPath,
-        env
-      });
 
       let stdout = '';
       let stderr = '';
@@ -132,8 +132,12 @@ export default async function handler(
         details: error.message
       });
     }
-  } else {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+  } catch (error: any) {
+    console.error('Error in authentication:', error);
+    return res.status(500).json({ 
+      success: false,
+      error: 'Authentication error',
+      details: error.message
+    });
   }
 }

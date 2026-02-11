@@ -15,31 +15,33 @@ logging.basicConfig(
 )
 
 def main():
+    logger.info("[RUNNER] ========== Starting All Feed Collectors ==========")
+    
     logger.info("[RUNNER] Starting RSS fetcher")
     try:
         import rss_fetcher
         rss_fetcher.main()
-        logger.info("[RUNNER] RSS fetcher done")
+        logger.info("[RUNNER] ✓ RSS fetcher done")
     except Exception as e:
-        logger.exception(f"[RUNNER] RSS failed: {e}")
+        logger.exception(f"[RUNNER] ✗ RSS failed: {e}")
     
     logger.info("[RUNNER] Starting Reddit fetcher")
     try:
         import reddit_fetcher
         reddit_fetcher.main()
-        logger.info("[RUNNER] Reddit fetcher done")
+        logger.info("[RUNNER] ✓ Reddit fetcher done")
     except Exception as e:
-        logger.exception(f"[RUNNER] Reddit failed: {e}")
+        logger.exception(f"[RUNNER] ✗ Reddit failed: {e}")
     
     logger.info("[RUNNER] Starting Telegram fetcher")
     try:
         import telegram_fetcher
         telegram_fetcher.run_once()
-        logger.info("[RUNNER] Telegram fetcher done")
+        logger.info("[RUNNER] ✓ Telegram fetcher done")
     except Exception as e:
-        logger.exception(f"[RUNNER] Telegram failed: {e}")
+        logger.exception(f"[RUNNER] ✗ Telegram failed: {e}")
     
-    logger.info("[RUNNER] All feeds completed")
+    logger.info("[RUNNER] ========== All feeds completed ==========")
 
 if __name__ == "__main__":
     main()

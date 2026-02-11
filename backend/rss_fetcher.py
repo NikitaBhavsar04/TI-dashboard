@@ -215,16 +215,25 @@ def incident_doc_id(incident_key: str) -> str:
 
 def incident_exists(incident_key: str) -> bool:
     try:
+        # Check if index exists first
+        if not os_client.indices.exists(index=INDEX):
+            logger.info(f"[RSS] Index '{INDEX}' does not exist, will be created on first insert")
+            return False
         return os_client.exists(index=INDEX, id=incident_doc_id(incident_key))
-    except Exception:
+    except Exception as e:
+        logger.debug(f"[RSS] incident_exists check failed: {e}")
         return False
 
 def url_exists(url_hash: str) -> bool:
     q = {"size": 0, "query": {"term": {"id": url_hash}}}
     try:
+        # Check if index exists first
+        if not os_client.indices.exists(index=INDEX):
+            return False
         r = os_client.search(index=INDEX, body=q, request_timeout=5)
         return r["hits"]["total"]["value"] > 0
-    except Exception:
+    except Exception as e:
+        logger.debug(f"[RSS] url_exists check failed: {e}")
         return False
 
 
@@ -370,18 +379,24 @@ def fetch_rss(feed_url: str) -> List[Dict]:
 # MAIN
 # -------------------------------------------------------------------
 def main():
+    logger.info(f"[RSS] Enabled feeds: {len(SOURCES)}")
     articles: List[Dict] = []
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as exe:
         futures = [exe.submit(fetch_rss, u) for u in SOURCES]
         for f in as_completed(futures):
             try:
-                articles.extend(f.result())
+                result = f.result()
+                articles.extend(result)
+                if result:
+                    logger.debug(f"[RSS] Feed returned {len(result)} articles")
             except Exception as e:
                 logger.error(f"[RSS] Worker failed: {e}", exc_info=True)
 
+    logger.info(f"[RSS] Total articles collected: {len(articles)}")
+
     if not articles:
-        logger.info("[RSS] No new incidents")
+        logger.info("[RSS] No new incidents (all duplicates or filtered)")
         return
 
     actions = [

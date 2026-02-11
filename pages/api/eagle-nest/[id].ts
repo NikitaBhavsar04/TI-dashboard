@@ -11,7 +11,10 @@ const port = process.env.OPENSEARCH_PORT || '9200';
 const username = process.env.OPENSEARCH_USERNAME;
 const password = process.env.OPENSEARCH_PASSWORD;
 
-const nodeUrl = opensearchUrl || `https://${host}:${port}`;
+// Auto-detect protocol: use http for localhost, https for cloud
+const isLocalhost = host === 'localhost' || host === '127.0.0.1';
+const protocol = isLocalhost ? 'http' : 'https';
+const nodeUrl = opensearchUrl || `${protocol}://${host}:${port}`;
 
 const clientConfig: {
   node: string;

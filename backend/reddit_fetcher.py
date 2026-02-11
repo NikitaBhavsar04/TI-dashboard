@@ -39,12 +39,20 @@ socket.setdefaulttimeout(10)
 cfg = read_yaml("config.yaml")
 
 reddit_cfg = cfg.get("reddit", {})
-SUBREDDITS = reddit_cfg.get("subreddits", [])
+# Filter enabled subreddits and extract names
+subreddits_config = reddit_cfg.get("subreddits", [])
+SUBREDDITS = [
+    sub["subreddit"] if isinstance(sub, dict) else sub
+    for sub in subreddits_config
+    if isinstance(sub, str) or (isinstance(sub, dict) and sub.get("enabled", True))
+]
 MAX_POSTS_PER_SUBREDDIT = reddit_cfg.get("max_posts_per_subreddit", 100)
 REQUEST_TIMEOUT = reddit_cfg.get("request_timeout", 30)
 
 if not SUBREDDITS:
-    raise RuntimeError("[REDDIT] No subreddits configured")
+    raise RuntimeError("[REDDIT] No subreddits configured or all disabled")
+
+logger.info(f"[REDDIT] Enabled subreddits: {SUBREDDITS}")
 
 REDDIT_USER_AGENT = (
     reddit_cfg.get("user_agent")
@@ -161,16 +169,25 @@ def incident_doc_id(incident_key: str) -> str:
 
 def incident_exists(incident_key: str) -> bool:
     try:
+        # Check if index exists first
+        if not os_client.indices.exists(index=INDEX):
+            logger.info(f"[REDDIT] Index '{INDEX}' does not exist, will be created on first insert")
+            return False
         return os_client.exists(index=INDEX, id=incident_doc_id(incident_key))
-    except Exception:
+    except Exception as e:
+        logger.debug(f"[REDDIT] incident_exists check failed: {e}")
         return False
 
 def url_exists(url_hash: str) -> bool:
     q = {"size": 0, "query": {"term": {"id": url_hash}}}
     try:
+        # Check if index exists first
+        if not os_client.indices.exists(index=INDEX):
+            return False
         r = os_client.search(index=INDEX, body=q, request_timeout=5)
         return r["hits"]["total"]["value"] > 0
-    except Exception:
+    except Exception as e:
+        logger.debug(f"[REDDIT] url_exists check failed: {e}")
         return False
 
 # -------------------------------------------------------------------
@@ -201,14 +218,17 @@ def fetch_html(url: str) -> str:
 def fetch_subreddit(sub: str) -> List[dict]:
     url = f"https://www.reddit.com/r/{sub}/new.json?limit={MAX_POSTS_PER_SUBREDDIT}"
     try:
+        logger.debug(f"[REDDIT] Requesting: {url}")
         r = session.get(url, timeout=REQUEST_TIMEOUT)
         if not r.ok:
-            logger.warning(f"[REDDIT] Failed /r/{sub} | status={r.status_code}")
+            logger.warning(f"[REDDIT] Failed /r/{sub} | status={r.status_code} | response={r.text[:200]}")
             return []
         data = r.json()
-        return [c["data"] for c in data.get("data", {}).get("children", [])]
+        posts = [c["data"] for c in data.get("data", {}).get("children", [])]
+        logger.info(f"[REDDIT] /r/{sub} API returned {len(posts)} posts")
+        return posts
     except Exception as e:
-        logger.warning(f"[REDDIT] Fetch failed /r/{sub} | {e}")
+        logger.exception(f"[REDDIT] Fetch failed /r/{sub} | {e}")
         return []
 
 # -------------------------------------------------------------------
@@ -217,20 +237,32 @@ def fetch_subreddit(sub: str) -> List[dict]:
 def process_post(post: dict) -> Optional[Dict]:
     try:
         url = post.get("url")
-        if not url or not is_valid_url(url):
+        if not url:
+            logger.debug(f"[REDDIT] Post missing URL: {post.get('id', 'unknown')}")
+            return None
+            
+        if not is_valid_url(url):
+            logger.debug(f"[REDDIT] URL not valid (reddit domain): {url}")
             return None
 
         url = normalize_url(url)
         url_hash = sha1(url)
         if url_exists(url_hash):
+            logger.debug(f"[REDDIT] Duplicate URL: {url}")
             return None
 
         html = fetch_html(url)
         if not html:
+            logger.debug(f"[REDDIT] Failed to fetch HTML: {url}")
             return None
 
         text = article_utils.extract_article_text(html)
-        if not text or not article_utils.has_security_context(text):
+        if not text:
+            logger.debug(f"[REDDIT] Text too short or extraction failed: {url}")
+            return None
+            
+        if not article_utils.has_security_context(text):
+            logger.debug(f"[REDDIT] No security context in text: {url}")
             return None
 
         title = article_utils.extract_title(html) or post.get("title", "")
@@ -245,6 +277,7 @@ def process_post(post: dict) -> Optional[Dict]:
         )
 
         if incident_exists(incident_key):
+            logger.debug(f"[REDDIT] Duplicate incident: {incident_key}")
             return None
 
         logger.info(f"[REDDIT][OK] Ingested | incident={incident_key}")
@@ -277,12 +310,20 @@ def main():
 
     for sub in SUBREDDITS:
         logger.info(f"[REDDIT] Fetching /r/{sub}")
-        jobs.extend(fetch_subreddit(sub))
+        posts = fetch_subreddit(sub)
+        logger.info(f"[REDDIT] /r/{sub} returned {len(posts)} posts")
+        jobs.extend(posts)
         time.sleep(0.5)
 
-    logger.info(f"[REDDIT] Posts collected: {len(jobs)}")
+    logger.info(f"[REDDIT] Total posts collected: {len(jobs)}")
+    
+    if not jobs:
+        logger.warning("[REDDIT] No posts collected from any subreddit. Check if subreddits are accessible.")
+        return
 
     articles: List[Dict] = []
+    skipped_count = 0
+    duplicate_count = 0
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as exe:
         futures = [exe.submit(process_post, p) for p in jobs]
@@ -291,11 +332,16 @@ def main():
                 res = f.result()
                 if res:
                     articles.append(res)
+                else:
+                    skipped_count += 1
             except Exception as e:
                 logger.warning(f"[REDDIT] Worker error | {e}")
+                skipped_count += 1
 
+    logger.info(f"[REDDIT] Processed: {len(articles)} articles, {skipped_count} skipped/duplicates")
+    
     if not articles:
-        logger.info("[REDDIT] No new incidents")
+        logger.info("[REDDIT] No new incidents (all posts were duplicates or filtered)")
         return
 
     actions = [
