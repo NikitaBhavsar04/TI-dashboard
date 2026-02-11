@@ -235,7 +235,7 @@ export default function RawArticles() {
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
-    pageSize: 50,
+    pageSize: 25,
     total: 0,
     totalPages: 0,
     hasMore: false,

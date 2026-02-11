@@ -94,21 +94,62 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error(`Python script not found: ${scriptPath}`);
     }
 
-    // Auto-detect python command for platform (use 'python3' for Linux/macOS, 'python' for Windows)
-    let pythonCmd = 'python3';
-    if (process.platform === 'win32') {
-      pythonCmd = 'python';
+    // Resolve the best Python executable. Priority:
+    // 1. process.env.PYTHON_EXECUTABLE, 2. VIRTUAL_ENV, 3. CONDA_PREFIX, 4. project venv, 5. platform default
+    const envVars = process.env;
+    let pythonCmd: string | undefined = envVars.PYTHON_EXECUTABLE;
+    const tryJoin = (...parts: string[]) => path.join(...parts);
+
+    if (!pythonCmd && envVars.VIRTUAL_ENV) {
+      const venvRoot = envVars.VIRTUAL_ENV;
+      const candidateWin = tryJoin(venvRoot, 'Scripts', 'python.exe');
+      const candidatePosix = tryJoin(venvRoot, 'bin', 'python');
+      if (process.platform === 'win32' && fs.existsSync(candidateWin)) pythonCmd = candidateWin;
+      if (process.platform !== 'win32' && fs.existsSync(candidatePosix)) pythonCmd = candidatePosix;
     }
+
+    if (!pythonCmd && envVars.CONDA_PREFIX) {
+      const condaRoot = envVars.CONDA_PREFIX;
+      const candidate = process.platform === 'win32' ? tryJoin(condaRoot, 'python.exe') : tryJoin(condaRoot, 'bin', 'python');
+      if (fs.existsSync(candidate)) pythonCmd = candidate;
+    }
+
+    if (!pythonCmd) {
+      const projectVenvWin = tryJoin(process.cwd(), 'venv', 'Scripts', 'python.exe');
+      const projectVenvPosix = tryJoin(process.cwd(), 'venv', 'bin', 'python');
+      if (process.platform === 'win32' && fs.existsSync(projectVenvWin)) pythonCmd = projectVenvWin;
+      else if (process.platform !== 'win32' && fs.existsSync(projectVenvPosix)) pythonCmd = projectVenvPosix;
+    }
+
+    if (!pythonCmd) {
+      pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+    }
+
+    // Prepare env for spawned process, prepending venv paths if used
+    const childEnv = { 
+      ...process.env,
+      OPENSEARCH_URL: process.env.OPENSEARCH_URL || '',
+      OPENSEARCH_HOST: process.env.OPENSEARCH_HOST || '',
+      OPENSEARCH_PORT: process.env.OPENSEARCH_PORT || '9200',
+      OPENSEARCH_USERNAME: process.env.OPENSEARCH_USERNAME || '',
+      OPENSEARCH_PASSWORD: process.env.OPENSEARCH_PASSWORD || ''
+    } as NodeJS.ProcessEnv;
+
+    try {
+      if (pythonCmd && pythonCmd.toLowerCase().includes(path.join('venv', 'scripts').toLowerCase())) {
+        const scriptsPath = tryJoin(process.cwd(), 'venv', 'Scripts');
+        childEnv.PATH = `${scriptsPath};${childEnv.PATH}`;
+      } else if (pythonCmd && pythonCmd.toLowerCase().includes(path.join('venv', 'bin').toLowerCase())) {
+        const binPath = tryJoin(process.cwd(), 'venv', 'bin');
+        childEnv.PATH = `${binPath}:${childEnv.PATH}`;
+      }
+    } catch (e) {
+      // ignore manipulation failures
+    }
+
     const python = spawn(pythonCmd, [scriptPath, articleId], {
       cwd: backendPath,
-      env: { 
-        ...process.env,
-        OPENSEARCH_URL: process.env.OPENSEARCH_URL || '',
-        OPENSEARCH_HOST: process.env.OPENSEARCH_HOST || '',
-        OPENSEARCH_PORT: process.env.OPENSEARCH_PORT || '9200',
-        OPENSEARCH_USERNAME: process.env.OPENSEARCH_USERNAME || '',
-        OPENSEARCH_PASSWORD: process.env.OPENSEARCH_PASSWORD || ''
-      },
+      env: childEnv
     });
 
     let stdout = '';

@@ -29,16 +29,62 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const script = findAutomationPath()
   if (!script) return res.status(500).json({ error: 'Backend script not found at: ' + SCRIPT_PATH })
 
-  const python = process.env.PYTHON_PATH || 'python'
+  // Resolve the best Python executable. Priority:
+  // 1. PYTHON_PATH env var, 2. PYTHON_EXECUTABLE, 3. VIRTUAL_ENV, 4. CONDA_PREFIX, 5. project venv, 6. platform default
+  let pythonCmd = process.env.PYTHON_PATH;
+  if (!pythonCmd) pythonCmd = process.env.PYTHON_EXECUTABLE;
+
+  const tryJoin = (...parts: string[]) => path.join(...parts);
+  const envVars = process.env;
+
+  if (!pythonCmd && envVars.VIRTUAL_ENV) {
+    const venvRoot = envVars.VIRTUAL_ENV;
+    const candidateWin = tryJoin(venvRoot, 'Scripts', 'python.exe');
+    const candidatePosix = tryJoin(venvRoot, 'bin', 'python');
+    if (process.platform === 'win32' && fs.existsSync(candidateWin)) pythonCmd = candidateWin;
+    if (process.platform !== 'win32' && fs.existsSync(candidatePosix)) pythonCmd = candidatePosix;
+  }
+
+  if (!pythonCmd && envVars.CONDA_PREFIX) {
+    const condaRoot = envVars.CONDA_PREFIX;
+    const candidate = process.platform === 'win32' ? tryJoin(condaRoot, 'python.exe') : tryJoin(condaRoot, 'bin', 'python');
+    if (fs.existsSync(candidate)) pythonCmd = candidate;
+  }
+
+  if (!pythonCmd) {
+    const projectVenvWin = tryJoin(process.cwd(), 'venv', 'Scripts', 'python.exe');
+    const projectVenvPosix = tryJoin(process.cwd(), 'venv', 'bin', 'python');
+    if (process.platform === 'win32' && fs.existsSync(projectVenvWin)) pythonCmd = projectVenvWin;
+    else if (process.platform !== 'win32' && fs.existsSync(projectVenvPosix)) pythonCmd = projectVenvPosix;
+  }
+
+  if (!pythonCmd) {
+    pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+  }
 
   const maxItems = typeof req.body?.maxItems === 'number' ? req.body.maxItems : 3
 
   // Set working directory to the ThreatAdvisory-Automation folder
   const workingDir = path.dirname(script)
 
-  const child = spawn(python, [script, String(maxItems)], { 
+  // Prepare env for spawned process, prepending venv paths if used
+  const childEnv = { ...process.env } as NodeJS.ProcessEnv;
+  try {
+    if (pythonCmd && pythonCmd.toLowerCase().includes(path.join('venv', 'scripts').toLowerCase())) {
+      const scriptsPath = tryJoin(process.cwd(), 'venv', 'Scripts');
+      childEnv.PATH = `${scriptsPath};${childEnv.PATH}`;
+    } else if (pythonCmd && pythonCmd.toLowerCase().includes(path.join('venv', 'bin').toLowerCase())) {
+      const binPath = tryJoin(process.cwd(), 'venv', 'bin');
+      childEnv.PATH = `${binPath}:${childEnv.PATH}`;
+    }
+  } catch (e) {
+    // ignore manipulation failures
+  }
+
+  const child = spawn(pythonCmd, [script, String(maxItems)], { 
     windowsHide: true,
-    cwd: workingDir
+    cwd: workingDir,
+    env: childEnv
   })
   let stdout = ''
   let stderr = ''
