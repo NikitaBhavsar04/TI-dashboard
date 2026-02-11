@@ -14,7 +14,8 @@ import {
   Link as LinkIcon,
   Clock,
   Zap,
-  Loader
+  Loader,
+  AlignLeft
 } from 'lucide-react';
 
 interface RawArticle {
@@ -37,15 +38,54 @@ interface RawArticle {
   status: string;
 }
 
+interface SimilarArticle {
+  id: string;
+  title: string;
+}
+
 export default function RawArticleDetail() {
   const [article, setArticle] = useState<RawArticle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [similarArticles, setSimilarArticles] = useState<SimilarArticle[]>([]);
+  const [loadingSimilar, setLoadingSimilar] = useState(false);
 
   const { user, hasRole, loading: authLoading } = useAuth();
   const router = useRouter();
   const { id } = router.query;
+
+  const fetchArticle = async () => {
+    try {
+      setLoading(true);
+      console.log('[RAW-ARTICLE] Fetching article with ID:', id);
+      
+      const response = await fetch(`/api/raw-articles/${id}`, {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.article) {
+          console.log('[RAW-ARTICLE] Article loaded:', data.article.title);
+          setArticle(data.article);
+          // Fetch similar articles after loading the main article
+          fetchSimilarArticles(data.article.id);
+        } else {
+          console.error('[RAW-ARTICLE] Article not found in response');
+          setError('Article not found');
+        }
+      } else {
+        console.error('[RAW-ARTICLE] Failed to fetch article:', response.status);
+        setError('Failed to load article');
+      }
+    } catch (error) {
+      console.error('Error fetching article:', error);
+      setError('Error loading article');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && (!user || !hasRole('admin'))) {
@@ -56,35 +96,33 @@ export default function RawArticleDetail() {
     if (hasRole('admin') && id) {
       fetchArticle();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, hasRole, authLoading, router, id]);
 
-  const fetchArticle = async () => {
+  const fetchSimilarArticles = async (articleId: string) => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/raw-articles', {
+      setLoadingSimilar(true);
+      console.log('[RAW-ARTICLE] Fetching similar articles for:', articleId);
+      
+      const response = await fetch(`/api/similar-articles?articleId=${articleId}`, {
         credentials: 'include'
       });
 
       if (response.ok) {
         const data = await response.json();
-        // Check both _id and id fields to support all article types (RSS, Reddit, Telegram)
-        const foundArticle = data.articles.find((a: any) => 
-          a._id === id || a.id === id
-        );
-        
-        if (foundArticle) {
-          setArticle(foundArticle);
+        if (data.success) {
+          console.log(`[RAW-ARTICLE] Found ${data.count} similar articles`);
+          setSimilarArticles(data.similarArticles);
         } else {
-          setError('Article not found');
+          console.error('[RAW-ARTICLE] Failed to fetch similar articles:', data.error);
         }
       } else {
-        setError('Failed to load article');
+        console.error('[RAW-ARTICLE] Similar articles API error:', response.status);
       }
     } catch (error) {
-      console.error('Error fetching article:', error);
-      setError('Error loading article');
+      console.error('[RAW-ARTICLE] Error fetching similar articles:', error);
     } finally {
-      setLoading(false);
+      setLoadingSimilar(false);
     }
   };
 
@@ -145,9 +183,10 @@ export default function RawArticleDetail() {
       } else {
         alert(`Failed to generate advisory: ${data.error || 'Unknown error'}`);
       }
-    } catch (error: any) {
-      console.error('Error generating advisory:', error);
-      alert(`Error: ${error.message}`);
+    } catch (error) {
+      const err = error as Error;
+      console.error('Error generating advisory:', err);
+      alert(`Error: ${err.message}`);
     } finally {
       setGenerating(false);
     }
@@ -330,7 +369,7 @@ export default function RawArticleDetail() {
 
             {/* Nested Links */}
             {article.nested_links.length > 0 && (
-              <div className="glass-panel-hover p-8">
+              <div className="glass-panel-hover p-8 mb-6">
                 <h2 className="text-xl font-orbitron font-bold text-white mb-4 flex items-center">
                   <LinkIcon className="h-5 w-5 mr-2 text-neon-blue" />
                   Nested Links ({article.nested_links.length})
@@ -351,6 +390,51 @@ export default function RawArticleDetail() {
                     </a>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Similar Articles */}
+            {article.cves.length > 0 && (
+              <div className="glass-panel-hover p-8">
+                <h2 className="text-xl font-orbitron font-bold text-white mb-4 flex items-center">
+                  <AlignLeft className="h-5 w-5 mr-2 text-purple-400" />
+                  Similar Articles
+                  {loadingSimilar && (
+                    <Loader className="h-4 w-4 ml-2 animate-spin text-purple-400" />
+                  )}
+                </h2>
+                
+                {loadingSimilar ? (
+                  <div className="text-center py-8">
+                    <div className="text-slate-400 font-rajdhani">
+                      Finding similar articles based on CVEs...
+                    </div>
+                  </div>
+                ) : similarArticles.length > 0 ? (
+                  <div className="space-y-3">
+                    <p className="text-slate-400 font-rajdhani text-sm mb-4">
+                      Found {similarArticles.length} article{similarArticles.length !== 1 ? 's' : ''} with matching CVEs from different sources
+                    </p>
+                    {similarArticles.map((similar) => (
+                      <Link key={similar.id} href={`/admin/raw-articles/${similar.id}`}>
+                        <div className="flex items-center space-x-3 p-4 bg-slate-900/50 rounded-lg border border-slate-700/50 hover:border-purple-400/40 transition-all duration-200 cursor-pointer group">
+                          <FileText className="h-4 w-4 text-purple-400 flex-shrink-0 group-hover:text-purple-300" />
+                          <p className="text-slate-200 font-rajdhani text-sm group-hover:text-white transition-colors flex-1">
+                            {similar.title}
+                          </p>
+                          <ArrowLeft className="h-4 w-4 text-slate-600 group-hover:text-purple-400 transition-colors flex-shrink-0 rotate-180" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-slate-900/30 rounded-lg border border-slate-700/30">
+                    <FileText className="h-12 w-12 text-slate-600 mx-auto mb-3 opacity-50" />
+                    <p className="text-slate-400 font-rajdhani">
+                      No similar articles found with matching CVEs
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

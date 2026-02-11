@@ -607,8 +607,8 @@ export default function RawArticles() {
                 </div>
               ) : (
                 articles.map((article) => {
-                  // Use _id if id is not available (for RSS feeds)
-                  const articleId = (article as any)._id || article.id;
+                  // Use id field (not _id which is OpenSearch document ID)
+                  const articleId = article.id;
                   return (
                   <Link key={articleId} href={`/admin/raw-articles/${articleId}`}>
                     <div className="glass-panel-hover p-4 cursor-pointer transition-all duration-200 hover:border-neon-blue/30">

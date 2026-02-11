@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
     xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -234,10 +235,10 @@
                                         <td valign="top" width="32%" class="stack-column">
                                             <table role="presentation" border="0" cellpadding="0" cellspacing="0"
                                                 width="100%"
-                                                style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; color: #ffffff;">
+                                                style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; color: #ffffff; height: 100%;">
                                                 <tr>
                                                     <td
-                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
+                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; height: 90px; vertical-align: top;">
                                                         <p
                                                             style="margin: 0 0 5px 0; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 800; font-size: 14px; text-transform: uppercase; color: #ffffff;">
                                                             Affected Product</p>
@@ -252,10 +253,10 @@
                                         <td valign="top" width="32%" class="stack-column">
                                             <table role="presentation" border="0" cellpadding="0" cellspacing="0"
                                                 width="100%"
-                                                style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; color: #ffffff;">
+                                                style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; color: #ffffff; height: 100%;">
                                                 <tr>
                                                     <td
-                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
+                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; height: 90px; vertical-align: top;">
                                                         <p
                                                             style="margin: 0 0 5px 0; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 800; font-size: 14px; text-transform: uppercase; color: #ffffff;">
                                                             Target Sector</p>
@@ -270,10 +271,10 @@
                                         <td valign="top" width="32%" class="stack-column">
                                             <table role="presentation" border="0" cellpadding="0" cellspacing="0"
                                                 width="100%"
-                                                style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; color: #ffffff;">
+                                                style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; color: #ffffff; height: 100%;">
                                                 <tr>
                                                     <td
-                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
+                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; height: 90px; vertical-align: top;">
                                                         <p
                                                             style="margin: 0 0 5px 0; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 800; font-size: 14px; text-transform: uppercase; color: #ffffff;">
                                                             Region</p>
@@ -290,8 +291,16 @@
                         </tr>
                     </table>
 
+                    <!-- Spacer -->
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td style="height: 20px; line-height: 20px; font-size: 1px;">&nbsp;</td>
+                        </tr>
+                    </table>
+                    <!-- End Spacer -->
+
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                        style="background-color: #FFFFFF; border: 1px solid #D7DEE8; border-radius: 12px; margin-top: 15px; box-shadow: 0 6px 18px rgba(11,31,51,.06);">
+                        style="background-color: #FFFFFF; border: 1px solid #D7DEE8; border-radius: 12px; margin-top: 25px; box-shadow: 0 6px 18px rgba(11,31,51,.06);">
                         <tr>
                             <td style="padding: 20px;">
                                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -315,20 +324,22 @@
                                         <!-- LEFT: CVE -->
                                         <td align="left" valign="top" style="font-family: 'Roboto', Arial, sans-serif;
                font-size: 16px;
-               color: #0B2233;">
+               color: #0B2233;
+               padding: 8px 0;">
                                             <strong style="color: #0B1F33;">CVE:</strong>
-                                            {{ cves|join(', ') }}
+                                            <span style="margin-left: 5px;">{{ cves|join(', ') }}</span>
                                         </td>
 
                                         <!-- RIGHT: CVSS SCORE ONLY -->
                                         <td align="right" valign="top" style="font-family: 'Roboto', Arial, sans-serif;
                font-size: 16px;
-               color: #0B2233;">
+               color: #0B2233;
+               padding: 8px 0;">
                                             {% if cvss %}
                                             {% set first = cvss.values() | list | first %}
-                                            <strong style="color: #0B1F33;">CVSS:</strong> {{ first.score }}
+                                            <strong style="color: #0B1F33;">CVSS:</strong> <span style="margin-left: 5px;">{{ first.score }}</span>
                                             {% else %}
-                                            <strong style="color: #0B1F33;">CVSS:</strong> N/A
+                                            <strong style="color: #0B1F33;">CVSS:</strong> <span style="color: #94A3B8; font-style: italic; margin-left: 5px;">Not Available</span>
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -374,8 +385,9 @@
                                         {% endfor %}
                                         {% else %}
                                         <tr>
-                                            <td colspan="3" style="padding: 10px; border-bottom: 1px solid #D7DEE8;">No
-                                                mapping available</td>
+                                            <td colspan="3" style="padding: 15px; border-bottom: 1px solid #D7DEE8; text-align: center; color: #94A3B8; font-style: italic; font-family: 'Roboto', Arial, sans-serif; font-size: 14px;">
+                                                MITRE ATT&CK mapping not available for this threat
+                                            </td>
                                         </tr>
                                         {% endif %}
                                     </tbody>
@@ -537,8 +549,16 @@
                     </table>
                     {% endif %}
 
+                    <!-- Spacer -->
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td style="height: 20px; line-height: 20px; font-size: 1px;">&nbsp;</td>
+                        </tr>
+                    </table>
+                    <!-- End Spacer -->
+
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                        style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; margin-top: 15px; color: #ffffff;">
+                        style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; margin-top: 25px; color: #ffffff;">
                         <tr>
                             <td style="padding: 20px;">
                                 <h3
@@ -559,8 +579,16 @@
                         </tr>
                     </table>
 
+                    <!-- Spacer -->
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td style="height: 20px; line-height: 20px; font-size: 1px;">&nbsp;</td>
+                        </tr>
+                    </table>
+                    <!-- End Spacer -->
+
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                        style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; margin-top: 15px; color: #ffffff;">
+                        style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; margin-top: 25px; color: #ffffff;">
                         <tr>
                             <td style="padding: 20px;">
                                 <h3

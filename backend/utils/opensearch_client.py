@@ -1,4 +1,5 @@
 import os
+import sys
 from dotenv import load_dotenv
 from opensearchpy import OpenSearch
 
@@ -44,7 +45,8 @@ def get_opensearch_client():
     if username and password:
         client_args["http_auth"] = (username, password)
 
-    print(f"[DEBUG] Connecting to {scheme}://{host}:{port} | use_ssl={use_ssl}")
+    # Print debug info to stderr to avoid mixing with stdout JSON output
+    print(f"[DEBUG] Connecting to {scheme}://{host}:{port} | use_ssl={use_ssl}", file=sys.stderr)
 
     return OpenSearch(**client_args)
 if __name__ == "__main__":

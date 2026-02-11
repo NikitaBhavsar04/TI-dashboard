@@ -1,17 +1,35 @@
 /**
- * THREAT ADVISORY - GOOGLE APPS SCRIPT EMAIL SCHEDULER
+ * ╔════════════════════════════════════════════════════════════════════════════╗
+ * ║  THREAT ADVISORY - GOOGLE APPS SCRIPT EMAIL SCHEDULER                      ║
+ * ╚════════════════════════════════════════════════════════════════════════════╝
  * 
  * This script runs on Google's servers 24/7 to handle scheduled email sending
  * No need for local server to be running - emails are sent via native GmailApp
  * 
- * DEPLOYMENT INSTRUCTIONS:
- * 1. Go to https://script.google.com
- * 2. Create new project named "Threat Advisory Email Scheduler"
- * 3. Paste this code into Code.gs
- * 4. Deploy as Web App:
- *    - Execute as: Me
- *    - Who has access: Anyone
- * 5. Copy the deployment URL to your .env.local as APPS_SCRIPT_URL
+ * ┌────────────────────────────────────────────────────────────────────────────┐
+ * │  🧪 TO TEST THIS SCRIPT (Run from function dropdown at top):               │
+ * ├────────────────────────────────────────────────────────────────────────────┤
+ * │  ✅ testScheduleEmail()     - Test scheduling with CC/BCC (sends in 2 min) │
+ * │  ✅ testSendImmediately()   - Test immediate email send (sends now)        │
+ * │  ✅ runSetup()              - Setup recurring trigger (run ONCE)           │
+ * │                                                                            │
+ * │  ❌ DO NOT RUN: doPost      - Only works via HTTP POST from Next.js       │
+ * │  ❌ DO NOT RUN: doGet       - Only works via HTTP GET from browser        │
+ * └────────────────────────────────────────────────────────────────────────────┘
+ * 
+ * ┌────────────────────────────────────────────────────────────────────────────┐
+ * │  📋 DEPLOYMENT INSTRUCTIONS:                                               │
+ * ├────────────────────────────────────────────────────────────────────────────┤
+ * │  1. Go to https://script.google.com                                       │
+ * │  2. Create new project: "Threat Advisory Email Scheduler"                 │
+ * │  3. Paste this code into Code.gs                                          │
+ * │  4. Select "runSetup" from dropdown and click Run (grant permissions)     │
+ * │  5. Click Deploy → New deployment                                         │
+ * │     - Type: Web app                                                       │
+ * │     - Execute as: Me                                                      │
+ * │     - Who has access: Anyone                                              │
+ * │  6. Copy deployment URL to .env file as APPS_SCRIPT_URL                   │
+ * └────────────────────────────────────────────────────────────────────────────┘
  */
 
 // ==============================================
@@ -32,6 +50,24 @@ const EMAIL_COUNTER_KEY = 'EMAIL_COUNTER';
  */
 function doPost(e) {
   try {
+    // Validate event object
+    if (!e) {
+      Logger.log('Error: Event object is undefined. This function should be called via HTTP POST, not directly.');
+      return createResponse(400, { 
+        error: 'Invalid request: Event object is undefined',
+        message: 'This function should be called via HTTP POST request, not run directly in the editor.'
+      });
+    }
+    
+    // Validate postData
+    if (!e.postData || !e.postData.contents) {
+      Logger.log('Error: No POST data received. Request must include JSON data.');
+      return createResponse(400, { 
+        error: 'No POST data received',
+        message: 'Request must include JSON data with an "action" field'
+      });
+    }
+    
     // Parse incoming request
     const data = JSON.parse(e.postData.contents);
     
@@ -73,9 +109,88 @@ function doGet(e) {
   return createResponse(200, {
     status: 'online',
     service: 'Threat Advisory Email Scheduler',
-    version: '1.0.0',
-    timestamp: new Date().toISOString()
+    version: '1.1.0',
+    timestamp: new Date().toISOString(),
+    message: 'Apps Script is running correctly. Use POST requests to schedule emails.',
+    endpoints: {
+      schedule: 'POST with action: "schedule"',
+      cancel: 'POST with action: "cancel"',
+      list: 'POST with action: "list"',
+      status: 'POST with action: "status"'
+    }
   });
+}
+
+/**
+ * ⭐ TEST FUNCTION #1 - Run this to test email scheduling with CC/BCC
+ * 
+ * HOW TO RUN:
+ * 1. Select "testScheduleEmail" from the function dropdown at the top
+ * 2. Click the Run button (▶️)
+ * 3. Check the Execution Log tab for results
+ * 
+ * This simulates a scheduling request without needing HTTP POST
+ */
+function testScheduleEmail() {
+  try {
+    Logger.log('==============================================');
+    Logger.log('📧 TESTING EMAIL SCHEDULING WITH CC/BCC');
+    Logger.log('==============================================');
+    
+    // Get your email for testing
+    const myEmail = Session.getActiveUser().getEmail();
+    
+    // Create test email data
+    const testData = {
+      action: 'schedule',
+      to: myEmail,  // Send to yourself
+      subject: '🔒 Test Threat Advisory - CC/BCC Test',
+      htmlBody: '<html><body style="font-family: Arial, sans-serif; padding: 20px;"><h1 style="color: #2563eb;">Test Email</h1><p>This is a test email to verify CC and BCC functionality.</p><ul><li>Primary recipient (To): You</li><li>CC recipient: Also you (should be visible)</li><li>BCC recipient: Also you (should NOT be visible in headers)</li></ul><p><strong>If you can see this email, the Apps Script is working! 🎉</strong></p></body></html>',
+      scheduledTime: new Date(Date.now() + 2 * 60 * 1000).toISOString(), // 2 minutes from now
+      replyTo: myEmail,
+      cc: myEmail,  // CC to yourself
+      bcc: myEmail, // BCC to yourself  
+      trackingId: 'test-tracking-' + Date.now(),
+      advisoryId: 'test-advisory-001'
+    };
+    
+    Logger.log('📤 Test email data:');
+    Logger.log('  To: ' + testData.to);
+    Logger.log('  CC: ' + testData.cc);
+    Logger.log('  BCC: ' + testData.bcc);
+    Logger.log('  Subject: ' + testData.subject);
+    Logger.log('  Scheduled for: ' + testData.scheduledTime);
+    Logger.log('');
+    
+    // Call the handler directly
+    const result = handleScheduleEmail(testData);
+    
+    Logger.log('📊 Result:');
+    Logger.log(JSON.stringify(result, null, 2));
+    Logger.log('');
+    
+    if (result.data && result.data.success) {
+      Logger.log('✅ TEST PASSED - Email scheduled successfully!');
+      Logger.log('📬 Email ID: ' + result.data.emailId);
+      Logger.log('⏰ Scheduled Time: ' + result.data.scheduledTime);
+      Logger.log('');
+      Logger.log('⏳ Your email will be sent in approximately 2 minutes');
+      Logger.log('📧 Check your inbox at: ' + myEmail);
+      Logger.log('💡 Look for CC and BCC in the email headers');
+    } else {
+      Logger.log('❌ TEST FAILED');
+      Logger.log(JSON.stringify(result));
+    }
+    
+    Logger.log('==============================================');
+    
+    return result;
+    
+  } catch (error) {
+    Logger.log('❌ TEST FAILED with error: ' + error.toString());
+    Logger.log('Stack trace: ' + error.stack);
+    return { error: error.toString() };
+  }
 }
 
 // ==============================================
@@ -129,6 +244,7 @@ function handleScheduleEmail(data) {
     const trigger = createTrigger(scheduledTime, emailId);
     
     Logger.log(`Email ${emailId} scheduled for ${scheduledTime}`);
+    Logger.log(`Email details - To: ${emailData.to}, CC: ${emailData.cc || 'none'}, BCC: ${emailData.bcc ? 'present' : 'none'}`);
     
     return createResponse(200, {
       success: true,
@@ -216,10 +332,12 @@ function sendEmailNow(emailData) {
     
     if (emailData.cc) {
       options.cc = emailData.cc;
+      Logger.log(`Adding CC: ${emailData.cc}`);
     }
     
     if (emailData.bcc) {
       options.bcc = emailData.bcc;
+      Logger.log(`Adding BCC: ${emailData.bcc}`);
     }
     
     // Handle attachments (if any)
@@ -244,6 +362,9 @@ function sendEmailNow(emailData) {
       .replace(/&quot;/g, '"')
       .replace(/\s+/g, ' ')
       .trim();
+    
+    // Log email details before sending
+    Logger.log(`📧 Sending email to: ${emailData.to}, CC: ${options.cc || 'none'}, BCC: ${options.bcc ? 'present' : 'none'}`);
     
     // Send email via GmailApp with workspace HTML body
     GmailApp.sendEmail(
@@ -522,60 +643,76 @@ function notifyBackend(emailId, status, emailData) {
 // ==============================================
 
 /**
- * Test function to verify the script is working
- * Run this manually from the Apps Script editor
+ * DUPLICATE REMOVED - See testScheduleEmail() at the top of the file
  */
-function testScheduleEmail() {
-  const testData = {
-    action: 'schedule',
-    to: 'test@example.com',
-    subject: 'Test Email from Apps Script',
-    htmlBody: '<h1>Hello!</h1><p>This is a test email.</p>',
-    scheduledTime: new Date(Date.now() + 2 * 60 * 1000).toISOString(), // 2 minutes from now
-    trackingId: 'TEST_TRACK_123',
-    advisoryId: 'ADV_TEST_001'
-  };
-  
-  const mockEvent = {
-    postData: {
-      contents: JSON.stringify(testData)
-    }
-  };
-  
-  const response = doPost(mockEvent);
-  Logger.log(response.getContent());
+
+/**
+ * ⭐ TEST FUNCTION #2 - Run this to test immediate email sending
+ * 
+ * HOW TO RUN:
+ * 1. Select "testSendImmediately" from the function dropdown at the top
+ * 2. Click the Run button (▶️)
+ * 3. Check your email inbox
+ * 
+ * This sends an email immediately (not scheduled) to verify Gmail integration
+ */
+function testSendImmediately() {
+  try {
+    const myEmail = Session.getActiveUser().getEmail();
+    
+    Logger.log('==============================================');
+    Logger.log('📧 TESTING IMMEDIATE EMAIL SEND');
+    Logger.log('==============================================');
+    Logger.log('Sending test email to: ' + myEmail);
+    
+    GmailApp.sendEmail(
+      myEmail,
+      '✅ Test Email from Threat Advisory Script',
+      'Plain text fallback: Your Google Apps Script is working correctly!',
+      {
+        htmlBody: '<html><body style="font-family: Arial, sans-serif; padding: 20px;"><h1 style="color: #059669;">✅ Success!</h1><p>Your Google Apps Script is working correctly.</p><ul><li>Gmail integration: ✓</li><li>HTML formatting: ✓</li><li>Apps Script permissions: ✓</li></ul><p><strong>You can now use this script for scheduled emails!</strong></p></body></html>',
+        name: 'Threat Intelligence Advisory'
+      }
+    );
+    
+    Logger.log('✅ Email sent successfully!');
+    Logger.log('📬 Check your inbox at: ' + myEmail);
+    Logger.log('==============================================');
+    
+  } catch (error) {
+    Logger.log('❌ Error sending email: ' + error.toString());
+  }
 }
 
 /**
- * Test sending an email immediately
- */
-function testSendEmail() {
-  GmailApp.sendEmail(
-    Session.getActiveUser().getEmail(), // Send to yourself
-    'Test Email from Threat Advisory Script',
-    'Plain text version',
-    {
-      htmlBody: '<h1>Success!</h1><p>Your Google Apps Script is working correctly.</p>',
-      name: 'Threat Intelligence Advisory'
-    }
-  );
-  
-  Logger.log('Test email sent!');
-}
-
-/**
- * SETUP FUNCTION - RUN THIS ONCE MANUALLY
- * Creates the recurring trigger that checks for emails every minute
+ * ⭐ SETUP FUNCTION - RUN THIS ONCE AFTER DEPLOYING
+ * 
+ * HOW TO RUN:
+ * 1. Select "runSetup" from the function dropdown at the top
+ * 2. Click the Run button (▶️)
+ * 3. Grant permissions when prompted
+ * 4. Check the Execution Log for confirmation
+ * 
+ * This creates the recurring trigger that checks for emails every minute
  */
 function runSetup() {
-  Logger.log('🚀 Setting up Threat Advisory Email Scheduler...');
+  Logger.log('==============================================');
+  Logger.log('🚀 SETTING UP THREAT ADVISORY EMAIL SCHEDULER');
+  Logger.log('==============================================');
   
   // Create recurring trigger
   setupRecurringTrigger();
   
-  Logger.log('Setup complete!');
+  Logger.log('');
+  Logger.log('✅ Setup complete!');
   Logger.log('📧 The script will now check for scheduled emails every minute');
   Logger.log('💡 You can now schedule emails from your Next.js app');
+  Logger.log('');
+  Logger.log('NEXT STEPS:');
+  Logger.log('1. Deploy this script as a Web App');
+  Logger.log('2. Copy the deployment URL');
+  Logger.log('3. Add it to your .env file as APPS_SCRIPT_URL');
+  Logger.log('==============================================');
 }
 
 /**

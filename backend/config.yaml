@@ -60,7 +60,7 @@ sources:
     - url: https://www.tenable.com/sitemap.xml?page=2
       enabled: true
     - url: https://www.techrepublic.com/rssfeeds/articles/
-      enabled: false
+      enabled: true
     - url: https://www.techrepublic.com/sitemap_index.xml
       enabled: true
     - url: https://krebsonsecurity.com/feed/
