@@ -392,7 +392,7 @@ export default function EmailModal({ isOpen, onClose, advisory, emailType = 'gen
         <form onSubmit={(e) => { e.preventDefault(); handleSendEmail(); }} className="space-y-6">
           
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-slate-600/50">
+            <div className="flex items-center justify-between p-6 border-b border-slate-600/50 bg-slate-900/70 rounded-t-xl">
             <div className="flex items-center space-x-3">
               <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-neon-blue/20 border border-neon-blue/50">
                 <Mail className="h-5 w-5 text-neon-blue" />
@@ -415,10 +415,10 @@ export default function EmailModal({ isOpen, onClose, advisory, emailType = 'gen
             </button>
           </div>
 
-          <div className="px-6 space-y-6">
+          <div className="px-6 pb-6 space-y-6 bg-slate-900/60 rounded-b-xl">
             
             {/* Send Method Selection */}
-            <div>
+            <div className="p-4 rounded-lg bg-slate-900 shadow-lg">
               <label className="block text-slate-400 font-rajdhani text-sm mb-3">
                 Send Method
               </label>

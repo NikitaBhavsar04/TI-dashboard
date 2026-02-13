@@ -12,14 +12,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await dbConnect();
 
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const normalizedUsername = String(username).trim();
+
+    // Find user by username (case-insensitive)
+    const user = await User.findOne({ username: normalizedUsername }).collation({ locale: 'en', strength: 2 });
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }

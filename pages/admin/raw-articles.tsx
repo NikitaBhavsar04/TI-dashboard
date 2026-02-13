@@ -403,7 +403,7 @@ export default function RawArticles() {
 
           {/* Modern Sticky Header */}
           <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50 shadow-2xl">
-            <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-4">
+            <div className="w-full mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 2xl:px-16 py-4">
               <div className="flex items-center justify-between">
                 {/* Left: Title & Description */}
                 <div className="flex items-center space-x-4">
@@ -433,7 +433,7 @@ export default function RawArticles() {
             </div>
           </header>
 
-          <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+          <main className="w-full mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 2xl:px-16 py-8">
 
             {/* Enhanced Stats Cards with Stagger Animation */}
             {loading ? (

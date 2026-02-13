@@ -9,7 +9,7 @@ import LoadingLogo from '@/components/LoadingLogo';
 import { motion } from 'framer-motion';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -30,7 +30,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      await login(username, password);
     } catch (error: any) {
       setError(error.message || 'Login failed. Please try again.');
     } finally {
@@ -103,21 +103,21 @@ export default function Login() {
 
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Email Field */}
+              {/* Username Field */}
               <div>
                 <label className="block font-poppins font-medium text-slate-300 mb-1.5 text-sm">
-                  Email Address
+                  Username
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <User className="h-4 w-4 text-slate-400" />
                   </div>
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="input-glass pl-9 w-full"
-                    placeholder="admin@forensiccybertech.com"
+                    placeholder="Enter your username"
                     required
                   />
                 </div>
