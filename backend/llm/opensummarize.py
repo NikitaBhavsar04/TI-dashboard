@@ -417,12 +417,15 @@ def count_llm_tokens(*, title: str, summary: str, source_text: str, prompt: str,
 # CHAT CALL
 # ============================================================
 def call_llm(prompt: str, max_tokens: int = 2200) -> str:
+    # Get request ID for tracing (passed from Next.js API)
+    request_id = os.getenv("REQUEST_ID", "unknown")
+
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
         raise RuntimeError("OPENROUTER_API_KEY environment variable not set in .env file")
 
     import httpx
-    
+
     # Smart development environment detection
     is_development = (
         os.getenv('NODE_ENV') == 'development' or
@@ -457,26 +460,64 @@ def call_llm(prompt: str, max_tokens: int = 2200) -> str:
             response_format={"type": "json_object"},
         )
     
-    logger.info(f"[LLM] Using OpenRouter model: {OPENROUTER_MODEL}")
+    logger.info(f"[LLM][req:{request_id}] Using OpenRouter model: {OPENROUTER_MODEL}")
     if is_development:
-        logger.info("[LLM] Development environment detected, SSL verification disabled")
-    
+        logger.info(f"[LLM][req:{request_id}] Development environment detected, SSL verification disabled")
+
     try:
         resp = make_request(verify_ssl=ssl_verify)
+        logger.info(f"[LLM][req:{request_id}] ✅ LLM request completed successfully")
         return (resp.choices[0].message.content or "").strip()
-        
+
     except Exception as e:
-        # Always try SSL fallback for any SSL-related error
-        if 'ssl' in str(e).lower() or 'certificate' in str(e).lower() or 'connection' in str(e).lower():
-            logger.warning(f"[LLM] SSL/Connection error detected, retrying without SSL verification: {e}")
+        error_str = str(e)
+
+        # ============================================================
+        # RATE LIMIT PROTECTION: DO NOT RETRY ON 429
+        # ============================================================
+        # 429 is a rate-limit signal, not a transient failure
+        # Retrying will only make the problem worse
+        if '429' in error_str or ('rate' in error_str.lower() and 'limit' in error_str.lower()):
+            logger.error(f"[LLM][req:{request_id}] ❌ Rate limit exceeded for model {OPENROUTER_MODEL}")
+            logger.error(f"[LLM][req:{request_id}] The free tier model is temporarily rate-limited")
+            logger.error(f"[LLM][req:{request_id}] DO NOT RETRY - waiting required")
+            logger.error(f"[LLM][req:{request_id}] Solutions:")
+            logger.error(f"[LLM][req:{request_id}]   1. Wait a few minutes and try again")
+            logger.error(f"[LLM][req:{request_id}]   2. Add your OpenRouter API key with credits: https://openrouter.ai/settings/integrations")
+            logger.error(f"[LLM][req:{request_id}]   3. Change the model in backend/config.yaml to a different one")
+            logger.error(f"[LLM][req:{request_id}]   Suggested alternatives:")
+            logger.error(f"[LLM][req:{request_id}]     - meta-llama/llama-3.2-3b-instruct:free")
+            logger.error(f"[LLM][req:{request_id}]     - google/gemini-flash-1.5:free")
+            logger.error(f"[LLM][req:{request_id}]     - microsoft/phi-3-mini-128k-instruct:free")
+            # DO NOT RETRY - raise immediately
+            raise RuntimeError(
+                f"OpenRouter API rate limit exceeded for model '{OPENROUTER_MODEL}'. "
+                "Please wait a few minutes and try again, or configure a different model in config.yaml. "
+                "Free tier models have limited requests per minute."
+            )
+
+        # Try SSL fallback ONLY for SSL-related errors (NOT for 429)
+        # Max 1 retry for network failures only
+        if 'ssl' in error_str.lower() or 'certificate' in error_str.lower() or 'connection' in error_str.lower():
+            logger.warning(f"[LLM][req:{request_id}] SSL/Connection error detected, retrying without SSL verification (max 1 retry)")
             try:
                 resp = make_request(verify_ssl=False)
+                logger.info(f"[LLM][req:{request_id}] ✅ LLM request completed successfully (retry succeeded)")
                 return (resp.choices[0].message.content or "").strip()
             except Exception as retry_e:
-                logger.error(f"[LLM] Failed even without SSL verification: {retry_e}")
+                # Check if retry also hit rate limit - do not continue
+                retry_error_str = str(retry_e)
+                if '429' in retry_error_str or ('rate' in retry_error_str.lower() and 'limit' in retry_error_str.lower()):
+                    logger.error(f"[LLM][req:{request_id}] ❌ Rate limit hit on retry - stopping immediately")
+                    raise RuntimeError(
+                        f"OpenRouter API rate limit exceeded for model '{OPENROUTER_MODEL}'. "
+                        "Please wait a few minutes and try again, or configure a different model in config.yaml. "
+                        "Free tier models have limited requests per minute."
+                    )
+                logger.error(f"[LLM][req:{request_id}] ❌ Failed even without SSL verification: {retry_e}")
                 raise retry_e
         else:
-            logger.error(f"[LLM] Request failed: {e}")
+            logger.error(f"[LLM][req:{request_id}] ❌ Request failed: {e}")
             raise e
 
 

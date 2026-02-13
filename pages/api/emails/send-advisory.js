@@ -67,7 +67,9 @@ export default async function handler(req, res) {
       scheduledTime,
       isScheduled = false,
       trackingOptions = { enableTracking: true }, // Default to enabled for super admins
-      csvEmails = [] // For CSV bulk emails
+      csvEmails = [], // For CSV bulk emails
+      emailType = 'general', // 'general' or 'dedicated'
+      ipSweepData // IOC detection data for dedicated advisories
     } = req.body;
 
     // Validation
@@ -139,6 +141,11 @@ export default async function handler(req, res) {
             continue;
           }
 
+          console.log(`📧 [CLIENT DATA] MongoDB _id: ${client._id}`);
+          console.log(`📧 [CLIENT DATA] client_id: ${client.client_id}`);
+          console.log(`📧 [CLIENT DATA] client_name: ${client.client_name}`);
+          console.log(`📧 [CLIENT DATA] name: ${client.name}`);
+
           emailData = {
             ...emailData,
             to: client.emails
@@ -146,7 +153,8 @@ export default async function handler(req, res) {
 
           emailJobs.push({
             ...emailData,
-            clientName: client.name
+            clientName: client.name,
+            clientId: client.client_id // Add client_id for matching with IOC detection data
           });
 
         } else if (recipient.type === 'individual') {
@@ -216,7 +224,58 @@ export default async function handler(req, res) {
 
     // Generate email body dynamically from OpenSearch data
     console.log('📧 Generating HTML template from OpenSearch advisory data');
-    const emailBody = generateAdvisory4EmailTemplate(advisory, customMessage);
+    console.log('📧 Email type:', emailType);
+    console.log('📧 IP Sweep Data:', JSON.stringify(ipSweepData, null, 2));
+
+    // For dedicated advisories, we'll generate individual emails per client with their specific IOC detection data
+    // For general advisories, generate one email body for all recipients
+    const emailBodies = {};
+
+    if (emailType === 'dedicated' && ipSweepData && ipSweepData.impacted_clients) {
+      console.log('📧 Generating dedicated advisory emails with IOC detection data');
+      console.log('📧 Number of impacted clients:', ipSweepData.impacted_clients.length);
+
+      // Generate separate email for each affected client
+      for (const impactedClient of ipSweepData.impacted_clients) {
+        const clientIocData = {
+          client_name: impactedClient.client_name,
+          checked_at: ipSweepData.checked_at,
+          match_count: impactedClient.matches.length,
+          matches: impactedClient.matches
+        };
+
+        console.log(`📧 Generating email for client: ${impactedClient.client_id} (${impactedClient.client_name})`);
+        console.log(`📧 IOC Data for client:`, JSON.stringify(clientIocData, null, 2));
+
+        emailBodies[impactedClient.client_id] = generateAdvisory4EmailTemplate(
+          advisory,
+          customMessage,
+          clientIocData
+        );
+
+        console.log(`📧 Email body generated for client ${impactedClient.client_id}, contains IOC section: ${emailBodies[impactedClient.client_id].includes('IOC DETECTION ALERT')}`);
+      }
+
+      console.log('📧 Email bodies keys:', Object.keys(emailBodies));
+
+      // Verify each generated body
+      Object.keys(emailBodies).forEach(key => {
+        if (key !== 'general') {
+          const hasIoc = emailBodies[key].includes('IOC DETECTION ALERT');
+          console.log(`📧 [VERIFICATION] emailBodies['${key}'] contains IOC section: ${hasIoc}`);
+          if (!hasIoc) {
+            console.error(`❌ [ERROR] Generated body for client '${key}' is missing IOC section!`);
+          }
+        }
+      });
+    } else {
+      console.log('📧 Generating general advisory email');
+      // General advisory - no IOC detection data
+      emailBodies['general'] = generateAdvisory4EmailTemplate(advisory, customMessage);
+    }
+
+    console.log('📧 [FINAL CHECK] Total email bodies generated:', Object.keys(emailBodies).length);
+    console.log('📧 [FINAL CHECK] Email bodies keys:', Object.keys(emailBodies));
 
     // Initialize tracking if enabled
     let trackingRecords = [];
@@ -293,14 +352,67 @@ export default async function handler(req, res) {
         try {
           // Add tracking IDs to email job if tracking is enabled
           if (trackingRecords.length > 0) {
-            emailJob.trackingData = trackingRecords.filter(tr => 
+            emailJob.trackingData = trackingRecords.filter(tr =>
               emailJob.to.includes(tr.email)
             );
             emailJob.enableTracking = true;
           }
 
+          // Select appropriate email body based on email type and client
+          let jobBody;
+
+          console.log(`📧 [EMAIL JOB] Processing email for client: ${emailJob.clientName}`);
+          console.log(`📧 [EMAIL JOB] clientId: ${emailJob.clientId}`);
+          console.log(`📧 [EMAIL JOB] emailType: ${emailType}`);
+          console.log(`📧 [EMAIL BODIES] Available keys: ${Object.keys(emailBodies).join(', ')}`);
+
+          if (emailType === 'dedicated' && emailJob.clientId) {
+            // Try exact clientId match
+            if (emailBodies[emailJob.clientId]) {
+              jobBody = emailBodies[emailJob.clientId];
+              console.log(`✅ Using dedicated email body for client ID: ${emailJob.clientId}`);
+            } else {
+              // Fallback: Try to find by client name
+              const bodyKey = Object.keys(emailBodies).find(key => {
+                if (key === 'general') return false;
+                // Try to match with impacted clients by name
+                const impactedClient = ipSweepData?.impacted_clients?.find(
+                  ic => ic.client_id === key || ic.client_name === emailJob.clientName
+                );
+                return !!impactedClient;
+              });
+
+              if (bodyKey && bodyKey !== 'general') {
+                jobBody = emailBodies[bodyKey];
+                console.log(`✅ Using dedicated email body via fallback match (key: ${bodyKey})`);
+              } else if (Object.keys(emailBodies).length === 2 && emailBodies['general']) {
+                // If there's only one dedicated body and one general body, use the dedicated one
+                const dedicatedKey = Object.keys(emailBodies).find(k => k !== 'general');
+                if (dedicatedKey) {
+                  jobBody = emailBodies[dedicatedKey];
+                  console.log(`✅ Using the only dedicated email body available (key: ${dedicatedKey})`);
+                } else {
+                  jobBody = emailBodies['general'];
+                  console.log(`⚠️ No dedicated body found, using general`);
+                }
+              } else {
+                jobBody = emailBodies['general'];
+                console.log(`⚠️ Could not match client ID "${emailJob.clientId}" to any email body, using general`);
+              }
+            }
+          } else {
+            jobBody = emailBodies['general'];
+            console.log(`📧 Using general email body (emailType: ${emailType})`);
+          }
+
+          // Verify the body contains IOC section if it should
+          const hasIocSection = jobBody.includes('IOC DETECTION ALERT');
+          console.log(`📧 [VERIFICATION] Email body contains IOC section: ${hasIocSection}`);
+          if (emailType === 'dedicated' && !hasIocSection) {
+            console.error(`❌ [ERROR] Dedicated email should have IOC section but doesn't!`);
+          }
+
           // Inject tracking pixel if tracking is enabled and trackingId is available
-          let jobBody = emailBody;
           if (emailJob.enableTracking && emailJob.trackingData && emailJob.trackingData.length > 0) {
             // Use the first trackingId for this recipient (should be only one per recipient)
             const trackingId = emailJob.trackingData[0].trackingId;

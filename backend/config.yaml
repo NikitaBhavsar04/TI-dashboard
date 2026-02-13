@@ -323,7 +323,7 @@ huggingface:
   model: meta-llama/Llama-3.1-8B-Instruct
 openrouter:
   enabled: true
-  model: tngtech/deepseek-r1t-chimera:free
+  model: arcee-ai/trinity-large-preview:free
 report:
   tlp: AMBER
   advisory_id_prefix: SOC-TA

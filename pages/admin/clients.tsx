@@ -24,9 +24,12 @@ import {
 
 interface Client {
   _id: string;
+  client_id: string;
+  client_name: string;
   name: string;
-  emails?: string[]; // Optional for admin users
-  emailCount?: number; // For admin users who can't see emails
+  emails?: string[];
+  emailCount?: number;
+  fw_index: string;
   description?: string;
   isActive: boolean;
   createdAt: string;
@@ -34,8 +37,11 @@ interface Client {
 }
 
 interface ClientFormData {
+  client_id: string;
+  client_name: string;
   name: string;
   emails: string[];
+  fw_index: string;
   description: string;
   isActive: boolean;
 }
@@ -50,8 +56,11 @@ export default function ClientsManagement() {
   const [showModal, setShowModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<ClientFormData>({
+    client_id: '',
+    client_name: '',
     name: '',
     emails: [''],
+    fw_index: '',
     description: '',
     isActive: true
   });
@@ -102,16 +111,22 @@ export default function ClientsManagement() {
     if (client) {
       setEditingClient(client);
       setFormData({
+        client_id: client.client_id,
+        client_name: client.client_name,
         name: client.name,
         emails: Array.isArray(client.emails) ? [...client.emails] : [''],
+        fw_index: client.fw_index,
         description: client.description || '',
         isActive: client.isActive
       });
     } else {
       setEditingClient(null);
       setFormData({
+        client_id: '',
+        client_name: '',
         name: '',
         emails: [''],
+        fw_index: '',
         description: '',
         isActive: true
       });
@@ -123,8 +138,11 @@ export default function ClientsManagement() {
     setShowModal(false);
     setEditingClient(null);
     setFormData({
+      client_id: '',
+      client_name: '',
       name: '',
       emails: [''],
+      fw_index: '',
       description: '',
       isActive: true
     });
@@ -153,11 +171,11 @@ export default function ClientsManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate form
     const validEmails = formData.emails.filter(email => email.trim());
-    if (!formData.name.trim() || validEmails.length === 0) {
-      toast.error('Please provide a client name and at least one email address');
+    if (!formData.client_id.trim() || !formData.client_name.trim() || !formData.name.trim() || !formData.fw_index.trim() || validEmails.length === 0) {
+      toast.error('Please provide client_id, client_name, name, fw_index, and at least one email address');
       return;
     }
 
@@ -307,8 +325,11 @@ export default function ClientsManagement() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+              client_id: client.name.toLowerCase().replace(/\s+/g, '_') + '_' + Math.random().toString(36).substr(2, 4),
+              client_name: client.name,
               name: client.name,
               emails: client.emails,
+              fw_index: client.name.toLowerCase().replace(/\s+/g, '-') + '-fw-logs',
               description: `Imported from CSV on ${new Date().toLocaleDateString()}`,
               isActive: true
             })
@@ -467,25 +488,29 @@ export default function ClientsManagement() {
                         </div>
                         <div>
                           <h3 className="font-orbitron font-bold text-lg text-white">
-                            {client.name}
+                            {client.client_name || client.name}
                           </h3>
                           <div className="flex items-center space-x-4 text-slate-400 font-rajdhani text-sm">
+                            <span className="text-slate-500">ID: {client.client_id}</span>
                             <span className="flex items-center space-x-1">
                               <Mail className="h-4 w-4" />
                               <span>
-                                {canViewEmails() 
+                                {canViewEmails()
                                   ? `${client.emails?.length || 0} email${(client.emails?.length || 0) !== 1 ? 's' : ''}`
                                   : `${client.emailCount || 0} email${(client.emailCount || 0) !== 1 ? 's' : ''}`
                                 }
                               </span>
                             </span>
                             <span className={`px-2 py-1 rounded-full text-xs ${
-                              client.isActive 
-                                ? 'bg-green-500/20 text-green-300 border border-green-400/30' 
+                              client.isActive
+                                ? 'bg-green-500/20 text-green-300 border border-green-400/30'
                                 : 'bg-gray-500/20 text-gray-300 border border-gray-400/30'
                             }`}>
                               {client.isActive ? 'Active' : 'Inactive'}
                             </span>
+                          </div>
+                          <div className="mt-1 text-slate-500 font-rajdhani text-xs">
+                            Index: {client.fw_index}
                           </div>
                         </div>
                       </div>
@@ -579,7 +604,22 @@ export default function ClientsManagement() {
               </div>
 
               <div className="px-6 space-y-6">
-                
+
+                {/* Client ID */}
+                <div>
+                  <label className="block text-slate-400 font-rajdhani text-sm mb-2">
+                    Client ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.client_id}
+                    onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50 transition-all duration-200"
+                    placeholder="e.g., google_001"
+                    required
+                  />
+                </div>
+
                 {/* Client Name */}
                 <div>
                   <label className="block text-slate-400 font-rajdhani text-sm mb-2">
@@ -587,10 +627,40 @@ export default function ClientsManagement() {
                   </label>
                   <input
                     type="text"
+                    value={formData.client_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50 transition-all duration-200"
+                    placeholder="e.g., Google"
+                    required
+                  />
+                </div>
+
+                {/* Display Name (old name field) */}
+                <div>
+                  <label className="block text-slate-400 font-rajdhani text-sm mb-2">
+                    Display Name *
+                  </label>
+                  <input
+                    type="text"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50 transition-all duration-200"
-                    placeholder="Enter client name"
+                    placeholder="Enter display name"
+                    required
+                  />
+                </div>
+
+                {/* Firewall Index */}
+                <div>
+                  <label className="block text-slate-400 font-rajdhani text-sm mb-2">
+                    Firewall Index (OpenSearch) *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.fw_index}
+                    onChange={(e) => setFormData(prev => ({ ...prev, fw_index: e.target.value }))}
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50 transition-all duration-200"
+                    placeholder="e.g., google-fw-logs"
                     required
                   />
                 </div>

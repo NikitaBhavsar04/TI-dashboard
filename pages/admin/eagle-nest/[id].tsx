@@ -5,8 +5,8 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import EmailModal from '@/components/EmailModal';
 import { motion } from 'framer-motion';
-import { 
-  Calendar, 
+import {
+  Calendar,
   ArrowLeft,
   Shield,
   AlertTriangle,
@@ -25,7 +25,8 @@ import {
   Globe,
   Mail,
   Server,
-  Activity
+  Activity,
+  ChevronDown
 } from 'lucide-react';
 import HydrationSafe from '@/components/HydrationSafe';
 
@@ -34,7 +35,9 @@ export default function EagleNestDetail() {
   const [loading, setLoading] = useState(true);
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
-  
+  const [showEmailDropdown, setShowEmailDropdown] = useState(false);
+  const [emailType, setEmailType] = useState<'general' | 'dedicated'>('general');
+
   const { user, hasRole, loading: authLoading } = useAuth();
   const router = useRouter();
   const { id } = router.query;
@@ -44,11 +47,23 @@ export default function EagleNestDetail() {
       router.push('/login');
       return;
     }
-    
+
     if (hasRole('user') && id) {
       loadAdvisory();
     }
   }, [user, hasRole, authLoading, router, id]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showEmailDropdown && !target.closest('.email-dropdown')) {
+        setShowEmailDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showEmailDropdown]);
 
   const loadAdvisory = async () => {
     try {
@@ -112,8 +127,56 @@ export default function EagleNestDetail() {
     }
   };
 
-  const handleEmailClick = () => {
-    setEmailModalOpen(true);
+  const handleEmailClick = async (type: 'general' | 'dedicated') => {
+    console.log('📧 [EAGLE-NEST] handleEmailClick called with type:', type);
+
+    // For dedicated emails, always reload advisory to ensure we have latest IP sweep data
+    if (type === 'dedicated') {
+      console.log('📧 [EAGLE-NEST] Reloading advisory to get latest IP sweep data...');
+      try {
+        const response = await fetch(`/api/eagle-nest/${id}`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.advisory) {
+          setAdvisory(data.advisory);
+          console.log('📧 [EAGLE-NEST] Advisory reloaded successfully');
+          console.log('📧 [EAGLE-NEST] advisory.ip_sweep:', data.advisory.ip_sweep);
+          console.log('📧 [EAGLE-NEST] impacted_clients:', data.advisory.ip_sweep?.impacted_clients);
+
+          // Check if IP sweep data exists
+          if (!data.advisory.ip_sweep) {
+            console.error('❌ [EAGLE-NEST] ERROR: No ip_sweep data in advisory!');
+            alert('No IP sweep data available. Please run IP sweep first before sending dedicated advisory.');
+            return;
+          }
+
+          if (!data.advisory.ip_sweep.impacted_clients || data.advisory.ip_sweep.impacted_clients.length === 0) {
+            alert('No impacted clients found. IP sweep shows no clients are affected by this advisory.');
+            return;
+          }
+
+          // Data is good, open modal
+          setEmailType(type);
+          setEmailModalOpen(true);
+          setShowEmailDropdown(false);
+        } else {
+          console.error('Failed to reload advisory:', data.error);
+          alert('Failed to reload advisory data. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error reloading advisory:', error);
+        alert('Failed to reload advisory data. Please try again.');
+      }
+    } else {
+      // General email - no need to reload
+      setEmailType(type);
+      setEmailModalOpen(true);
+      setShowEmailDropdown(false);
+    }
   };
 
   // Convert Eagle Nest advisory to EmailModal format
@@ -214,16 +277,46 @@ export default function EagleNestDetail() {
                 </button>
 
                 <div className="flex items-center space-x-3">
-                  {/* Send Email button - Admin only */}
+                  {/* Send Email dropdown - Admin only */}
                   {hasRole('admin') && (
-                    <button 
-                      onClick={handleEmailClick}
-                      className="relative flex items-center space-x-2 px-5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 hover:border-emerald-400/50 rounded-lg transition-all duration-300 hover:scale-105 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-400/40 backdrop-blur-sm group overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-300/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700"></div>
-                      <Mail className="h-4 w-4 text-emerald-300 group-hover:text-emerald-200 relative z-10 transition-colors duration-300" />
-                      <span className="text-emerald-300 group-hover:text-emerald-200 font-rajdhani font-semibold relative z-10 transition-colors duration-300">Send Email</span>
-                    </button>
+                    <div className="relative email-dropdown">
+                      <button
+                        onClick={() => setShowEmailDropdown(!showEmailDropdown)}
+                        className="relative flex items-center space-x-2 px-5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 hover:border-emerald-400/50 rounded-lg transition-all duration-300 hover:scale-105 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-400/40 backdrop-blur-sm group overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-300/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700"></div>
+                        <Mail className="h-4 w-4 text-emerald-300 group-hover:text-emerald-200 relative z-10 transition-colors duration-300" />
+                        <span className="text-emerald-300 group-hover:text-emerald-200 font-rajdhani font-semibold relative z-10 transition-colors duration-300">Send Email</span>
+                        <ChevronDown className={`h-4 w-4 text-emerald-300 group-hover:text-emerald-200 relative z-10 transition-all duration-300 ${showEmailDropdown ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {showEmailDropdown && (
+                        <div className="absolute right-0 mt-2 w-72 glass-panel border border-emerald-400/30 rounded-lg shadow-xl shadow-emerald-500/20 overflow-hidden z-50">
+                          <button
+                            onClick={() => handleEmailClick('general')}
+                            className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-emerald-500/10 transition-colors text-left group"
+                          >
+                            <Globe className="h-5 w-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <div className="text-white font-rajdhani font-semibold">Send General Advisory</div>
+                              <div className="text-slate-400 text-xs mt-0.5">Send to all clients without IOC detection details</div>
+                            </div>
+                          </button>
+                          {advisory.ip_sweep && advisory.ip_sweep.impacted_clients && advisory.ip_sweep.impacted_clients.length > 0 && (
+                            <button
+                              onClick={() => handleEmailClick('dedicated')}
+                              className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-amber-500/10 transition-colors text-left border-t border-slate-700/50 group"
+                            >
+                              <AlertTriangle className="h-5 w-5 text-amber-400 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <div className="text-white font-rajdhani font-semibold">Send Dedicated Advisory</div>
+                                <div className="text-slate-400 text-xs mt-0.5">Send to {advisory.ip_sweep.impacted_clients.length} affected client(s) with IOC detection details</div>
+                              </div>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   <button 
@@ -654,6 +747,97 @@ export default function EagleNestDetail() {
                   </motion.div>
                 )}
 
+                {/* IP Sweep Results - Admin/Super Admin Only */}
+                {hasRole('admin') && advisory.ip_sweep && advisory.ip_sweep.impacted_clients && (
+                  <motion.div
+                    className="glass-panel-hover p-8"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.39 }}
+                  >
+                    <div className="flex items-center space-x-3 mb-6 p-4 bg-amber-500/10 border border-amber-400/30 rounded-lg">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-400/50">
+                        <Activity className="h-5 w-5 text-amber-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="font-orbitron font-bold text-xl text-white">🎯 IOC DETECTION RESULTS</h2>
+                        <p className="text-sm text-amber-300 mt-1 font-rajdhani">Last checked: {formatDate(advisory.ip_sweep.checked_at)}</p>
+                      </div>
+                      {advisory.ip_sweep.impacted_clients.length === 0 ? (
+                        <div className="flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 border border-green-400/50 rounded-lg">
+                          <CheckCircle className="h-4 w-4 text-green-400" />
+                          <span className="text-green-300 font-rajdhani font-semibold text-sm">All Clear</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2 px-3 py-1.5 bg-red-500/20 border border-red-400/50 rounded-lg">
+                          <AlertTriangle className="h-4 w-4 text-red-400" />
+                          <span className="text-red-300 font-rajdhani font-semibold text-sm">{advisory.ip_sweep.impacted_clients.length} Client(s) Affected</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {advisory.ip_sweep.impacted_clients.length === 0 ? (
+                      <div className="bg-green-500/10 border border-green-400/30 rounded-lg p-6 text-center">
+                        <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-3" />
+                        <p className="text-green-300 font-rajdhani text-lg font-semibold">No IOCs detected in client environments</p>
+                        <p className="text-slate-400 text-sm mt-2">All monitored clients are clear of the indicators listed in this advisory</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {advisory.ip_sweep.impacted_clients.map((client: any, clientIndex: number) => (
+                          <div key={clientIndex} className="bg-red-500/10 border border-red-400/30 rounded-lg p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center space-x-3">
+                                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/20 border border-red-400/50">
+                                  <Server className="h-5 w-5 text-red-400" />
+                                </div>
+                                <div>
+                                  <h3 className="font-rajdhani font-bold text-lg text-white">{client.client_name}</h3>
+                                  <p className="text-sm text-slate-400">Client ID: {client.client_id}</p>
+                                </div>
+                              </div>
+                              <div className="px-3 py-1.5 bg-red-500/20 border border-red-400/50 rounded-lg">
+                                <span className="text-red-300 font-rajdhani font-semibold text-sm">{client.matches.length} Match(es)</span>
+                              </div>
+                            </div>
+
+                            <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
+                              <table className="w-full">
+                                <thead className="bg-red-500/10 border-b border-red-400/30">
+                                  <tr>
+                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-3 px-4">IOC</th>
+                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-3 px-4">FIELD</th>
+                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-3 px-4">LOG INDEX</th>
+                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-3 px-4">TIMESTAMP</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {client.matches.map((match: any, matchIndex: number) => (
+                                    <tr key={matchIndex} className="border-b border-slate-700/50 hover:bg-red-500/5 transition-colors">
+                                      <td className="py-3 px-4">
+                                        <span className="text-red-400 font-mono text-xs">{match.ioc}</span>
+                                      </td>
+                                      <td className="py-3 px-4">
+                                        <span className="text-slate-300 font-mono text-xs uppercase">{match.matched_field}</span>
+                                      </td>
+                                      <td className="py-3 px-4">
+                                        <span className="text-slate-300 font-mono text-xs">{match.log_index}</span>
+                                      </td>
+                                      <td className="py-3 px-4">
+                                        <span className="text-slate-400 text-xs">{formatDate(match.timestamp)}</span>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
                 {/* Recommendations */}
                 {advisory.recommendations && advisory.recommendations.length > 0 && (
                   <motion.div 
@@ -798,13 +982,26 @@ export default function EagleNestDetail() {
         </div>
 
         {/* Email Modal */}
-        {advisory && emailModalOpen && (
-          <EmailModal
-            isOpen={emailModalOpen}
-            onClose={() => setEmailModalOpen(false)}
-            advisory={getAdvisoryForEmail()!}
-          />
-        )}
+        {advisory && emailModalOpen && (() => {
+          const ipSweepDataToPass = emailType === 'dedicated' ? advisory.ip_sweep : undefined;
+          console.log('📧 [EAGLE-NEST] Rendering EmailModal with:');
+          console.log('📧 [EAGLE-NEST] emailType:', emailType);
+          console.log('📧 [EAGLE-NEST] ipSweepData to pass:', JSON.stringify(ipSweepDataToPass, null, 2));
+
+          return (
+            <EmailModal
+              isOpen={emailModalOpen}
+              onClose={() => {
+                setEmailModalOpen(false);
+                // Reload advisory to get fresh data after sending
+                loadAdvisory();
+              }}
+              advisory={getAdvisoryForEmail()!}
+              emailType={emailType}
+              ipSweepData={ipSweepDataToPass}
+            />
+          );
+        })()}
       </div>
     </HydrationSafe>
   );

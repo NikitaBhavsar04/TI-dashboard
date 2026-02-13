@@ -2,8 +2,11 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IClient extends Document {
   _id: string;
+  client_id: string;
+  client_name: string;
   name: string;
   emails: string[];
+  fw_index: string;
   description?: string;
   isActive: boolean;
   createdAt: Date;
@@ -11,6 +14,17 @@ export interface IClient extends Document {
 }
 
 const ClientSchema = new Schema<IClient>({
+  client_id: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+  },
+  client_name: {
+    type: String,
+    required: true,
+    trim: true
+  },
   name: {
     type: String,
     required: true,
@@ -29,6 +43,12 @@ const ClientSchema = new Schema<IClient>({
       message: 'Invalid email format'
     }
   }],
+  fw_index: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+  },
   description: {
     type: String,
     trim: true
@@ -42,6 +62,8 @@ const ClientSchema = new Schema<IClient>({
 });
 
 // Indexes for searching - separate indexes since text index doesn't support arrays
+ClientSchema.index({ client_id: 1 }, { unique: true });
+ClientSchema.index({ fw_index: 1 }, { unique: true });
 ClientSchema.index({ name: 'text' });
 ClientSchema.index({ emails: 1 });
 ClientSchema.index({ isActive: 1 });

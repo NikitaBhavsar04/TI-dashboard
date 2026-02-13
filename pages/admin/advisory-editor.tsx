@@ -5,11 +5,14 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import HydrationSafe from '@/components/HydrationSafe';
-import { 
+import {
   ArrowLeft,
   Save,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Radar,
+  Shield,
+  Clock
 } from 'lucide-react';
 
 
@@ -17,6 +20,8 @@ export default function AdvisoryEditor() {
   const [advisory, setAdvisory] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sweeping, setSweeping] = useState(false);
+  const [sweepResults, setSweepResults] = useState<any>(null);
 
   const { user, hasRole, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -131,6 +136,12 @@ export default function AdvisoryEditor() {
     } else if (typeof src.cvss === 'object') {
       cvssObj = src.cvss;
     }
+
+    // Load IP sweep results if present
+    if (src.ip_sweep) {
+      setSweepResults(src.ip_sweep);
+    }
+
     return {
       ...src,
       cvss: cvssObj,
@@ -144,6 +155,7 @@ export default function AdvisoryEditor() {
       recommendations: src.recommendations || [],
       patch_details: src.patch_details || [],
       references: src.references || [],
+      ip_sweep: src.ip_sweep || null,
     };
   }
 
@@ -180,6 +192,49 @@ export default function AdvisoryEditor() {
     setLoading(false);
   };
 
+  const handleIPSweep = async () => {
+    if (!advisory || !advisory.advisory_id || advisory.is_new) {
+      toast.error('Please save the advisory first before running IP sweep');
+      return;
+    }
+
+    try {
+      setSweeping(true);
+      console.log('[EDITOR] Starting IP sweep for:', advisory.advisory_id);
+      toast.success('IP Sweep started... This may take a moment.');
+
+      const response = await fetch('/api/advisory/ip-sweep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ advisory_id: advisory.advisory_id })
+      });
+
+      const data = await response.json();
+      console.log('[EDITOR] IP Sweep response:', data);
+
+      if (data.success) {
+        setSweepResults(data.results);
+        setAdvisory({ ...advisory, ip_sweep: data.results });
+
+        const impactedCount = data.results.impacted_clients?.length || 0;
+        if (impactedCount > 0) {
+          toast.success(`IP Sweep completed! Found matches in ${impactedCount} client(s)`);
+        } else {
+          toast.success('IP Sweep completed! No matches found in any client firewall logs');
+        }
+      } else {
+        console.error('[EDITOR] IP Sweep failed:', data);
+        toast.error(`IP Sweep failed: ${data.error}`);
+      }
+    } catch (error: any) {
+      console.error('[EDITOR] Error running IP sweep:', error);
+      toast.error(`Error: ${error.message}`);
+    } finally {
+      setSweeping(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!advisory) return;
     try {
@@ -190,17 +245,17 @@ export default function AdvisoryEditor() {
         title: advisory.title,
         is_new: advisory.is_new
       });
-      
+
       // Ensure advisory has created_at if not present
       const advisoryToSave = {
         ...advisory,
         created_at: advisory.created_at || new Date().toISOString(),
         timestamp: advisory.timestamp || new Date().toISOString()
       };
-      
+
       // Remove the is_new flag before saving
       delete advisoryToSave.is_new;
-      
+
       const response = await fetch('/api/eagle-nest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -847,6 +902,129 @@ export default function AdvisoryEditor() {
                   className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani"
                   placeholder="Enter each reference URL on a new line"
                 />
+              </div>
+
+              {/* IP Sweep Section */}
+              <div className="border-t border-slate-700/50 pt-6 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-white font-orbitron font-bold text-lg flex items-center space-x-2">
+                      <Radar className="h-5 w-5 text-purple-400" />
+                      <span>🔍 IP Sweep - Check Client Impact</span>
+                    </h3>
+                    <p className="text-slate-400 font-rajdhani text-sm mt-1">
+                      Scan all client firewall logs to check if any IOCs from this advisory have been detected
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleIPSweep}
+                    disabled={sweeping || advisory.is_new || !advisory.advisory_id}
+                    className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-lg text-white hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-orbitron font-bold shadow-lg shadow-purple-500/20"
+                  >
+                    {sweeping ? (
+                      <>
+                        <Radar className="h-5 w-5 animate-spin" />
+                        <span>Scanning...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="h-5 w-5" />
+                        <span>Run IP Sweep</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {advisory.is_new && (
+                  <div className="bg-yellow-500/10 border border-yellow-400/30 rounded-lg p-4 flex items-start space-x-3">
+                    <AlertTriangle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="text-yellow-400 font-rajdhani font-semibold">Advisory Not Saved</div>
+                      <div className="text-slate-300 font-rajdhani text-sm">
+                        Please save this advisory first before running IP sweep
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* IP Sweep Results */}
+                {(advisory.ip_sweep || sweepResults) && !advisory.is_new && (
+                  <div className="mt-4 bg-slate-800/30 border border-slate-600/50 rounded-lg p-6">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <Clock className="h-5 w-5 text-slate-400" />
+                      <div className="text-slate-400 font-rajdhani text-sm">
+                        Last checked: {new Date((advisory.ip_sweep || sweepResults).checked_at).toLocaleString()}
+                      </div>
+                    </div>
+
+                    {((advisory.ip_sweep || sweepResults).impacted_clients?.length || 0) === 0 ? (
+                      <div className="bg-green-500/10 border border-green-400/30 rounded-lg p-4 flex items-start space-x-3">
+                        <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <div className="text-green-400 font-rajdhani font-semibold">No Matches Found</div>
+                          <div className="text-slate-300 font-rajdhani text-sm">
+                            None of the IOCs from this advisory were detected in any client firewall logs
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="bg-red-500/10 border border-red-400/30 rounded-lg p-4 mb-4 flex items-start space-x-3">
+                          <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <div className="text-red-400 font-rajdhani font-semibold">
+                              {(advisory.ip_sweep || sweepResults).impacted_clients.length} Client(s) Impacted
+                            </div>
+                            <div className="text-slate-300 font-rajdhani text-sm">
+                              IOCs from this advisory were detected in the following client firewall logs
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          {(advisory.ip_sweep || sweepResults).impacted_clients.map((client: any, idx: number) => (
+                            <div key={idx} className="bg-slate-900/50 border border-slate-600/50 rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <div>
+                                  <div className="text-white font-orbitron font-bold">{client.client_name}</div>
+                                  <div className="text-slate-400 font-rajdhani text-sm">ID: {client.client_id}</div>
+                                </div>
+                                <div className="px-3 py-1 bg-red-500/20 border border-red-400/30 rounded-lg text-red-400 font-rajdhani text-sm font-semibold">
+                                  {client.matches.length} Match{client.matches.length !== 1 ? 'es' : ''}
+                                </div>
+                              </div>
+
+                              <div className="overflow-x-auto">
+                                <table className="w-full">
+                                  <thead className="bg-slate-800/50 border-b border-slate-600/50">
+                                    <tr>
+                                      <th className="text-left text-slate-400 font-rajdhani text-xs py-2 px-3">IOC</th>
+                                      <th className="text-left text-slate-400 font-rajdhani text-xs py-2 px-3">Field</th>
+                                      <th className="text-left text-slate-400 font-rajdhani text-xs py-2 px-3">Log Index</th>
+                                      <th className="text-left text-slate-400 font-rajdhani text-xs py-2 px-3">Timestamp</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {client.matches.map((match: any, matchIdx: number) => (
+                                      <tr key={matchIdx} className="border-b border-slate-700/50">
+                                        <td className="py-2 px-3 text-red-400 font-mono text-sm">{match.ioc}</td>
+                                        <td className="py-2 px-3 text-slate-300 font-rajdhani text-sm">{match.matched_field}</td>
+                                        <td className="py-2 px-3 text-slate-400 font-rajdhani text-xs">{match.log_index}</td>
+                                        <td className="py-2 px-3 text-slate-400 font-rajdhani text-xs">
+                                          {new Date(match.timestamp).toLocaleString()}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

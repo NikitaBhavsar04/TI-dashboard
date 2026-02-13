@@ -53,7 +53,7 @@ async function handleGet(req, res, currentUser) {
 
     const clients = await Client.find(query)
       .sort({ name: 1 })
-      .select('name emails description isActive createdAt');
+      .select('client_id client_name name emails fw_index description isActive createdAt');
 
     // Filter email addresses for admin role
     const filteredClients = clients.map(client => {
@@ -84,21 +84,33 @@ async function handleGet(req, res, currentUser) {
 
 async function handlePost(req, res, currentUser) {
   try {
-    const { name, emails, description } = req.body;
+    const { client_id, client_name, name, emails, fw_index, description } = req.body;
 
-    if (!name || !emails || !emails.length) {
-      return res.status(400).json({ message: 'Name and at least one email are required' });
+    if (!client_id || !client_name || !name || !emails || !emails.length || !fw_index) {
+      return res.status(400).json({ message: 'client_id, client_name, name, fw_index, and at least one email are required' });
     }
 
     // Validate all emails
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const invalidEmails = emails.filter(email => !emailRegex.test(email));
-    
+
     if (invalidEmails.length > 0) {
-      return res.status(400).json({ 
-        message: 'Invalid email addresses', 
-        invalidEmails 
+      return res.status(400).json({
+        message: 'Invalid email addresses',
+        invalidEmails
       });
+    }
+
+    // Check if client_id already exists
+    const existingClientId = await Client.findOne({ client_id: client_id.trim() });
+    if (existingClientId) {
+      return res.status(409).json({ message: 'client_id already exists' });
+    }
+
+    // Check if fw_index already exists
+    const existingFwIndex = await Client.findOne({ fw_index: fw_index.trim() });
+    if (existingFwIndex) {
+      return res.status(409).json({ message: 'fw_index already exists' });
     }
 
     // Check if client name already exists
@@ -108,8 +120,11 @@ async function handlePost(req, res, currentUser) {
     }
 
     const client = new Client({
+      client_id: client_id.trim(),
+      client_name: client_name.trim(),
       name: name.trim(),
       emails: emails.map(email => email.toLowerCase().trim()),
+      fw_index: fw_index.trim(),
       description: description?.trim(),
       createdBy: currentUser.username
     });
@@ -127,7 +142,10 @@ async function handlePost(req, res, currentUser) {
     // Filter response for admin
     const responseClient = {
       _id: client._id,
+      client_id: client.client_id,
+      client_name: client.client_name,
       name: client.name,
+      fw_index: client.fw_index,
       description: client.description,
       isActive: client.isActive
     };

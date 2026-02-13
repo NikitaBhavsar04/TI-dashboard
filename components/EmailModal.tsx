@@ -16,6 +16,20 @@ interface EmailModalProps {
     affected_systems?: string[];
     recommendations?: string | string[];
   };
+  emailType?: 'general' | 'dedicated';
+  ipSweepData?: {
+    impacted_clients: Array<{
+      client_id: string;
+      client_name: string;
+      matches: Array<{
+        ioc: string;
+        matched_field: string;
+        log_index: string;
+        timestamp: string;
+      }>;
+    }>;
+    checked_at: string;
+  };
 }
 
 interface Client {
@@ -27,7 +41,7 @@ interface Client {
   isActive: boolean;
 }
 
-export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProps) {
+export default function EmailModal({ isOpen, onClose, advisory, emailType = 'general', ipSweepData }: EmailModalProps) {
   const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
@@ -38,7 +52,7 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [sendMethod, setSendMethod] = useState<'clients' | 'individual' | 'csv_bulk'>('clients');
-  
+
   // Email content
   const [subject, setSubject] = useState('');
   const [customMessage, setCustomMessage] = useState('');
@@ -67,14 +81,29 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
   useEffect(() => {
     if (isOpen) {
       fetchClients();
-      // Set default subject
-      setSubject(`Threat Advisory: ${advisory.title}`);
+      // Set default subject based on email type
+      if (emailType === 'dedicated') {
+        setSubject(`🚨 URGENT: ${advisory.title} - IOC Detected in Your Environment`);
+        // Pre-select affected clients for dedicated advisory
+        if (ipSweepData?.impacted_clients) {
+          const affectedClientIds = ipSweepData.impacted_clients.map(c => {
+            // Find matching client by name or client_id
+            const matchingClient = clients.find(client =>
+              client.name === c.client_name || (client as any).client_id === c.client_id
+            );
+            return matchingClient?._id;
+          }).filter(Boolean) as string[];
+          setSelectedClients(affectedClientIds);
+        }
+      } else {
+        setSubject(`Threat Advisory: ${advisory.title}`);
+      }
       // Set default scheduled date to today
       const today = new Date();
       setScheduledDate(today.toISOString().split('T')[0]);
       setScheduledTime('09:00');
     }
-  }, [isOpen, advisory.title]);
+  }, [isOpen, advisory.title, emailType, ipSweepData, clients]);
 
   const fetchClients = async () => {
     try {
@@ -293,6 +322,8 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
         customMessage,
         cc: validCcEmails.length > 0 ? validCcEmails : undefined,
         bcc: validBccEmails.length > 0 ? validBccEmails : undefined,
+        emailType,
+        ipSweepData: emailType === 'dedicated' ? ipSweepData : undefined,
         trackingOptions: {
           enableTracking,
           ...trackingOptions
@@ -304,7 +335,14 @@ export default function EmailModal({ isOpen, onClose, advisory }: EmailModalProp
         })
       };
 
-      console.log('Sending payload:', payload); // Debug log
+      console.log('📧 [FRONTEND] Sending payload with:');
+      console.log('📧 [FRONTEND] emailType:', emailType);
+      console.log('📧 [FRONTEND] ipSweepData prop received:', ipSweepData);
+      console.log('📧 [FRONTEND] ipSweepData in payload:', payload.ipSweepData);
+      if (emailType === 'dedicated' && !ipSweepData) {
+        console.error('❌ [FRONTEND] ERROR: Dedicated email but ipSweepData is missing!');
+      }
+      console.log('📧 [FRONTEND] Full payload:', JSON.stringify(payload, null, 2));
 
       const response = await fetch('/api/emails/send-advisory', {
         method: 'POST',

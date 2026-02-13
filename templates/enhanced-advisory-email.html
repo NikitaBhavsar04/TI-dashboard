@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>Threat Advisory Notification</title>
+    <style>
+        /* Reset and base styles */
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+        table { border-collapse: collapse !important; }
+        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .email-container { background-color: #1a1a1a !important; }
+            .content-section { background-color: #2d2d2d !important; color: #ffffff !important; }
+        }
+        
+        /* Mobile responsive */
+        @media only screen and (max-width: 600px) {
+            .email-container { width: 100% !important; }
+            .content-section { padding: 20px !important; }
+            .threat-level { font-size: 14px !important; }
+            h1 { font-size: 24px !important; }
+            .iocs-section { margin-top: 10px !important; }
+        }
+        
+        /* Custom styles */
+        .header { background: linear-gradient(135deg, #0B1F33, #1F3A5F); color: #ffffff; padding: 40px 20px; text-align: center; }
+        .main-content { background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .advisory-title { font-size: 28px; font-weight: 700; margin: 0 0 10px 0; color: #0B1F33; }
+        .advisory-id { font-size: 14px; color: #94A3B8; margin: 0 0 20px 0; }
+        .threat-level-badge { display: inline-block; background: #dc2626; color: #ffffff; padding: 8px 20px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .section-title { font-size: 20px; font-weight: 600; color: #0B1F33; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #D7DEE8; }
+        .iocs-section { background: #F8F9FA; border: 1px solid #D7DEE8; border-radius: 8px; padding: 20px; margin-top: 20px; }
+        .iocs-title { font-size: 16px; font-weight: 600; color: #0B1F33; margin: 0 0 15px 0; }
+        .iocs-list { list-style: none; padding: 0; margin: 0; }
+        .ioc-item { padding: 8px 12px; background: #ffffff; border: 1px solid #D7DEE8; border-radius: 6px; margin-bottom: 8px; font-family: 'Courier New', monospace; font-size: 14px; }
+        .detected-advisory { background: #FFF3CD; border: 1px solid #FFEAA7; border-radius: 8px; padding: 15px; margin: 20px 0; }
+        .detected-title { font-size: 16px; font-weight: 600; color: #856404; margin: 0 0 10px 0; }
+        .detected-content { font-size: 14px; color: #856404; margin: 0; line-height: 1.5; }
+        .footer { text-align: center; padding: 30px 20px; color: #64748b; font-size: 14px; }
+        .action-button { display: inline-block; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #ffffff; padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); margin: 20px 0; }
+        .spacer { height: 20px; }
+    </style>
+</head>
+<body>
+    <!-- Preheader text (hidden but appears in email client preview) -->
+    <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; color: #f5f7fa;">
+        New threat advisory notification - {{ advisory.title }}
+    </div>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f7fa;">
+        <tr>
+            <td align="center" style="padding: 20px 20px 0 20px;">
+                
+                <!-- Main Email Container -->
+                <table class="email-container" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px;">
+                    
+                    <!-- Header Section -->
+                    <tr>
+                        <td class="header">
+                            <h1 style="margin: 0 0 10px 0; font-size: 32px; font-weight: 700; color: #ffffff;">Threat Advisory</h1>
+                            <p style="margin: 0; font-size: 16px; color: rgba(255, 255, 255, 0.9);">Security Intelligence Report</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Main Content Section -->
+                    <tr>
+                        <td class="main-content">
+                            
+                            <!-- Advisory Title and ID -->
+                            <div>
+                                <span class="threat-level-badge">{{ advisory.criticality or 'CRITICAL' }}</span>
+                                <h1 class="advisory-title">{{ advisory.title }}</h1>
+                                <p class="advisory-id">Advisory ID: {{ advisory.advisory_id }} | {{ advisory.timestamp | date('en-US', 'MMMM d, yyyy') }}</p>
+                            </div>
+                            
+                            <!-- Detected Advisory Section (if applicable) -->
+                            {% if advisory.ip_sweep and advisory.ip_sweep.impacted_clients and advisory.ip_sweep.impacted_clients[0].matches %}
+                            <div class="detected-advisory">
+                                <div class="detected-title">⚠️ Detected Advisory for Client</div>
+                                <div class="detected-content">
+                                    This advisory has been detected in your environment. 
+                                    IOC matches found: {{ advisory.ip_sweep.impacted_clients[0].matches | length }} 
+                                    (Last detection: {{ advisory.ip_sweep.impacted_clients[0].matches[0].timestamp }})
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Executive Summary -->
+                            <div>
+                                <h2 class="section-title">Executive Summary</h2>
+                                <p style="font-size: 16px; color: #0B2233; line-height: 1.6; margin: 0 0 20px 0;">
+                                    {{ advisory.exec_summary_parts[0] }}
+                                </p>
+                            </div>
+                            
+                            <!-- Technical Details -->
+                            <div>
+                                <h2 class="section-title">Technical Details</h2>
+                                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                                    <tr>
+                                        <td style="width: 50%; padding: 10px; background: #F8F9FA; border: 1px solid #D7DEE8; border-radius: 6px; font-size: 14px;">
+                                            <strong style="color: #0B1F33;">CVEs:</strong><br>
+                                            {{ advisory.cves | join(', ') }}
+                                        </td>
+                                        <td style="width: 50%; padding: 10px; background: #F8F9FA; border: 1px solid #D7DEE8; border-radius: 6px; font-size: 14px;">
+                                            <strong style="color: #0B1F33;">CVSS:</strong><br>
+                                            {% if advisory.cvss %}
+                                                {% set first_cvss = advisory.cvss.values() | list | first %}
+                                                {{ first_cvss.score }} ({{ first_cvss.vector }})
+                                            {% else %}
+                                                Not Available
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <!-- IOCs Section (only show if IOCs exist) -->
+                            {% if advisory.iocs and (advisory.iocs.ipv4 or advisory.iocs.domains or advisory.iocs.md5 or advisory.iocs.sha1 or advisory.iocs.sha256) %}
+                            <div class="iocs-section">
+                                <h3 class="iocs-title">Indicators of Compromise (IOCs)</h3>
+                                <ul class="iocs-list">
+                                    {% if advisory.iocs.ipv4 %}
+                                    <li class="ioc-item">IP Addresses: {{ advisory.iocs.ipv4 | join(', ') }}</li>
+                                    {% endif %}
+                                    {% if advisory.iocs.domains %}
+                                    <li class="ioc-item">Domains: {{ advisory.iocs.domains | join(', ') }}</li>
+                                    {% endif %}
+                                    {% if advisory.iocs.md5 %}
+                                    <li class="ioc-item">MD5 Hashes: {{ advisory.iocs.md5 | join(', ') }}</li>
+                                    {% endif %}
+                                    {% if advisory.iocs.sha1 %}
+                                    <li class="ioc-item">SHA1 Hashes: {{ advisory.iocs.sha1 | join(', ') }}</li>
+                                    {% endif %}
+                                    {% if advisory.iocs.sha256 %}
+                                    <li class="ioc-item">SHA256 Hashes: {{ advisory.iocs.sha256 | join(', ') }}</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Recommendations -->
+                            <div>
+                                <h2 class="section-title">Recommended Actions</h2>
+                                <ol style="font-size: 16px; color: #0B2233; line-height: 1.6; margin: 0 0 20px 20px; padding: 0;">
+                                    {% for rec in advisory.recommendations %}
+                                    <li style="margin-bottom: 10px;">{{ rec }}</li>
+                                    {% endfor %}
+                                </ol>
+                            </div>
+                            
+                            <!-- References -->
+                            <div>
+                                <h2 class="section-title">References</h2>
+                                <ul style="font-size: 16px; color: #0B2233; line-height: 1.6; margin: 0 0 20px 20px; padding: 0;">
+                                    {% for ref in advisory.references %}
+                                    <li style="margin-bottom: 10px;">
+                                        <a href="{{ ref }}" style="color: #3b82f6; text-decoration: none;">{{ ref }}</a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            
+                            <!-- Action Button -->
+                            <div>
+                                <a href="/advisory/{{ advisory.advisory_id }}" class="action-button">View Full Advisory Details</a>
+                            </div>
+                            
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td class="footer">
+                            <p style="margin: 0 0 10px 0;">This threat advisory was sent to: <strong>{{ recipient.email }}</strong></p>
+                            <p style="margin: 0 0 10px 0;">© {{ "now" | date("Y") }} Threat Advisory System. All rights reserved.</p>
+                            <p style="margin: 0;">You received this because you're subscribed to security notifications.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

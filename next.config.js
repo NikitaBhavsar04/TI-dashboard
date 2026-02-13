@@ -1,7 +1,7 @@
 require('dotenv/config')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,  // Disabled to prevent double API calls in development
   
   // TypeScript configuration for build
   typescript: {

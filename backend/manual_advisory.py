@@ -99,8 +99,11 @@ def normalize_iocs(iocs_raw: dict) -> List[Dict]:
 # ============================================================
 
 def generate_advisory_for_article(article_id: str) -> dict:
+    # Get request ID from environment for tracing (passed from Next.js API)
+    request_id = os.getenv("REQUEST_ID", "unknown")
+
     article = load_raw_article(article_id)
-    logger.info(f"[MANUAL] Generating advisory for: {article['title']}")
+    logger.info(f"[MANUAL][req:{request_id}] Generating advisory for: {article['title']}")
 
     # --------------------------------------------------------
     # Article text
@@ -287,7 +290,7 @@ def generate_advisory_for_article(article_id: str) -> dict:
     }
 
     save_generated_advisory(advisory_doc)
-    logger.info(f"✅ Advisory indexed: {advisory_uid}")
+    logger.info(f"[MANUAL][req:{request_id}] ✅ Advisory indexed: {advisory_uid}")
 
     return advisory_doc
 
@@ -310,12 +313,16 @@ def generate_advisory(article_id: str) -> dict:
 if __name__ == "__main__":
     import sys
     import json
-    
+
+    # Get request ID for tracing
+    request_id = os.getenv("REQUEST_ID", "unknown")
+
     if len(sys.argv) != 2:
         print("Usage: manual_advisory.py <raw_article_id>", file=sys.stderr)
         sys.exit(1)
 
     try:
+        logger.info(f"[MANUAL][req:{request_id}] Starting advisory generation script")
         advisory_doc = generate_advisory_for_article(sys.argv[1])
         # Output ONLY the advisory JSON to stdout for API consumption
         # All log messages go to stderr via logger
@@ -323,6 +330,6 @@ if __name__ == "__main__":
         print(json_output)
         sys.stdout.flush()  # Ensure output is sent immediately
     except Exception as e:
-        logger.error(f"Failed to generate advisory: {e}")
+        logger.error(f"[MANUAL][req:{request_id}] ❌ Failed to generate advisory: {e}")
         print(f"Error: {str(e)}", file=sys.stderr)
         sys.exit(1)

@@ -1,3 +1,15 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { requireAdmin } from '@/lib/auth';
+import { spawn } from 'child_process';
+import path from 'path';
+import fs from 'fs';
+import { randomUUID } from 'crypto';
+
+// ============================================================
+// IN-MEMORY LOCK FOR CONCURRENCY PROTECTION
+// ============================================================
+let advisoryGenerationLock = false;
+
 // Normalize backend advisory fields to frontend schema
 function normalizeAdvisoryFields(advisory: any) {
   if (!advisory || typeof advisory !== 'object') return advisory;
@@ -16,11 +28,6 @@ function normalizeAdvisoryFields(advisory: any) {
     description: advisory.exec_summary_parts ? advisory.exec_summary_parts.join('\n\n') : advisory.description,
   };
 }
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { requireAdmin } from '@/lib/auth';
-import { spawn } from 'child_process';
-import path from 'path';
-import fs from 'fs';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -39,14 +46,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Article ID required' });
   }
 
+  // ============================================================
+  // CONCURRENCY PROTECTION: Only one advisory generation at a time
+  // ============================================================
+  if (advisoryGenerationLock) {
+    console.log('[MANUAL-ADVISORY] ⚠️ Advisory generation already in progress, rejecting duplicate request');
+    return res.status(429).json({
+      error: 'Advisory generation already in progress. Please wait for the current generation to complete.',
+      retry_after: 30  // Suggest retry after 30 seconds
+    });
+  }
+
+  // Generate unique request ID for tracing
+  const requestId = randomUUID().split('-')[0];  // Use first 8 chars for brevity
+  console.log(`[MANUAL-ADVISORY][req:${requestId}] Starting advisory generation for article:`, articleId);
+
+  // Acquire lock
+  advisoryGenerationLock = true;
+
   try {
-    console.log('[MANUAL-ADVISORY] Generating advisory for article:', articleId);
+    console.log(`[MANUAL-ADVISORY][req:${requestId}] Lock acquired, proceeding with generation`);
 
     // Check if we're in a serverless environment (like Vercel)
     const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
-    
+
     if (isServerless) {
-      console.log('[MANUAL-ADVISORY] Serverless environment detected, using fallback method');
+      console.log(`[MANUAL-ADVISORY][req:${requestId}] Serverless environment detected, using fallback method`);
       
       // Fallback: Generate a basic advisory structure
       const fallbackAdvisory = {
@@ -79,10 +104,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const backendPath = path.resolve(process.cwd(), 'backend');
     const scriptPath = path.join(backendPath, 'manual_advisory.py');
 
-    console.log('[MANUAL-ADVISORY] Generating advisory for article:', articleId);
-    console.log('[MANUAL-ADVISORY] Backend path:', backendPath);
-    console.log('[MANUAL-ADVISORY] Script path:', scriptPath);
-    console.log('[MANUAL-ADVISORY] OpenSearch config:', {
+    console.log(`[MANUAL-ADVISORY][req:${requestId}] Python script path:`, scriptPath);
+    console.log(`[MANUAL-ADVISORY][req:${requestId}] OpenSearch config:`, {
       url: process.env.OPENSEARCH_URL || `https://${process.env.OPENSEARCH_HOST}:${process.env.OPENSEARCH_PORT || '9200'}`,
       username: process.env.OPENSEARCH_USERNAME ? '***' : '(empty)',
       password: process.env.OPENSEARCH_PASSWORD ? '***' : '(empty)'
@@ -90,7 +113,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Check if Python script exists
     if (!fs.existsSync(scriptPath)) {
-      console.error('[MANUAL-ADVISORY] Python script not found:', scriptPath);
+      console.error(`[MANUAL-ADVISORY][req:${requestId}] Python script not found:`, scriptPath);
       throw new Error(`Python script not found: ${scriptPath}`);
     }
 
@@ -126,8 +149,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Prepare env for spawned process, prepending venv paths if used
-    const childEnv = { 
+    const childEnv = {
       ...process.env,
+      REQUEST_ID: requestId,  // Pass request ID to Python for logging
       OPENSEARCH_URL: process.env.OPENSEARCH_URL || '',
       OPENSEARCH_HOST: process.env.OPENSEARCH_HOST || '',
       OPENSEARCH_PORT: process.env.OPENSEARCH_PORT || '9200',
@@ -161,25 +185,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     python.stderr.on('data', (data) => {
       stderr += data.toString();
-      console.error('[MANUAL-ADVISORY]', data.toString());
+      console.error(`[MANUAL-ADVISORY][req:${requestId}]`, data.toString());
     });
 
     await new Promise((resolve, reject) => {
       python.on('close', (code) => {
-        console.log(`[MANUAL-ADVISORY] Python process finished with code: ${code}`);
+        console.log(`[MANUAL-ADVISORY][req:${requestId}] Python process finished with code: ${code}`);
         if (code === 0) {
           resolve(true);
         } else {
-          console.error(`[MANUAL-ADVISORY] Process failed with code ${code}`);
-          console.error(`[MANUAL-ADVISORY] STDERR: ${stderr}`);
-          console.error(`[MANUAL-ADVISORY] STDOUT: ${stdout}`);
-          reject(new Error(`Process exited with code ${code}. Error: ${stderr || 'Unknown error'}`));
+          console.error(`[MANUAL-ADVISORY][req:${requestId}] Process failed with code ${code}`);
+          console.error(`[MANUAL-ADVISORY][req:${requestId}] STDERR: ${stderr}`);
+          console.error(`[MANUAL-ADVISORY][req:${requestId}] STDOUT: ${stdout}`);
+
+          // Check for rate limit errors
+          const isRateLimitError = stderr.includes('429') ||
+                                  (stderr.toLowerCase().includes('rate') && stderr.toLowerCase().includes('limit'));
+
+          if (isRateLimitError) {
+            reject(new Error(
+              'RATE_LIMIT_ERROR: The OpenRouter API is temporarily rate-limited. ' +
+              'Please wait a few minutes and try again, or configure a different LLM model in backend/config.yaml. ' +
+              'Current model: tngtech/deepseek-r1t-chimera:free'
+            ));
+          } else {
+            reject(new Error(`Process exited with code ${code}. Error: ${stderr || 'Unknown error'}`));
+          }
         }
       });
 
       python.on('error', (err) => {
-        console.error(`[MANUAL-ADVISORY] Process error:`, err);
-        console.log('[MANUAL-ADVISORY] Python failed, using fallback method');
+        console.error(`[MANUAL-ADVISORY][req:${requestId}] Process error:`, err);
+        console.log(`[MANUAL-ADVISORY][req:${requestId}] Python failed, using fallback method`);
         
         const fallbackAdvisory = {
           advisory_id: articleId,
@@ -208,13 +245,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     });
 
-    console.log('[MANUAL-ADVISORY] Advisory generated successfully via Python');
+    console.log(`[MANUAL-ADVISORY][req:${requestId}] ✅ Advisory generated successfully via Python`);
 
     // Parse the advisory from stdout or file
     try {
-      console.log('[MANUAL-ADVISORY] Raw stdout length:', stdout.length);
-      console.log('[MANUAL-ADVISORY] Raw stdout (first 500 chars):', stdout.substring(0, 500));
-      console.log('[MANUAL-ADVISORY] Raw stdout (last 500 chars):', stdout.substring(Math.max(0, stdout.length - 500)));
+      console.log(`[MANUAL-ADVISORY][req:${requestId}] Parsing Python output (length: ${stdout.length} chars)`);
       
       // Try to extract JSON if there are log messages mixed in
       let jsonStr = stdout.trim();
@@ -231,23 +266,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
       
-      console.log('[MANUAL-ADVISORY] Attempting to parse JSON...');
       const advisory = JSON.parse(jsonStr);
-      console.log('[MANUAL-ADVISORY] ✅ Parsed advisory successfully');
-      console.log('[MANUAL-ADVISORY] Advisory ID from Python:', advisory.advisory_id);
-      
+      console.log(`[MANUAL-ADVISORY][req:${requestId}] ✅ Parsed advisory successfully, ID: ${advisory.advisory_id}`);
+
       const normalized = normalizeAdvisoryFields(advisory);
-      console.log('[MANUAL-ADVISORY] Advisory IDs in normalized:', {
-        advisory_id: normalized.advisory_id,
-        advisoryId: normalized.advisoryId
-      });
       
       return res.status(200).json({ 
         success: true, 
         advisory: normalized
       });
     } catch (parseError) {
-      console.error('[MANUAL-ADVISORY] Failed to parse advisory JSON');
+      console.error(`[MANUAL-ADVISORY][req:${requestId}] ❌ Failed to parse advisory JSON:`, parseError);
       
       // Fallback if JSON parsing fails
       const fallbackAdvisory = {
@@ -277,8 +306,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
   } catch (error: any) {
-    console.error('[MANUAL-ADVISORY] Error:', error);
-    
+    console.error(`[MANUAL-ADVISORY][req:${requestId}] ❌ Error:`, error);
+
+    // Check if this is a rate limit error
+    if (error.message?.includes('RATE_LIMIT_ERROR')) {
+      return res.status(429).json({
+        error: 'Rate Limit Exceeded',
+        message: 'The OpenRouter API free tier is temporarily rate-limited. Please try one of the following:',
+        solutions: [
+          '⏰ Wait 2-5 minutes and try again',
+          '🔑 Add your OpenRouter API key with credits at: https://openrouter.ai/settings/integrations',
+          '🔧 Change the model in backend/config.yaml (current: tngtech/deepseek-r1t-chimera:free)',
+          '💡 Suggested free alternatives: meta-llama/llama-3.2-3b-instruct:free, google/gemini-flash-1.5:free'
+        ],
+        current_model: 'tngtech/deepseek-r1t-chimera:free',
+        config_file: 'backend/config.yaml'
+      });
+    }
+
     // Final fallback for any other errors
     const fallbackAdvisory = {
       advisory_id: articleId,
@@ -298,11 +343,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       iocs: []
     };
 
-    return res.status(200).json({ 
-      success: true, 
+    return res.status(200).json({
+      success: true,
       advisory: normalizeAdvisoryFields(fallbackAdvisory),
       note: 'Generated in final fallback mode. Please review and customize.',
       error_details: error.message
     });
+  } finally {
+    // ============================================================
+    // ALWAYS RELEASE LOCK - CRITICAL FOR CONCURRENCY PROTECTION
+    // ============================================================
+    advisoryGenerationLock = false;
+    console.log(`[MANUAL-ADVISORY][req:${requestId}] 🔓 Lock released`);
   }
 }

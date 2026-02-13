@@ -403,7 +403,7 @@ export default function RawArticles() {
 
           {/* Modern Sticky Header */}
           <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50 shadow-2xl">
-            <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
+            <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-4">
               <div className="flex items-center justify-between">
                 {/* Left: Title & Description */}
                 <div className="flex items-center space-x-4">
@@ -433,18 +433,18 @@ export default function RawArticles() {
             </div>
           </header>
 
-          <main className="w-full px-4 sm:px-6 lg:px-8 py-8">
-            
+          <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+
             {/* Enhanced Stats Cards with Stagger Animation */}
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <CardSkeleton />
                 <CardSkeleton />
                 <CardSkeleton />
                 <CardSkeleton />
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {/* Total Articles */}
                 <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-cyan-900/20 border-2 border-cyan-500/30 rounded-lg p-4 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 card-hover-enhanced">
                   <div className="flex items-center justify-between mb-3">
