@@ -45,7 +45,24 @@ def read_yaml(path: str):
         raise FileNotFoundError(f"Config not found: {path}")
     
     with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        config = yaml.safe_load(f)
+
+    # Allow model overrides via environment variables without rebuilding images
+    model_overrides = {
+        "openrouter": os.getenv("OPENROUTER_MODEL"),
+        "huggingface": os.getenv("HUGGINGFACE_MODEL"),
+        "ollama": os.getenv("OLLAMA_MODEL"),
+    }
+
+    if isinstance(config, dict):
+        for section, override_val in model_overrides.items():
+            if override_val:
+                section_data = config.get(section)
+                if isinstance(section_data, dict):
+                    section_data["model"] = override_val
+                    config[section] = section_data
+
+    return config
 
 def write_json(path: str, data):
     with open(path, "w", encoding="utf-8") as f:

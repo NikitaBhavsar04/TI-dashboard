@@ -321,9 +321,7 @@ ollama:
 huggingface:
   enabled: false
   model: meta-llama/Llama-3.1-8B-Instruct
-openrouter:
-  enabled: true
-  model: arcee-ai/trinity-large-preview:free
+
 report:
   tlp: AMBER
   advisory_id_prefix: SOC-TA

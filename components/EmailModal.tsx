@@ -78,32 +78,39 @@ export default function EmailModal({ isOpen, onClose, advisory, emailType = 'gen
     trackDevice: false
   });
 
+  // Fetch clients and set base defaults when modal opens
   useEffect(() => {
-    if (isOpen) {
-      fetchClients();
-      // Set default subject based on email type
-      if (emailType === 'dedicated') {
-        setSubject(`🚨 URGENT: ${advisory.title} - IOC Detected in Your Environment`);
-        // Pre-select affected clients for dedicated advisory
-        if (ipSweepData?.impacted_clients) {
-          const affectedClientIds = ipSweepData.impacted_clients.map(c => {
-            // Find matching client by name or client_id
-            const matchingClient = clients.find(client =>
-              client.name === c.client_name || (client as any).client_id === c.client_id
-            );
-            return matchingClient?._id;
-          }).filter(Boolean) as string[];
-          setSelectedClients(affectedClientIds);
-        }
-      } else {
-        setSubject(`Threat Advisory: ${advisory.title}`);
-      }
-      // Set default scheduled date to today
-      const today = new Date();
-      setScheduledDate(today.toISOString().split('T')[0]);
-      setScheduledTime('09:00');
+    if (!isOpen) return;
+
+    fetchClients();
+
+    if (emailType === 'dedicated') {
+      setSubject(`🚨 URGENT: ${advisory.title} - IOC Detected in Your Environment`);
+    } else {
+      setSubject(`Threat Advisory: ${advisory.title}`);
     }
-  }, [isOpen, advisory.title, emailType, ipSweepData, clients]);
+
+    // Set default scheduled date/time
+    const today = new Date();
+    setScheduledDate(today.toISOString().split('T')[0]);
+    setScheduledTime('09:00');
+  }, [isOpen, advisory.title, emailType]);
+
+  // Pre-select affected clients once data is available for dedicated advisories
+  useEffect(() => {
+    if (!isOpen) return;
+    if (emailType !== 'dedicated') return;
+    if (!ipSweepData?.impacted_clients || clients.length === 0) return;
+
+    const affectedClientIds = ipSweepData.impacted_clients.map(c => {
+      const matchingClient = clients.find(client =>
+        client.name === c.client_name || (client as any).client_id === c.client_id
+      );
+      return matchingClient?._id;
+    }).filter(Boolean) as string[];
+
+    setSelectedClients(affectedClientIds);
+  }, [isOpen, emailType, ipSweepData, clients]);
 
   const fetchClients = async () => {
     try {

@@ -385,24 +385,31 @@ export default async function handler(req, res) {
               if (bodyKey && bodyKey !== 'general') {
                 jobBody = emailBodies[bodyKey];
                 console.log(`✅ Using dedicated email body via fallback match (key: ${bodyKey})`);
-              } else if (Object.keys(emailBodies).length === 2 && emailBodies['general']) {
-                // If there's only one dedicated body and one general body, use the dedicated one
-                const dedicatedKey = Object.keys(emailBodies).find(k => k !== 'general');
-                if (dedicatedKey) {
-                  jobBody = emailBodies[dedicatedKey];
-                  console.log(`✅ Using the only dedicated email body available (key: ${dedicatedKey})`);
-                } else {
-                  jobBody = emailBodies['general'];
-                  console.log(`⚠️ No dedicated body found, using general`);
-                }
-              } else {
+              } else if (emailBodies['general']) {
                 jobBody = emailBodies['general'];
-                console.log(`⚠️ Could not match client ID "${emailJob.clientId}" to any email body, using general`);
+                console.log(`⚠️ No dedicated match found, using pre-generated general body`);
+              } else {
+                // FALLBACK: Generate a fresh standard advisory body for this client
+                // This handles manually added clients who weren't in the IP sweep results
+                console.log(`⚠️ Generating new standard advisory body for manual client "${emailJob.clientName}" (not in IP sweep results)`);
+                jobBody = generateAdvisory4EmailTemplate(advisory, customMessage);
               }
             }
           } else {
-            jobBody = emailBodies['general'];
+            // General email type or no client ID
+            if (emailBodies['general']) {
+                jobBody = emailBodies['general'];
+            } else {
+                 console.log(`⚠️ General body missing, generating now`);
+                 jobBody = generateAdvisory4EmailTemplate(advisory, customMessage);
+            }
             console.log(`📧 Using general email body (emailType: ${emailType})`);
+          }
+
+          if (!jobBody) {
+             console.error(`❌ CRITICAL: Failed to generate email body for ${emailJob.clientName}`);
+             // Emergency fallback
+             jobBody = generateAdvisory4EmailTemplate(advisory, customMessage);
           }
 
           // Verify the body contains IOC section if it should

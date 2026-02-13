@@ -32,11 +32,16 @@ OPENROUTER_BASE = "https://openrouter.ai/api/v1"
 
 cfg = read_yaml("config.yaml") or {}
 or_cfg = cfg.get("openrouter", {})
+# Allow env override to enable OpenRouter even if config.yaml has it disabled
+env_enabled = os.getenv("OPENROUTER_ENABLED")
+enabled = (
+    (env_enabled.lower() in {"1", "true", "yes", "on"}) if env_enabled else or_cfg.get("enabled", False)
+)
 
-if not or_cfg.get("enabled", False):
+if not enabled:
     raise RuntimeError("OpenRouter is disabled in config.yaml")
 
-OPENROUTER_MODEL = or_cfg.get("model")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL") or or_cfg.get("model")
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not OPENROUTER_MODEL or not API_KEY:

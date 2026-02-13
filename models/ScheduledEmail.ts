@@ -5,6 +5,8 @@ export interface IScheduledEmail extends Document {
   to: string[];
   cc: string[];
   bcc: string[];
+  clientId?: string;
+  clientName?: string;
   subject: string;
   customMessage?: string;
   scheduledDate: Date;
@@ -46,6 +48,14 @@ const ScheduledEmailSchema = new Schema({
   subject: {
     type: String,
     required: true,
+    trim: true
+  },
+  clientId: {
+    type: String,
+    trim: true
+  },
+  clientName: {
+    type: String,
     trim: true
   },
   customMessage: {
