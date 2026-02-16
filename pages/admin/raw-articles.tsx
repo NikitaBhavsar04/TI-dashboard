@@ -629,7 +629,7 @@ export default function RawArticles() {
                                 {formatDate(article.published_dt)}
                               </span>
                             </div>
-                            <h3 className="text-base font-orbitron font-bold text-white mb-1.5">
+                            <h3 className="text-base font-orbitron font-bold text-white mb-1.5 break-words">
                               {article.title}
                             </h3>
                           </div>
@@ -647,7 +647,7 @@ export default function RawArticles() {
                         </div>
 
                         {/* Article Text Preview */}
-                        <p className="text-slate-400 font-rajdhani text-xs line-clamp-2">
+                        <p className="text-slate-400 font-rajdhani text-xs line-clamp-2 break-all">
                           {article.article_text}
                         </p>
 
@@ -661,7 +661,7 @@ export default function RawArticles() {
                                   {article.cves.slice(0, 5).map((cve) => (
                                     <span
                                       key={cve}
-                                      className="px-1.5 py-0.5 bg-purple-500/20 border border-purple-400/30 rounded text-purple-300 text-xs font-rajdhani"
+                                      className="px-1.5 py-0.5 bg-purple-500/20 border border-purple-400/30 rounded text-purple-300 text-xs font-rajdhani break-all"
                                     >
                                       {cve}
                                     </span>

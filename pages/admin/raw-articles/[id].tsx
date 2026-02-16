@@ -312,7 +312,7 @@ export default function RawArticleDetail() {
                       {formatDate(article.published_dt)}
                     </span>
                   </div>
-                  <h1 className="text-3xl font-orbitron font-bold text-white mb-4">
+                  <h1 className="text-3xl font-orbitron font-bold text-white mb-4 break-words">
                     {article.title}
                   </h1>
 
@@ -324,7 +324,7 @@ export default function RawArticleDetail() {
                         {article.cves.map((cve) => (
                           <span
                             key={cve}
-                            className="px-3 py-1 bg-purple-500/20 border border-purple-400/30 rounded text-purple-300 text-sm font-rajdhani font-medium"
+                            className="px-3 py-1 bg-purple-500/20 border border-purple-400/30 rounded text-purple-300 text-sm font-rajdhani font-medium break-all"
                           >
                             {cve}
                           </span>
@@ -362,7 +362,7 @@ export default function RawArticleDetail() {
                 <FileText className="h-5 w-5 mr-2 text-neon-blue" />
                 Article Content
               </h2>
-              <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap">
+              <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap break-words">
                 {article.article_text}
               </div>
             </div>
@@ -381,10 +381,10 @@ export default function RawArticleDetail() {
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center space-x-2 p-3 bg-slate-900/50 rounded-lg border border-slate-700/50 hover:border-neon-blue/30 transition-all duration-200 group"
+                      className="flex items-center space-x-2 p-3 bg-slate-900/50 rounded-lg border border-slate-700/50 hover:border-neon-blue/30 transition-all duration-200 group max-w-full"
                     >
                       <ExternalLink className="h-4 w-4 text-neon-blue flex-shrink-0" />
-                      <span className="text-slate-300 font-rajdhani text-sm group-hover:text-neon-blue transition-colors truncate">
+                      <span className="text-slate-300 font-rajdhani text-sm group-hover:text-neon-blue transition-colors truncate break-all">
                         {link.url}
                       </span>
                     </a>
