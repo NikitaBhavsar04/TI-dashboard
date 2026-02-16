@@ -26,11 +26,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await scheduledEmail.save();
 
     // For immediate sending (Vercel doesn't support background jobs)
-    // Check against IST timezone
-    const scheduleInIST = new Date(new Date(scheduleTime).toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
-    const nowInIST = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    // IST is UTC+5:30
+    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const userInputUTC = new Date(new Date(scheduleTime).getTime() - istOffsetMs);
+    const nowUTC = new Date();
     
-    if (scheduleInIST <= nowInIST) {
+    if (userInputUTC <= nowUTC) {
       try {
         await sendEmail({
           to: recipients,

@@ -21,14 +21,17 @@ export default async function handler(req, res) {
   // Validate
   if (!to || !subject || !body || !scheduledDate) return res.status(400).json({ message: 'Missing required fields' });
   if (!/.+@.+\..+/.test(to)) return res.status(400).json({ message: 'Invalid email address' });
-  const scheduledAt = new Date(scheduledDate);
-  if (isNaN(scheduledAt.getTime())) return res.status(400).json({ message: 'Invalid date' });
+  const userInputTime = new Date(scheduledDate);
+  if (isNaN(userInputTime.getTime())) return res.status(400).json({ message: 'Invalid date' });
   
-  // Check if scheduled time is in the future (in IST)
-  const nowInIST = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
-  const scheduledInIST = new Date(scheduledAt.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+  // IST is UTC+5:30
+  const istOffsetMs = 5.5 * 60 * 60 * 1000;
   
-  if (scheduledInIST < nowInIST) return res.status(400).json({ message: 'Cannot schedule for the past' });
+  // User enters time in IST, convert to UTC for comparison
+  const userIntendedUTC = new Date(userInputTime.getTime() - istOffsetMs);
+  const nowUTC = new Date();
+  
+  if (userIntendedUTC < nowUTC) return res.status(400).json({ message: 'Cannot schedule for the past (IST)' });
 
   try {
     const emailDoc = await Email.create({ to, subject, body, scheduledAt });

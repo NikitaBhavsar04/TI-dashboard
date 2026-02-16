@@ -43,9 +43,10 @@ const EditScheduledEmailModal: React.FC<EditScheduledEmailModalProps> = ({
 
   useEffect(() => {
     if (scheduledEmail && isOpen) {
-      // Convert scheduled date to IST for editing
+      // Convert UTC stored time back to IST for editing (add 5:30)
+      const istOffsetMs = 5.5 * 60 * 60 * 1000;
       const scheduleDate = new Date(scheduledEmail.scheduledDate);
-      const istDate = new Date(scheduleDate.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      const istDate = new Date(scheduleDate.getTime() + istOffsetMs);
       const dateStr = istDate.toISOString().split('T')[0];
       const timeStr = istDate.toTimeString().split(' ')[0].substring(0, 5);
 
@@ -119,11 +120,12 @@ const EditScheduledEmailModal: React.FC<EditScheduledEmailModalProps> = ({
         return;
       }
 
-      const scheduledDateTime = new Date(`${emailData.scheduledDate}T${emailData.scheduledTime}`);
-      const nowInIST = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
-      const scheduledInIST = new Date(scheduledDateTime.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      const userLocalTime = new Date(`${emailData.scheduledDate}T${emailData.scheduledTime}`);
+      const istOffsetMs = 5.5 * 60 * 60 * 1000;
+      const userIntendedUTC = new Date(userLocalTime.getTime() - istOffsetMs);
+      const nowUTC = new Date();
       
-      if (scheduledInIST <= nowInIST) {
+      if (userIntendedUTC <= nowUTC) {
         alert('Scheduled time must be in the future (India Standard Time)');
         return;
       }

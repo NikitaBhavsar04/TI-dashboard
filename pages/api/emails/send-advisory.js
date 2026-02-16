@@ -339,30 +339,30 @@ export default async function handler(req, res) {
     const useAppsScript = appsScriptScheduler.isAvailable() && isScheduled;
 
     if (isScheduled && scheduledDate && scheduledTime) {
-      // Create datetime string and interpret as user's timezone (IST)
-      // Then convert to UTC for storage and scheduling
+      // Create datetime string and interpret as IST
+      // IST is UTC+5:30, so calculate the offset explicitly
       const dateTimeString = `${scheduledDate}T${scheduledTime}`;
-      const scheduleDateTime = new Date(dateTimeString);
+      const userLocalTime = new Date(dateTimeString);
       
       // Check if the time is valid
-      if (isNaN(scheduleDateTime.getTime())) {
+      if (isNaN(userLocalTime.getTime())) {
         return res.status(400).json({ message: 'Invalid date or time format' });
       }
       
-      // Add timezone offset for IST (UTC+05:30) to ensure proper conversion
-      // This ensures the user's intended time is preserved
-      const userTimezone = 'Asia/Kolkata'; // Indian Standard Time
+      // Convert user's IST input to UTC by subtracting 5:30
+      // User enters time in IST, we store in UTC
+      const istOffsetMs = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+      const utcTime = new Date(userLocalTime.getTime() - istOffsetMs);
+      
+      // Get current time
       const now = new Date();
       
-      // Convert to IST timezone for comparison
-      const scheduleInIST = new Date(dateTimeString);
-      const nowInIST = new Date(now.toLocaleString("en-US", {timeZone: userTimezone}));
-      
-      if (scheduleInIST <= nowInIST) {
+      // Valid if user's intended time is in future
+      if (userLocalTime <= new Date(now.getTime() - istOffsetMs)) {
         return res.status(400).json({ message: 'Scheduled time must be in the future (IST)' });
       }
       
-      scheduledAt = scheduleDateTime;
+      scheduledAt = utcTime;
     }
 
     // Decide scheduling method

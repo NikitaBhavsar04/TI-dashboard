@@ -55,11 +55,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const scheduleDateTime = new Date(scheduledDate);
       const now = new Date();
       
-      // Validate against IST timezone
-      const scheduleInIST = new Date(scheduleDateTime.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
-      const nowInIST = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      // Validate against IST timezone (UTC+5:30)
+      const istOffsetMs = 5.5 * 60 * 60 * 1000;
+      const userIntendedUTC = new Date(scheduleDateTime.getTime() - istOffsetMs);
+      const nowUTC = new Date();
       
-      if (scheduleInIST <= nowInIST) {
+      if (userIntendedUTC <= nowUTC) {
         return res.status(400).json({ message: 'Scheduled time must be in the future (IST)' });
       }
 

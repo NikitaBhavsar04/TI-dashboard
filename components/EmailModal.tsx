@@ -92,8 +92,10 @@ export default function EmailModal({ isOpen, onClose, advisory, emailType = 'gen
 
     // Set default scheduled date/time in IST
     const today = new Date();
-    const istDate = new Date(today.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
-    setScheduledDate(istDate.toISOString().split('T')[0]);
+    // Add IST offset to show current IST time
+    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(today.getTime() + istOffsetMs);
+    setScheduledDate(istNow.toISOString().split('T')[0]);
     setScheduledTime('09:00');
   }, [isOpen, advisory.title, emailType]);
 
@@ -286,11 +288,12 @@ export default function EmailModal({ isOpen, onClose, advisory, emailType = 'gen
 
     // Validate scheduled time is in the future (IST)
     if (isScheduled) {
-      const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-      const nowInIST = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
-      const scheduledInIST = new Date(scheduledDateTime.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      const userLocalTime = new Date(`${scheduledDate}T${scheduledTime}`);
+      const istOffsetMs = 5.5 * 60 * 60 * 1000;
+      const userIntendedUTC = new Date(userLocalTime.getTime() - istOffsetMs);
+      const nowUTC = new Date();
       
-      if (scheduledInIST <= nowInIST) {
+      if (userIntendedUTC <= nowUTC) {
         alert('Scheduled time must be in the future (India Standard Time)');
         return;
       }
