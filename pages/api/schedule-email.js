@@ -23,7 +23,12 @@ export default async function handler(req, res) {
   if (!/.+@.+\..+/.test(to)) return res.status(400).json({ message: 'Invalid email address' });
   const scheduledAt = new Date(scheduledDate);
   if (isNaN(scheduledAt.getTime())) return res.status(400).json({ message: 'Invalid date' });
-  if (scheduledAt < new Date()) return res.status(400).json({ message: 'Cannot schedule for the past' });
+  
+  // Check if scheduled time is in the future (in IST)
+  const nowInIST = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+  const scheduledInIST = new Date(scheduledAt.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+  
+  if (scheduledInIST < nowInIST) return res.status(400).json({ message: 'Cannot schedule for the past' });
 
   try {
     const emailDoc = await Email.create({ to, subject, body, scheduledAt });

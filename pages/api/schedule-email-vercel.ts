@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { advisoryId, recipients, scheduleTime } = req.body;
 
-    // Create scheduled email record
+    // Create scheduled email record with proper timezone handling
     const scheduledEmail = new ScheduledEmail({
       advisoryId,
       recipients,
@@ -26,7 +26,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await scheduledEmail.save();
 
     // For immediate sending (Vercel doesn't support background jobs)
-    if (new Date(scheduleTime) <= new Date()) {
+    // Check against IST timezone
+    const scheduleInIST = new Date(new Date(scheduleTime).toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    const nowInIST = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    
+    if (scheduleInIST <= nowInIST) {
       try {
         await sendEmail({
           to: recipients,

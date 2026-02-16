@@ -319,7 +319,15 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                       <span className="text-slate-500">To:</span> {email.to.join(', ')}
                     </div>
                     <div>
-                      <span className="text-slate-500">Scheduled:</span> {new Date(email.scheduledDate).toLocaleString()}
+                      <span className="text-slate-500">Scheduled:</span> {new Date(email.scheduledDate).toLocaleString('en-IN', {
+                        timeZone: 'Asia/Kolkata',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
                     </div>
                     {email.cc.length > 0 && (
                       <div>
@@ -328,12 +336,28 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                     )}
                     {email.sentAt && (
                       <div>
-                        <span className="text-slate-500">Sent:</span> {new Date(email.sentAt).toLocaleString()}
+                        <span className="text-slate-500">Sent:</span> {new Date(email.sentAt).toLocaleString('en-IN', {
+                          timeZone: 'Asia/Kolkata',
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
                       </div>
                     )}
                     {email.isOpened && email.openedAt && (
                       <div>
-                        <span className="text-slate-500">First Opened:</span> {new Date(email.openedAt).toLocaleString()}
+                        <span className="text-slate-500">First Opened:</span> {new Date(email.openedAt).toLocaleString('en-IN', {
+                          timeZone: 'Asia/Kolkata',
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
                       </div>
                     )}
                     {email.opens && email.opens.length > 0 && (

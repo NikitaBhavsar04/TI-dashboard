@@ -55,8 +55,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const scheduleDateTime = new Date(scheduledDate);
       const now = new Date();
       
-      if (scheduleDateTime <= now) {
-        return res.status(400).json({ message: 'Scheduled time must be in the future' });
+      // Validate against IST timezone
+      const scheduleInIST = new Date(scheduleDateTime.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      const nowInIST = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      
+      if (scheduleInIST <= nowInIST) {
+        return res.status(400).json({ message: 'Scheduled time must be in the future (IST)' });
       }
 
       const advisory = await Advisory.findById(advisoryId);

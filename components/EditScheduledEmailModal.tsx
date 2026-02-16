@@ -43,9 +43,11 @@ const EditScheduledEmailModal: React.FC<EditScheduledEmailModalProps> = ({
 
   useEffect(() => {
     if (scheduledEmail && isOpen) {
+      // Convert scheduled date to IST for editing
       const scheduleDate = new Date(scheduledEmail.scheduledDate);
-      const dateStr = scheduleDate.toISOString().split('T')[0];
-      const timeStr = scheduleDate.toTimeString().split(' ')[0].substring(0, 5);
+      const istDate = new Date(scheduleDate.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      const dateStr = istDate.toISOString().split('T')[0];
+      const timeStr = istDate.toTimeString().split(' ')[0].substring(0, 5);
 
       setEmailData({
         to: scheduledEmail.to.length > 0 ? scheduledEmail.to : [''],
@@ -111,17 +113,18 @@ const EditScheduledEmailModal: React.FC<EditScheduledEmailModalProps> = ({
         return;
       }
 
-      // Validate scheduled date/time
+      // Validate scheduled date/time with IST timezone
       if (!emailData.scheduledDate || !emailData.scheduledTime) {
         alert('Please select both date and time for scheduled email');
         return;
       }
 
       const scheduledDateTime = new Date(`${emailData.scheduledDate}T${emailData.scheduledTime}`);
-      const now = new Date();
+      const nowInIST = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      const scheduledInIST = new Date(scheduledDateTime.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
       
-      if (scheduledDateTime <= now) {
-        alert('Scheduled time must be in the future');
+      if (scheduledInIST <= nowInIST) {
+        alert('Scheduled time must be in the future (India Standard Time)');
         return;
       }
 
