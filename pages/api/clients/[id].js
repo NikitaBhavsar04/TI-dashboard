@@ -71,20 +71,27 @@ async function handleGet(req, res, id, currentUser) {
 
 async function handlePut(req, res, id, currentUser) {
   try {
-    const { client_id, client_name, name, emails, fw_index, description, isActive } = req.body;
+    const { client_id, client_name, name, emails, cc_emails, bcc_emails, fw_index, description, isActive } = req.body;
 
     if (!client_id || !client_name || !name || !emails || !emails.length || !fw_index) {
       return res.status(400).json({ message: 'client_id, client_name, name, fw_index, and at least one email are required' });
     }
 
-    // Validate all emails
+    // Validate email function
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const invalidEmails = emails.filter(email => !emailRegex.test(email));
+    const validateEmails = (emailList) => {
+      if (!emailList || !Array.isArray(emailList)) return [];
+      return emailList.filter(email => !emailRegex.test(email));
+    };
 
-    if (invalidEmails.length > 0) {
+    const invalidEmails = validateEmails(emails);
+    const invalidCcEmails = validateEmails(cc_emails);
+    const invalidBccEmails = validateEmails(bcc_emails);
+
+    if (invalidEmails.length > 0 || invalidCcEmails.length > 0 || invalidBccEmails.length > 0) {
       return res.status(400).json({
         message: 'Invalid email addresses',
-        invalidEmails
+        invalidEmails: [...invalidEmails, ...invalidCcEmails, ...invalidBccEmails]
       });
     }
 
@@ -125,6 +132,8 @@ async function handlePut(req, res, id, currentUser) {
         client_name: client_name.trim(),
         name: name.trim(),
         emails: emails.map(email => email.toLowerCase().trim()),
+        cc_emails: cc_emails ? cc_emails.map(email => email.toLowerCase().trim()) : [],
+        bcc_emails: bcc_emails ? bcc_emails.map(email => email.toLowerCase().trim()) : [],
         fw_index: fw_index.trim(),
         description: description?.trim(),
         isActive: isActive !== undefined ? isActive : true
@@ -147,8 +156,11 @@ async function handlePut(req, res, id, currentUser) {
     // Filter response for admin
     const responseClient = updatedClient.toObject();
     if (currentUser.role !== 'super_admin') {
+      const count = (updatedClient.emails?.length || 0) + (updatedClient.cc_emails?.length || 0) + (updatedClient.bcc_emails?.length || 0);
       delete responseClient.emails;
-      responseClient.emailCount = updatedClient.emails?.length || 0;
+      delete responseClient.cc_emails;
+      delete responseClient.bcc_emails;
+      responseClient.emailCount = count;
     }
 
     res.status(200).json({

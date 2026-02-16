@@ -85,7 +85,7 @@ export default function EmailModal({ isOpen, onClose, advisory, emailType = 'gen
     fetchClients();
 
     if (emailType === 'dedicated') {
-      setSubject(`🚨 URGENT: ${advisory.title} - IOC Detected in Your Environment`);
+      setSubject(`URGENT: ${advisory.title} - IOC Detected in Your Environment`);
     } else {
       setSubject(`Threat Advisory: ${advisory.title}`);
     }

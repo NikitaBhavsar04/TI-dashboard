@@ -35,13 +35,19 @@ const ClientSchema = new Schema<IClient>({
     type: String,
     required: true,
     lowercase: true,
-    trim: true,
-    validate: {
-      validator: function(email: string) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      },
-      message: 'Invalid email format'
-    }
+    trim: true
+  }],
+  cc_emails: [{
+    type: String,
+    required: false,
+    lowercase: true,
+    trim: true
+  }],
+  bcc_emails: [{
+    type: String,
+    required: false,
+    lowercase: true,
+    trim: true
   }],
   fw_index: {
     type: String,

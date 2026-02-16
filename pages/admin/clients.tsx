@@ -28,6 +28,8 @@ interface Client {
   client_name: string;
   name: string;
   emails?: string[];
+  cc_emails?: string[];
+  bcc_emails?: string[];
   emailCount?: number;
   fw_index: string;
   description?: string;
@@ -41,6 +43,8 @@ interface ClientFormData {
   client_name: string;
   name: string;
   emails: string[];
+  cc_emails: string[];
+  bcc_emails: string[];
   fw_index: string;
   description: string;
   isActive: boolean;
@@ -60,6 +64,8 @@ export default function ClientsManagement() {
     client_name: '',
     name: '',
     emails: [''],
+    cc_emails: [''],
+    bcc_emails: [''],
     fw_index: '',
     description: '',
     isActive: true
@@ -115,6 +121,8 @@ export default function ClientsManagement() {
         client_name: client.client_name,
         name: client.name,
         emails: Array.isArray(client.emails) ? [...client.emails] : [''],
+        cc_emails: Array.isArray(client.cc_emails) ? [...client.cc_emails] : [''],
+        bcc_emails: Array.isArray(client.bcc_emails) ? [...client.bcc_emails] : [''],
         fw_index: client.fw_index,
         description: client.description || '',
         isActive: client.isActive
@@ -126,6 +134,8 @@ export default function ClientsManagement() {
         client_name: '',
         name: '',
         emails: [''],
+        cc_emails: [''],
+        bcc_emails: [''],
         fw_index: '',
         description: '',
         isActive: true
@@ -142,6 +152,8 @@ export default function ClientsManagement() {
       client_name: '',
       name: '',
       emails: [''],
+      cc_emails: [''],
+      bcc_emails: [''],
       fw_index: '',
       description: '',
       isActive: true
@@ -169,28 +181,78 @@ export default function ClientsManagement() {
     }));
   };
 
+  const addCcEmailField = () => {
+    setFormData(prev => ({
+      ...prev,
+      cc_emails: [...prev.cc_emails, '']
+    }));
+  };
+
+  const removeCcEmailField = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      cc_emails: prev.cc_emails.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateCcEmailField = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      cc_emails: prev.cc_emails.map((email, i) => i === index ? value : email)
+    }));
+  };
+
+  const addBccEmailField = () => {
+    setFormData(prev => ({
+      ...prev,
+      bcc_emails: [...prev.bcc_emails, '']
+    }));
+  };
+
+  const removeBccEmailField = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      bcc_emails: prev.bcc_emails.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateBccEmailField = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      bcc_emails: prev.bcc_emails.map((email, i) => i === index ? value : email)
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate form
     const validEmails = formData.emails.filter(email => email.trim());
+    const validCcEmails = formData.cc_emails.filter(email => email.trim());
+    const validBccEmails = formData.bcc_emails.filter(email => email.trim());
+
     if (!formData.client_id.trim() || !formData.client_name.trim() || !formData.name.trim() || !formData.fw_index.trim() || validEmails.length === 0) {
-      toast.error('Please provide client_id, client_name, name, fw_index, and at least one email address');
+      toast.error('Please provide client_id, client_name, name, fw_index, and at least one TO email address');
       return;
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const invalidEmails = validEmails.filter(email => !emailRegex.test(email));
-    if (invalidEmails.length > 0) {
-      toast.error(`Invalid email addresses: ${invalidEmails.join(', ')}`);
+    const invalidCcEmails = validCcEmails.filter(email => !emailRegex.test(email));
+    const invalidBccEmails = validBccEmails.filter(email => !emailRegex.test(email));
+
+    if (invalidEmails.length > 0 || invalidCcEmails.length > 0 || invalidBccEmails.length > 0) {
+      toast.error('Invalid email addresses detected');
       return;
     }
 
     try {
       const payload = {
         ...formData,
-        emails: validEmails
+        emails: validEmails,
+        cc_emails: validCcEmails,
+        bcc_emails: validBccEmails
       };
 
       const url = editingClient ? `/api/clients/${editingClient._id}` : '/api/clients';
@@ -699,6 +761,76 @@ export default function ClientsManagement() {
                     >
                       <Plus className="h-4 w-4" />
                       <span className="font-rajdhani font-medium">Add Email</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* CC Email Addresses */}
+                <div>
+                  <label className="block text-slate-400 font-rajdhani text-sm mb-3">
+                    CC Email Addresses (Optional)
+                  </label>
+                  <div className="space-y-3">
+                    {formData.cc_emails.map((email, index) => (
+                      <div key={`cc-${index}`} className="flex items-center space-x-2">
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => updateCcEmailField(index, e.target.value)}
+                          className="flex-1 px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50 transition-all duration-200"
+                          placeholder="cc@example.com"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeCcEmailField(index)}
+                          className="p-3 bg-red-500/20 border border-red-400/50 rounded-lg text-red-400 hover:bg-red-500/30 transition-all duration-200"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addCcEmailField}
+                      className="flex items-center space-x-2 px-4 py-2 bg-neon-green/20 border border-neon-green/50 rounded-lg text-neon-green hover:bg-neon-green/30 transition-all duration-200"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="font-rajdhani font-medium">Add CC Email</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* BCC Email Addresses */}
+                <div>
+                  <label className="block text-slate-400 font-rajdhani text-sm mb-3">
+                    BCC Email Addresses (Optional)
+                  </label>
+                  <div className="space-y-3">
+                    {formData.bcc_emails.map((email, index) => (
+                      <div key={`bcc-${index}`} className="flex items-center space-x-2">
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => updateBccEmailField(index, e.target.value)}
+                          className="flex-1 px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white font-rajdhani placeholder-slate-400 focus:outline-none focus:border-neon-blue/50 transition-all duration-200"
+                          placeholder="bcc@example.com"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeBccEmailField(index)}
+                          className="p-3 bg-red-500/20 border border-red-400/50 rounded-lg text-red-400 hover:bg-red-500/30 transition-all duration-200"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addBccEmailField}
+                      className="flex items-center space-x-2 px-4 py-2 bg-neon-green/20 border border-neon-green/50 rounded-lg text-neon-green hover:bg-neon-green/30 transition-all duration-200"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="font-rajdhani font-medium">Add BCC Email</span>
                     </button>
                   </div>
                 </div>

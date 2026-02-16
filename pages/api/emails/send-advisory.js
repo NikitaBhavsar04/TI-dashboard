@@ -146,9 +146,18 @@ export default async function handler(req, res) {
           console.log(`📧 [CLIENT DATA] client_name: ${client.client_name}`);
           console.log(`📧 [CLIENT DATA] name: ${client.name}`);
 
+          // Combine client's configured CC/BCC with manual overrides
+          const clientCcEmails = client.cc_emails || [];
+          const clientBccEmails = client.bcc_emails || [];
+          
+          const combinedCc = [...new Set([...(cc || []), ...clientCcEmails])];
+          const combinedBcc = [...new Set([...(bcc || []), ...clientBccEmails])];
+
           emailData = {
             ...emailData,
-            to: client.emails
+            to: client.emails,
+            cc: combinedCc,
+            bcc: combinedBcc
           };
 
           emailJobs.push({
