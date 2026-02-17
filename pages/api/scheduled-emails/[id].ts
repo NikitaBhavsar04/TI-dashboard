@@ -59,13 +59,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Validate scheduled date if provided
       if (scheduledDate) {
-        const scheduleDateTime = new Date(scheduledDate);
+        // Parse as UTC first (add Z if not present), then convert from IST
+        const dateStr = scheduledDate.endsWith('Z') ? scheduledDate : scheduledDate + 'Z';
+        const scheduleDateTime = new Date(dateStr);
+        const istOffsetMs = 5.5 * 60 * 60 * 1000;
+        const scheduledAtUTC = new Date(scheduleDateTime.getTime() - istOffsetMs);
         const now = new Date();
         
-        if (scheduleDateTime <= now) {
+        if (scheduledAtUTC <= now) {
           return res.status(400).json({ message: 'Scheduled time must be in the future' });
         }
-        scheduledEmail.scheduledDate = scheduleDateTime;
+        scheduledEmail.scheduledDate = scheduledAtUTC;
       }
 
       // Update fields

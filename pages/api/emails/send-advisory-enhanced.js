@@ -143,11 +143,15 @@ export default async function handler(req, res) {
     let scheduledAt = new Date();
 
     if (isScheduled && scheduledDate && scheduledTime) {
-      const scheduleDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-      if (scheduleDateTime <= new Date()) {
+      // Parse as UTC first to avoid timezone issues, then convert from IST
+      const scheduleDateTime = new Date(`${scheduledDate}T${scheduledTime}:00Z`);
+      const istOffsetMs = 5.5 * 60 * 60 * 1000;
+      const scheduledAtUTC = new Date(scheduleDateTime.getTime() - istOffsetMs);
+      
+      if (scheduledAtUTC <= new Date()) {
         return res.status(400).json({ message: 'Scheduled time must be in the future' });
       }
-      scheduledAt = scheduleDateTime;
+      scheduledAt = scheduledAtUTC;
     }
 
     // Create scheduled email records

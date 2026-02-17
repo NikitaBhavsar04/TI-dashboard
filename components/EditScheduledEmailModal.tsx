@@ -120,12 +120,13 @@ const EditScheduledEmailModal: React.FC<EditScheduledEmailModalProps> = ({
         return;
       }
 
-      const userLocalTime = new Date(`${emailData.scheduledDate}T${emailData.scheduledTime}`);
+      // Parse as UTC first to avoid timezone issues, then convert from IST
+      const userInputAsUTC = new Date(`${emailData.scheduledDate}T${emailData.scheduledTime}:00Z`);
       const istOffsetMs = 5.5 * 60 * 60 * 1000;
-      const userIntendedUTC = new Date(userLocalTime.getTime() - istOffsetMs);
+      const userIntendedUTC = new Date(userInputAsUTC.getTime() - istOffsetMs);
       const nowUTC = new Date();
       
-      if (userIntendedUTC <= nowUTC) {
+      if (userIntendedUTC < nowUTC) {
         alert('Scheduled time must be in the future (India Standard Time)');
         return;
       }

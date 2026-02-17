@@ -52,7 +52,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ message: 'Advisory ID, recipient emails, and scheduled date are required' });
       }
 
-      const scheduleDateTime = new Date(scheduledDate);
+      // Parse scheduledDate as UTC first (add Z if not present), then convert from IST
+      const dateStr = scheduledDate.endsWith('Z') ? scheduledDate : scheduledDate + 'Z';
+      const scheduleDateTime = new Date(dateStr);
       const now = new Date();
       
       // Validate against IST timezone (UTC+5:30)
@@ -60,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const userIntendedUTC = new Date(scheduleDateTime.getTime() - istOffsetMs);
       const nowUTC = new Date();
       
-      if (userIntendedUTC <= nowUTC) {
+      if (userIntendedUTC < nowUTC) {
         return res.status(400).json({ message: 'Scheduled time must be in the future (IST)' });
       }
 

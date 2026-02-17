@@ -27,8 +27,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // For immediate sending (Vercel doesn't support background jobs)
     // IST is UTC+5:30
+    // Parse as UTC first to avoid timezone issues
+    const scheduleTimeStr = typeof scheduleTime === 'string' && !scheduleTime.endsWith('Z') 
+      ? scheduleTime + 'Z' 
+      : scheduleTime;
     const istOffsetMs = 5.5 * 60 * 60 * 1000;
-    const userInputUTC = new Date(new Date(scheduleTime).getTime() - istOffsetMs);
+    const userInputUTC = new Date(new Date(scheduleTimeStr).getTime() - istOffsetMs);
     const nowUTC = new Date();
     
     if (userInputUTC <= nowUTC) {

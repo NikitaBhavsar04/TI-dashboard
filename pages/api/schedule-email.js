@@ -21,7 +21,10 @@ export default async function handler(req, res) {
   // Validate
   if (!to || !subject || !body || !scheduledDate) return res.status(400).json({ message: 'Missing required fields' });
   if (!/.+@.+\..+/.test(to)) return res.status(400).json({ message: 'Invalid email address' });
-  const userInputTime = new Date(scheduledDate);
+  
+  // Parse as UTC first (add Z if not present) to avoid timezone issues
+  const dateStr = scheduledDate.endsWith('Z') ? scheduledDate : scheduledDate + 'Z';
+  const userInputTime = new Date(dateStr);
   if (isNaN(userInputTime.getTime())) return res.status(400).json({ message: 'Invalid date' });
   
   // IST is UTC+5:30
@@ -34,9 +37,9 @@ export default async function handler(req, res) {
   if (userIntendedUTC < nowUTC) return res.status(400).json({ message: 'Cannot schedule for the past (IST)' });
 
   try {
-    const emailDoc = await Email.create({ to, subject, body, scheduledAt });
+    const emailDoc = await Email.create({ to, subject, body, scheduledAt: userIntendedUTC });
     await agenda.start();
-    await agenda.schedule(scheduledAt, 'send-scheduled-email', { emailId: emailDoc._id });
+    await agenda.schedule(userIntendedUTC, 'send-scheduled-email', { emailId: emailDoc._id });
     res.status(201).json({ message: 'Email scheduled', id: emailDoc._id });
   } catch (err) {
     res.status(500).json({ message: 'Failed to schedule email', error: err.message });
