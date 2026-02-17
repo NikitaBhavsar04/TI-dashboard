@@ -92,10 +92,14 @@ export default function EmailModal({ isOpen, onClose, advisory, emailType = 'gen
 
     // Set default scheduled date/time in IST
     const today = new Date();
-    // Add IST offset to show current IST time
-    const istOffsetMs = 5.5 * 60 * 60 * 1000;
-    const istNow = new Date(today.getTime() + istOffsetMs);
-    setScheduledDate(istNow.toISOString().split('T')[0]);
+    // Get current IST date using toLocaleString
+    const istDateStr = today.toLocaleString('en-CA', { 
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    setScheduledDate(istDateStr);
     setScheduledTime('09:00');
   }, [isOpen, advisory.title, emailType]);
 
@@ -288,7 +292,7 @@ export default function EmailModal({ isOpen, onClose, advisory, emailType = 'gen
 
     // Validate scheduled time is in the future (IST)
     if (isScheduled) {
-      // Parse as UTC first to avoid timezone issues, then convert from IST
+      // Force UTC interpretation by adding Z, then subtract 5.5h to get UTC equivalent of IST input
       const userInputAsUTC = new Date(`${scheduledDate}T${scheduledTime}:00Z`);
       const istOffsetMs = 5.5 * 60 * 60 * 1000;
       const userIntendedUTC = new Date(userInputAsUTC.getTime() - istOffsetMs);

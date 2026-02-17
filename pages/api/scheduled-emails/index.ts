@@ -52,12 +52,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ message: 'Advisory ID, recipient emails, and scheduled date are required' });
       }
 
-      // Parse scheduledDate as UTC first (add Z if not present), then convert from IST
-      const dateStr = scheduledDate.endsWith('Z') ? scheduledDate : scheduledDate + 'Z';
+      // Force UTC interpretation by adding Z, then subtract 5.5h to get UTC equivalent of IST input
+      const dateStr = scheduledDate.includes('Z') ? scheduledDate : scheduledDate + 'Z';
       const scheduleDateTime = new Date(dateStr);
       const now = new Date();
       
-      // Validate against IST timezone (UTC+5:30)
+      // User inputs time in IST, subtract 5.5h to convert to UTC for comparison
       const istOffsetMs = 5.5 * 60 * 60 * 1000;
       const userIntendedUTC = new Date(scheduleDateTime.getTime() - istOffsetMs);
       const nowUTC = new Date();

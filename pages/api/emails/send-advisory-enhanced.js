@@ -143,8 +143,10 @@ export default async function handler(req, res) {
     let scheduledAt = new Date();
 
     if (isScheduled && scheduledDate && scheduledTime) {
-      // Parse as UTC first to avoid timezone issues, then convert from IST
-      const scheduleDateTime = new Date(`${scheduledDate}T${scheduledTime}:00Z`);
+      // User enters time intending IST
+      // Force UTC interpretation by adding Z, then subtract 5.5h to get UTC equivalent of IST input
+      const dateTimeString = `${scheduledDate}T${scheduledTime}:00Z`;
+      const scheduleDateTime = new Date(dateTimeString);
       const istOffsetMs = 5.5 * 60 * 60 * 1000;
       const scheduledAtUTC = new Date(scheduleDateTime.getTime() - istOffsetMs);
       

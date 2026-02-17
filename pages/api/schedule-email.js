@@ -22,8 +22,8 @@ export default async function handler(req, res) {
   if (!to || !subject || !body || !scheduledDate) return res.status(400).json({ message: 'Missing required fields' });
   if (!/.+@.+\..+/.test(to)) return res.status(400).json({ message: 'Invalid email address' });
   
-  // Parse as UTC first (add Z if not present) to avoid timezone issues
-  const dateStr = scheduledDate.endsWith('Z') ? scheduledDate : scheduledDate + 'Z';
+  // Force UTC interpretation by adding Z, then subtract 5.5h to get UTC equivalent of IST input
+  const dateStr = scheduledDate.includes('Z') ? scheduledDate : scheduledDate + 'Z';
   const userInputTime = new Date(dateStr);
   if (isNaN(userInputTime.getTime())) return res.status(400).json({ message: 'Invalid date' });
   

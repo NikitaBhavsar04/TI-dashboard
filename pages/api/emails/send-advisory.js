@@ -339,26 +339,21 @@ export default async function handler(req, res) {
     const useAppsScript = appsScriptScheduler.isAvailable() && isScheduled;
 
     if (isScheduled && scheduledDate && scheduledTime) {
-      // Create datetime string and interpret as IST
-      // IST is UTC+5:30, so calculate the offset explicitly
-      // Parse as UTC first by adding 'Z', then subtract IST offset
+      // User enters time intending IST
+      // Force UTC interpretation by adding Z, then subtract 5.5h to get UTC equivalent of IST input
       const dateTimeString = `${scheduledDate}T${scheduledTime}:00Z`;
       const userInputAsUTC = new Date(dateTimeString);
       
-      // Check if the time is valid
       if (isNaN(userInputAsUTC.getTime())) {
         return res.status(400).json({ message: 'Invalid date or time format' });
       }
       
-      // User enters time in IST, convert to actual UTC by subtracting 5:30
-      // Example: User enters 15:00 IST -> parse as 15:00 UTC -> subtract 5.5h -> 09:30 UTC (which is 15:00 IST)
-      const istOffsetMs = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+      // Subtract 5.5 hours to get the UTC time that represents user's IST input
+      const istOffsetMs = 5.5 * 60 * 60 * 1000;
       const utcTime = new Date(userInputAsUTC.getTime() - istOffsetMs);
-      
-      // Get current time
       const now = new Date();
       
-      // Valid if user's intended time (in UTC) is in future
+      // Valid if user's intended time is in future
       if (utcTime <= now) {
         return res.status(400).json({ message: 'Scheduled time must be in the future (IST)' });
       }

@@ -320,16 +320,17 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                     </div>
                     <div>
                       <span className="text-slate-500">Scheduled:</span> {(() => {
-                        // Convert UTC stored time back to IST for display (add 5:30)
-                        const istOffsetMs = 5.5 * 60 * 60 * 1000;
-                        const istTime = new Date(new Date(email.scheduledDate).getTime() + istOffsetMs);
-                        return istTime.toLocaleString('en-IN', {
+                        // The datetime is stored in UTC. toLocaleString with Asia/Kolkata timeZone will automatically convert to IST
+                        const scheduledDateObj = new Date(email.scheduledDate);
+                        return scheduledDateObj.toLocaleString('en-IN', {
                           year: 'numeric',
                           month: '2-digit',
                           day: '2-digit',
                           hour: '2-digit',
                           minute: '2-digit',
-                          hour12: true
+                          second: '2-digit',
+                          hour12: true,
+                          timeZone: 'Asia/Kolkata' // Explicitly set IST timezone
                         });
                       })()}
                     </div>
@@ -341,15 +342,16 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                     {email.sentAt && (
                       <div>
                         <span className="text-slate-500">Sent:</span> {(() => {
-                          const istOffsetMs = 5.5 * 60 * 60 * 1000;
-                          const istTime = new Date(new Date(email.sentAt).getTime() + istOffsetMs);
-                          return istTime.toLocaleString('en-IN', {
+                          const sentAtObj = new Date(email.sentAt);
+                          return sentAtObj.toLocaleString('en-IN', {
                             year: 'numeric',
                             month: '2-digit',
                             day: '2-digit',
                             hour: '2-digit',
                             minute: '2-digit',
-                            hour12: true
+                            second: '2-digit',
+                            hour12: true,
+                            timeZone: 'Asia/Kolkata'
                           });
                         })()}
                       </div>
@@ -357,15 +359,16 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                     {email.isOpened && email.openedAt && (
                       <div>
                         <span className="text-slate-500">First Opened:</span> {(() => {
-                          const istOffsetMs = 5.5 * 60 * 60 * 1000;
-                          const istTime = new Date(new Date(email.openedAt).getTime() + istOffsetMs);
-                          return istTime.toLocaleString('en-IN', {
+                          const openedAtObj = new Date(email.openedAt);
+                          return openedAtObj.toLocaleString('en-IN', {
                             year: 'numeric',
                             month: '2-digit',
                             day: '2-digit',
                             hour: '2-digit',
                             minute: '2-digit',
-                            hour12: true
+                            second: '2-digit',
+                            hour12: true,
+                            timeZone: 'Asia/Kolkata'
                           });
                         })()}
                       </div>
