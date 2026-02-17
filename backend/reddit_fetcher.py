@@ -70,7 +70,14 @@ os_client = get_opensearch_client()
 # HTTP SESSION
 # -------------------------------------------------------------------
 session = requests.Session()
-session.headers.update({"User-Agent": REDDIT_USER_AGENT})
+session.headers.update({
+    "User-Agent": REDDIT_USER_AGENT,
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept": "application/json, text/plain, */*",
+    "Connection": "keep-alive",
+    "Cache-Control": "no-cache"
+})
 
 _last_host_access: dict[str, float] = {}
 
@@ -217,19 +224,43 @@ def fetch_html(url: str) -> str:
 # -------------------------------------------------------------------
 def fetch_subreddit(sub: str) -> List[dict]:
     url = f"https://www.reddit.com/r/{sub}/new.json?limit={MAX_POSTS_PER_SUBREDDIT}"
-    try:
-        logger.debug(f"[REDDIT] Requesting: {url}")
-        r = session.get(url, timeout=REQUEST_TIMEOUT)
-        if not r.ok:
-            logger.warning(f"[REDDIT] Failed /r/{sub} | status={r.status_code} | response={r.text[:200]}")
-            return []
-        data = r.json()
-        posts = [c["data"] for c in data.get("data", {}).get("children", [])]
-        logger.info(f"[REDDIT] /r/{sub} API returned {len(posts)} posts")
-        return posts
-    except Exception as e:
-        logger.exception(f"[REDDIT] Fetch failed /r/{sub} | {e}")
-        return []
+    
+    # Retry logic with exponential backoff
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            logger.debug(f"[REDDIT] Requesting: {url} (attempt {attempt + 1}/{max_retries})")
+            r = session.get(url, timeout=REQUEST_TIMEOUT)
+            
+            if r.status_code == 403:
+                logger.warning(f"[REDDIT] /r/{sub} blocked (403 Forbidden) - Reddit may have restricted API access")
+                return []
+            
+            if not r.ok:
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt  # Exponential backoff: 1, 2, 4 seconds
+                    logger.warning(f"[REDDIT] /r/{sub} returned {r.status_code}, retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    logger.warning(f"[REDDIT] Failed /r/{sub} after {max_retries} attempts | status={r.status_code}")
+                    return []
+            
+            data = r.json()
+            posts = [c["data"] for c in data.get("data", {}).get("children", [])]
+            logger.info(f"[REDDIT] /r/{sub} API returned {len(posts)} posts")
+            return posts
+            
+        except Exception as e:
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt
+                logger.warning(f"[REDDIT] /r/{sub} error: {e}, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                logger.exception(f"[REDDIT] Fetch failed /r/{sub} after {max_retries} attempts | {e}")
+                return []
+    
+    return []
 
 # -------------------------------------------------------------------
 # POST PROCESSOR

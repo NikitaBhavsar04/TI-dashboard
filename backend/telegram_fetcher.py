@@ -15,7 +15,7 @@ import socket
 import time
 from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Dict, Tuple, Set
+from typing import List, Dict, Tuple, Set, Optional
 from urllib.parse import urlparse, urljoin, urlunparse, parse_qsl, urlencode
 
 import requests
@@ -238,7 +238,7 @@ def extract_nested_links_inline(raw_html: str, base_url: str, max_links: int = 2
 # -------------------------------------------------------------------
 # ARTICLE PROCESSOR
 # -------------------------------------------------------------------
-def process_article(job: Tuple[str, str, str]) -> Dict | None:
+def process_article(job: Tuple[str, str, str]) -> Optional[Dict]:
     msg_key, url, source_label = job
 
     url = normalize_url(expand_url(url))
