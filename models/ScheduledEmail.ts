@@ -5,6 +5,8 @@ export interface IScheduledEmail extends Document {
   to: string[];
   cc: string[];
   bcc: string[];
+  from?: string;  // Email account sending this email
+  sentByName?: string;  // Admin username who sent this email
   clientId?: string;
   clientName?: string;
   subject: string;
@@ -45,6 +47,14 @@ const ScheduledEmailSchema = new Schema({
     type: String,
     trim: true
   }],
+  from: {
+    type: String,
+    trim: true
+  },
+  sentByName: {
+    type: String,
+    trim: true
+  },
   subject: {
     type: String,
     required: true,

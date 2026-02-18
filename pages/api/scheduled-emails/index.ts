@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       console.log(`📧 Found ${scheduledEmails.length} scheduled emails in database`);
 
-      // Transform emails for client (advisory info would need to be fetched from OpenSearch if needed)
+      // Transform emails for client (advisory info would be fetched from OpenSearch if needed)
       const transformedEmails = scheduledEmails.map((email) => {
         return {
           ...email,
@@ -76,6 +76,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         to: to || [],
         cc: cc || [],
         bcc: bcc || [],
+        from: process.env.SMTP_USER,
+        sentByName: tokenPayload.username,
         subject: subject || `THREAT ALERT: ${advisory.title}`,
         customMessage: customMessage || '',
         scheduledDate: scheduleDateTime,

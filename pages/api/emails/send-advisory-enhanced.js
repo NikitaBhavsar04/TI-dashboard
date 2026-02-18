@@ -161,6 +161,8 @@ export default async function handler(req, res) {
       const scheduledEmail = new ScheduledEmail({
         advisoryId: mongoose.Types.ObjectId(advisoryId),
         recipientEmail: trackedEmail.to,
+        from: process.env.SMTP_USER,
+        sentByName: decoded.username,
         subject: trackedEmail.subject,
         htmlContent: trackedEmail.html,
         textContent: trackedEmail.plainText,
@@ -245,7 +247,7 @@ agenda.define('send enhanced advisory email', async (job) => {
 
     // Send email with tracking
     const result = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || '"Threat Advisory" <noreply@inteldesk.com>',
+      from: process.env.SMTP_USER,
       to: to,
       subject: subject,
       html: html,

@@ -306,6 +306,7 @@ export default async function handler(req, res) {
             const trackingRecord = {
               emailId: advisoryId,
               recipientEmail: email,
+              senderEmail: process.env.SMTP_USER,
               trackingId,
               events: [],
               openCount: 0,
@@ -339,8 +340,8 @@ export default async function handler(req, res) {
     const useAppsScript = appsScriptScheduler.isAvailable() && isScheduled;
 
     if (isScheduled && scheduledDate && scheduledTime) {
-      // User enters time intending IST
-      // Force UTC interpretation by adding Z, then subtract 5.5h to get UTC equivalent of IST input
+      // User enters time in IST (Indian Standard Time = UTC+5:30)
+      // Convert IST to UTC for storage and scheduling
       const dateTimeString = `${scheduledDate}T${scheduledTime}:00Z`;
       const userInputAsUTC = new Date(dateTimeString);
       
@@ -348,28 +349,34 @@ export default async function handler(req, res) {
         return res.status(400).json({ message: 'Invalid date or time format' });
       }
       
-      // Subtract 5.5 hours to get the UTC time that represents user's IST input
+      // Convert IST to UTC: subtract 5 hours 30 minutes
       const istOffsetMs = 5.5 * 60 * 60 * 1000;
       const utcTime = new Date(userInputAsUTC.getTime() - istOffsetMs);
       const now = new Date();
       
-      // Valid if user's intended time is in future
+      console.log(`⏰ Scheduling: IST input=${dateTimeString}, UTC=${utcTime.toISOString()}, Current UTC=${now.toISOString()}`);
+      
+      // Validate future time
       if (utcTime <= now) {
-        return res.status(400).json({ message: 'Scheduled time must be in the future (IST)' });
+        return res.status(400).json({ 
+          message: 'Scheduled time must be in the future (Indian Standard Time)',
+          debug: { userInput: dateTimeString, utcScheduled: utcTime.toISOString(), currentUtc: now.toISOString() }
+        });
       }
       
       scheduledAt = utcTime;
     }
 
-    // Decide scheduling method
+    // Decide scheduling method and ensure Agenda is started
     if (useAppsScript) {
       console.log('📧 Using Google Apps Script for scheduling (cloud-based, 24/7)');
-    } else if (isScheduled) {
-      console.log('⏰ Using local Agenda.js for scheduling (requires server running)');
-      await agenda.start();
     } else {
-      console.log('⚡ Sending emails immediately via Agenda.js');
-      await agenda.start();
+      // Always start Agenda for both scheduled and immediate sends
+      console.log(isScheduled ? '⏰ Using Agenda.js for scheduling' : '⚡ Sending immediately via Agenda.js');
+      if (!agenda._ready) {
+        await agenda.start();
+        console.log('✅ Agenda started and ready');
+      }
     }
 
     for (const emailJob of emailJobs) {
@@ -459,14 +466,15 @@ export default async function handler(req, res) {
           }
           emailJob.body = jobBody;
 
-          // Create scheduled email record
-          const emailDoc = await ScheduledEmail.create({
-            ...emailJob,
-            scheduledDate: scheduledAt,
-            sentAt: undefined, // Don't mark as sent until actually sent
-            trackingEnabled: trackingOptions.enableTracking || false,
-            schedulingMethod: useAppsScript ? 'apps-script' : 'agenda'
-          });
+          // Set tracking fields
+          emailJob.from = process.env.SMTP_USER;
+          emailJob.sentByName = decoded.username;
+          emailJob.scheduledDate = scheduledAt;
+          emailJob.sentAt = undefined;
+          emailJob.trackingEnabled = trackingOptions.enableTracking || false;
+          emailJob.schedulingMethod = useAppsScript ? 'apps-script' : 'agenda';
+          
+          const emailDoc = await ScheduledEmail.create(emailJob);
 
           if (useAppsScript) {
             // Use Google Apps Script for reliable cloud-based scheduling
@@ -520,11 +528,14 @@ export default async function handler(req, res) {
 
           } else if (isScheduled) {
             // Schedule the email for later using Agenda.js
+            console.log(`⏰ Scheduling job for ${emailDoc._id} at ${scheduledAt.toISOString()}`);
             await agenda.schedule(scheduledAt, 'send-scheduled-advisory-email', { 
-              emailId: emailDoc._id 
+              emailId: emailDoc._id.toString()
             });
+            console.log(`✅ Job scheduled successfully`);
           } else {
-            // Send immediately but still track it
+            // Send immediately
+            console.log(`⚡ Sending email immediately for ${emailDoc._id}`);
             await agenda.now('send-scheduled-advisory-email', { 
               emailId: emailDoc._id 
             });

@@ -87,6 +87,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     // Save advisory to Eagle Nest (OpenSearch + local file for backward compatibility)
     try {
+      // Get user info from request
+      const user = requireAdmin(req);
+      
       const advisory = req.body;
 
       if (!advisory.advisory_id) {
@@ -97,9 +100,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
-      // Add status and timestamp
+      // Add status, timestamp, and creator tracking
       advisory.status = 'EAGLE_NEST';
       advisory.saved_to_eagle_nest_at = new Date().toISOString();
+      advisory.created_by = user.username;
+      advisory.created_by_email = user.email;
       
       if (!advisory.created_at) {
         advisory.created_at = advisory.saved_to_eagle_nest_at;

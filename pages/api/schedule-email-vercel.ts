@@ -3,6 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import dbConnect from '@/lib/db';
 import ScheduledEmail from '@/models/ScheduledEmail';
 import { sendEmail } from '@/lib/emailSender';
+import { getUserFromRequest } from '@/lib/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -12,12 +13,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await dbConnect();
 
+    // Get user info from token
+    const user = getUserFromRequest(req);
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
     const { advisoryId, recipients, scheduleTime } = req.body;
 
     // Create scheduled email record with proper timezone handling
     const scheduledEmail = new ScheduledEmail({
       advisoryId,
       recipients,
+      from: process.env.SMTP_USER,
+      sentByName: user.username,
       scheduleTime: new Date(scheduleTime),
       status: 'pending',
       createdAt: new Date(),
@@ -38,6 +47,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         await sendEmail({
           to: recipients,
+          cc: [],
+          bcc: [],
           subject: `Threat Advisory Notification`,
           body: `Advisory notification details here` // You may need to generate proper email body
         });

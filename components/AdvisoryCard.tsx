@@ -242,7 +242,13 @@ export default function AdvisoryCard({ advisory }: AdvisoryCardProps) {
             </span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="font-rajdhani font-medium">{advisory.author}</span>
+            {(advisory as any).created_by ? (
+              <span className="font-rajdhani font-medium" title={`Created by: ${(advisory as any).created_by}`}>
+                👤 {(advisory as any).created_by}
+              </span>
+            ) : (
+              <span className="font-rajdhani font-medium">{advisory.author}</span>
+            )}
             <ExternalLink className="w-2.5 h-2.5 group-hover:translate-x-1 transition-transform duration-300 text-neon-blue" />
           </div>
         </div>

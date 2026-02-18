@@ -8,6 +8,8 @@ interface ScheduledEmail {
   to: string[];
   cc: string[];
   bcc: string[];
+  from?: string;  // Email account sending this email
+  sentByName?: string;  // Admin who sent this email
   subject: string;
   customMessage?: string;
   scheduledDate: string;
@@ -315,6 +317,12 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4 text-sm text-slate-300 mb-3">
+                    <div>
+                      <span className="text-slate-500">From:</span> {email.from || <span className="text-yellow-400">(Not set - using default SMTP)</span>}
+                    </div>
+                    <div>
+                      <span className="text-slate-500">Sent By:</span> {email.sentByName || <span className="text-slate-400">(Unknown)</span>}
+                    </div>
                     <div>
                       <span className="text-slate-500">To:</span> {email.to.join(', ')}
                     </div>
