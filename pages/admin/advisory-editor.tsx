@@ -12,7 +12,9 @@ import {
   AlertTriangle,
   Radar,
   Shield,
-  Clock
+  Clock,
+  Plus,
+  Trash2
 } from 'lucide-react';
 
 
@@ -169,7 +171,7 @@ export default function AdvisoryEditor() {
       advisory_id: advisory_id,
       title: '',
       exec_summary: '',
-      exec_summary_parts: [''],
+      exec_summary_parts: ['', '', ''],
       severity: 'Medium',
       timestamp: now.toISOString(),
       created_at: now.toISOString(),
@@ -423,24 +425,61 @@ export default function AdvisoryEditor() {
 
               {/* Executive Summary */}
               <div>
-                <label className="block text-white font-orbitron font-bold mb-2">Executive Summary</label>
-                {advisory.exec_summary_parts && advisory.exec_summary_parts.map((part: string, index: number) => (
-                  <textarea
-                    key={index}
-                    value={part}
-                    onChange={(e) => {
-                      const newParts = [...advisory.exec_summary_parts];
-                      newParts[index] = e.target.value;
-                      setAdvisory({
-                        ...advisory, 
-                        exec_summary_parts: newParts,
-                        exec_summary: newParts.join('\n\n')
-                      });
+                <div className="flex items-center justify-between mb-4">
+                  <label className="block text-white font-orbitron font-bold">Executive Summary</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newParts = [...(advisory.exec_summary_parts || [])];
+                      newParts.push('');
+                      setAdvisory({ ...advisory, exec_summary_parts: newParts });
                     }}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani mb-3"
-                    placeholder={`Paragraph ${index + 1}`}
-                  />
+                    className="flex items-center space-x-1 px-3 py-1 bg-blue-500/20 border border-blue-400/30 rounded text-blue-400 hover:bg-blue-500/30 transition-all text-xs font-orbitron"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>Add Paragraph</span>
+                  </button>
+                </div>
+                {advisory.exec_summary_parts && advisory.exec_summary_parts.map((part: string, index: number) => (
+                  <div key={index} className="relative mb-4 group">
+                    <textarea
+                      value={part}
+                      onChange={(e) => {
+                        const newParts = [...advisory.exec_summary_parts];
+                        newParts[index] = e.target.value;
+                        setAdvisory({
+                          ...advisory, 
+                          exec_summary_parts: newParts,
+                          exec_summary: newParts.join('\n\n')
+                        });
+                      }}
+                      rows={4}
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani"
+                      placeholder={
+                        index === 0 ? "Paragraph 1: Threat Overview (What is the vulnerability/incident?)" :
+                        index === 1 ? "Paragraph 2: Impact Analysis (What are the risks and consequences?)" :
+                        index === 2 ? "Paragraph 3: Recommendations & Conclusion (Suggested actions and next steps)" :
+                        `Paragraph ${index + 1}`
+                      }
+                    />
+                    {advisory.exec_summary_parts.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newParts = advisory.exec_summary_parts.filter((_: any, i: number) => i !== index);
+                          setAdvisory({
+                            ...advisory,
+                            exec_summary_parts: newParts,
+                            exec_summary: newParts.join('\n\n')
+                          });
+                        }}
+                        className="absolute -right-2 -top-2 p-1.5 bg-red-500/20 border border-red-400/30 rounded-full text-red-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/40"
+                        title="Delete paragraph"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
 
