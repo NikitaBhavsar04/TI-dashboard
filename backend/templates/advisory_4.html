@@ -237,7 +237,7 @@
                                                 style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; color: #ffffff; height: 100%;">
                                                 <tr>
                                                     <td
-                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; height: 90px; vertical-align: top;">
+                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; vertical-align: top;">
                                                         <p
                                                             style="margin: 0 0 5px 0; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 800; font-size: 14px; text-transform: uppercase; color: #ffffff;">
                                                             Affected Product</p>
@@ -255,7 +255,7 @@
                                                 style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; color: #ffffff; height: 100%;">
                                                 <tr>
                                                     <td
-                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; height: 90px; vertical-align: top;">
+                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; vertical-align: top;">
                                                         <p
                                                             style="margin: 0 0 5px 0; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 800; font-size: 14px; text-transform: uppercase; color: #ffffff;">
                                                             Target Sector</p>
@@ -273,7 +273,7 @@
                                                 style="background-color: #0B1F33; background: linear-gradient(135deg, #0B1F33, #1F3A5F); border-radius: 12px; color: #ffffff; height: 100%;">
                                                 <tr>
                                                     <td
-                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; height: 90px; vertical-align: top;">
+                                                        style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; vertical-align: top;">
                                                         <p
                                                             style="margin: 0 0 5px 0; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 800; font-size: 14px; text-transform: uppercase; color: #ffffff;">
                                                             Region</p>
@@ -461,6 +461,13 @@
                             </td>
                         </tr>
                     </table>
+                    <!-- Spacer -->
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td style="height: 20px; line-height: 20px; font-size: 1px;">&nbsp;</td>
+                        </tr>
+                    </table>
+                    <!-- End Spacer -->
                     {% if iocs and (
                     iocs.ipv4 or
                     iocs.domains or
@@ -469,7 +476,7 @@
                     iocs.sha256
                     ) %}
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                        style="background-color: #FFFFFF; border: 1px solid #D7DEE8; border-radius: 12px; margin-top: 15px; box-shadow: 0 6px 18px rgba(11,31,51,.06);">
+                        style="background-color: #FFFFFF; border: 1px solid #D7DEE8; border-radius: 12px; margin-top: 25px; box-shadow: 0 6px 18px rgba(11,31,51,.06);">
                         <tr>
                             <td style="padding: 20px;">
                                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -548,8 +555,15 @@
                     </table>
                     {% endif %}
 
+                    {% if iocs and (
+                    iocs.ipv4 or
+                    iocs.domains or
+                    iocs.md5 or
+                    iocs.sha1 or
+                    iocs.sha256
+                    ) %}
                     <!-- IOC Detection Results (Dedicated Advisory Only) -->
-                    {% if ioc_detection and ioc_detection.client_name %}
+                    {% if ioc_detection and (ioc_detection.match_count | default(0) | int) > 0 and ioc_detection.matches and (ioc_detection.matches | length) > 0 %}
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
                         style="background-color: #FFF3CD; border: 2px solid #FF6B35; border-radius: 12px; margin-top: 15px; box-shadow: 0 6px 18px rgba(255,107,53,.15);">
                         <tr>
@@ -639,6 +653,7 @@
                             </td>
                         </tr>
                     </table>
+                    {% endif %}
                     {% endif %}
 
                     <!-- Spacer -->
