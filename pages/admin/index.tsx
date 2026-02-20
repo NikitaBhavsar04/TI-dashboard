@@ -425,7 +425,7 @@ export default function AdminDashboard() {
             {/* Modern Quick Actions Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
               {/* Advisory Management */}
-              <div className="group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300">
+              <div className="stagger-item card-animated group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl"></div>
                 <div className="relative">
                   <div className="flex items-center justify-between mb-4">
@@ -437,7 +437,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <p className="text-slate-400 text-sm mb-4">Manage threat intelligence reports and advisories</p>
-                  <div className="space-y-2">
+                  <div className="flex flex-col gap-3">
                     <Link href="/admin/advisory-editor">
                       <button className="w-full flex items-center justify-between p-3 bg-red-500/10 border border-red-400/30 rounded-lg text-red-400 hover:bg-red-500/20 transition-all duration-200 group">
                         <div className="flex items-center space-x-2">
@@ -461,19 +461,19 @@ export default function AdminDashboard() {
               </div>
 
               {/* Threat Intelligence */}
-              <div className="group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300">
+              <div className="stagger-item card-animated group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-blue-400/50 transition-all duration-300">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl"></div>
                 <div className="relative">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-orange-500/20 border border-orange-400/30 rounded-lg">
-                        <Database className="h-5 w-5 text-cyan-400" />
+                        <Database className="h-5 w-5 text-orange-400" />
                       </div>
                       <h3 className="text-lg font-bold text-white">Intelligence</h3>
                     </div>
                   </div>
                   <p className="text-slate-400 text-sm mb-4">Access raw threat data and RSS feeds</p>
-                  <div className="space-y-2">
+                  <div className="flex flex-col gap-3">
                     <Link href="/admin/raw-articles">
                       <button className="w-full flex items-center justify-between p-3 bg-orange-500/10 border border-orange-400/30 rounded-lg text-orange-400 hover:bg-orange-500/20 transition-all duration-200 group">
                         <div className="flex items-center space-x-2">
@@ -497,7 +497,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Client Management */}
-              <div className="group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-green-400/50 transition-all duration-300">
+              <div className="stagger-item card-animated group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-green-400/50 transition-all duration-300">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full blur-2xl"></div>
                 <div className="relative">
                   <div className="flex items-center justify-between mb-4">
@@ -509,7 +509,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <p className="text-slate-400 text-sm mb-4">Manage client organizations and emails</p>
-                  <div className="space-y-2">
+                  <div className="flex flex-col gap-3">
                     <Link href="/admin/clients">
                       <button className="w-full flex items-center justify-between p-3 bg-green-500/10 border border-green-400/30 rounded-lg text-green-400 hover:bg-green-500/20 transition-all duration-200 group">
                         <div className="flex items-center space-x-2">
@@ -533,7 +533,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* User Management */}
-              <div className="group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-amber-400/50 transition-all duration-300">
+              <div className="stagger-item card-animated group relative overflow-hidden backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:border-amber-400/50 transition-all duration-300">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl"></div>
                 <div className="relative">
                   <div className="flex items-center justify-between mb-4">
@@ -545,7 +545,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <p className="text-slate-400 text-sm mb-4">Manage platform users and permissions</p>
-                  <div className="space-y-2">
+                  <div className="flex flex-col gap-3">
                     <Link href="/admin/users">
                       <button className="w-full flex items-center justify-between p-3 bg-amber-500/10 border border-amber-400/30 rounded-lg text-amber-400 hover:bg-amber-500/20 transition-all duration-200 group">
                         <div className="flex items-center space-x-2">
@@ -556,17 +556,17 @@ export default function AdminDashboard() {
                       </button>
                     </Link>
                 {isSuperAdmin && (
-                  <button className="w-full flex items-center justify-between p-4 bg-red-500/10 border border-red-400/30 rounded-lg text-red-400 hover:bg-red-500/20 transition-all duration-200 group">
-                    <div className="flex items-center space-x-3">
-                      <Settings className="h-5 w-5" />
-                      <span className="font-rajdhani font-medium">System Settings</span>
+                  <button className="w-full flex items-center justify-between p-3 bg-red-500/10 border border-red-400/30 rounded-lg text-red-400 hover:bg-red-500/20 transition-all duration-200 group">
+                    <div className="flex items-center space-x-2">
+                      <Settings className="h-4 w-4" />
+                      <span className="font-medium text-sm">System Settings</span>
                     </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">→</div>
+                    <div className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</div>
                   </button>
                 )}
+                    </div>
                   </div>
                 </div>
-              </div>
             </div>
 
             {/* Enhanced Recent Users Table */}
