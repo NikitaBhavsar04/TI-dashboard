@@ -17,13 +17,19 @@ export const SkeletonTitle: React.FC = () => (
 );
 
 export const SkeletonStatsCard: React.FC = () => (
-  <div className="backdrop-blur-md bg-slate-800/50 border-2 border-slate-700/50 rounded-lg p-4">
-    <div className="flex items-center justify-between mb-3">
-      <div className="skeleton h-4 w-24"></div>
-      <div className="skeleton h-10 w-10 rounded-lg"></div>
+  <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-slate-900/20 border-2 border-slate-700/40 rounded-lg p-4 shadow-lg shadow-slate-800/20">
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex-1">
+        <div className="h-4 bg-slate-700/70 rounded w-32 mb-3"></div>
+      </div>
+      <div className="p-2 bg-slate-700/50 rounded-lg mr-0">
+        <div className="h-4 w-4 bg-slate-700/70 rounded"></div>
+      </div>
     </div>
-    <div className="skeleton h-10 w-20 mb-2"></div>
-    <div className="skeleton h-3 w-32"></div>
+    <div className="space-y-2">
+      <div className="h-8 bg-slate-700/70 rounded w-16 animate-pulse"></div>
+      <div className="h-3 bg-slate-700/50 rounded w-40 animate-pulse"></div>
+    </div>
   </div>
 );
 

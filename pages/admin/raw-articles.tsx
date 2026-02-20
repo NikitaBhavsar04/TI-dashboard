@@ -196,6 +196,39 @@ import {
 
 
 
+const ArticleListSkeleton = () => (
+  <div className="space-y-4">
+    {[1, 2, 3, 4, 5].map((i) => (
+      <div key={i} className="glass-panel-hover p-4 border border-slate-700/50 rounded-lg">
+        <div className="flex justify-between items-start mb-4">
+          <div className="w-3/4 space-y-3">
+            <div className="flex space-x-2 items-center">
+              <div className="h-5 bg-slate-700/70 rounded w-16 animate-pulse"></div>
+              <div className="h-5 bg-slate-700/70 rounded w-20 animate-pulse"></div>
+              <div className="h-5 bg-slate-700/70 rounded w-28 animate-pulse"></div>
+            </div>
+            <div className="h-5 bg-slate-700/70 rounded w-3/4 animate-pulse"></div>
+            <div className="h-4 bg-slate-700/50 rounded w-5/6 animate-pulse"></div>
+          </div>
+          <div className="h-8 bg-slate-700/70 rounded w-16 flex-shrink-0 animate-pulse"></div>
+        </div>
+        <div className="flex justify-between items-center pt-3 border-t border-slate-700/30">
+          <div className="flex space-x-3">
+            <div className="h-4 bg-slate-700/60 rounded w-20 animate-pulse"></div>
+            <div className="h-4 bg-slate-700/60 rounded w-28 animate-pulse"></div>
+          </div>
+          <div className="h-4 bg-slate-700/60 rounded w-32 animate-pulse"></div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+interface SimilarArticle {
+  id: string;
+  title: string;
+}
+
 interface RawArticle {
   id: string;
   title: string;
@@ -214,6 +247,8 @@ interface RawArticle {
   }>;
   cves: string[];
   status: string;
+  similarCount?: number;
+  similarArticles?: SimilarArticle[];
 }
 
 interface Pagination {
@@ -232,7 +267,13 @@ export default function RawArticles() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterTimeRange, setFilterTimeRange] = useState<string>('all');
+  const [filterSource, setFilterSource] = useState<string>('all');
+  const [customDateFrom, setCustomDateFrom] = useState('');
+  const [customDateTo, setCustomDateTo] = useState('');
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [loadingSimilar, setLoadingSimilar] = useState<{[key: string]: boolean}>({});
+  const [expandedArticles, setExpandedArticles] = useState<{[key: string]: boolean}>({});
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
     pageSize: 25,
@@ -267,15 +308,29 @@ export default function RawArticles() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Auto-refresh articles every 60 seconds
+  useEffect(() => {
+    if (!hasRole('admin') || !user) return;
+    
+    const interval = setInterval(() => {
+      fetchArticles(false, true); // background=true
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, [user, hasRole, pagination.page, debouncedSearchQuery, filterStatus, filterTimeRange, filterSource, customDateFrom, customDateTo]);
+
   // Fetch articles when page, debounced search, or filter changes
   useEffect(() => {
     if (hasRole('admin') && user) {
-      fetchArticles();
+      fetchArticles(); // background=false (default) -> shows skeleton
     }
-  }, [pagination.page, debouncedSearchQuery, filterStatus]);
+  }, [pagination.page, debouncedSearchQuery, filterStatus, filterTimeRange, filterSource, customDateFrom, customDateTo]);
 
-  const fetchArticles = async (resetPage = false) => {
+  const fetchArticles = async (resetPage = false, background = false) => {
     try {
+      if (!background) {
+        setLoading(true);
+      }
       const currentPage = resetPage ? 1 : pagination.page;
       const params = new URLSearchParams({
         page: currentPage.toString(),
@@ -290,13 +345,30 @@ export default function RawArticles() {
         params.append('status', filterStatus);
       }
       
+      if (filterTimeRange && filterTimeRange !== 'all') {
+        params.append('timeRange', filterTimeRange);
+      }
+      
+      if (filterSource && filterSource !== 'all') {
+        params.append('source', filterSource);
+      }
+      
+      if (filterTimeRange === 'custom' && customDateFrom) {
+        params.append('dateFrom', customDateFrom);
+      }
+      
+      if (filterTimeRange === 'custom' && customDateTo) {
+        params.append('dateTo', customDateTo);
+      }
+      
       const response = await fetch(`/api/raw-articles?${params.toString()}`, {
         credentials: 'include'
       });
 
       if (response.ok) {
         const data = await response.json();
-        setArticles(data.articles || []);
+        const fetchedArticles = data.articles || [];
+        setArticles(fetchedArticles);
         
         if (data.pagination) {
           setPagination(data.pagination);
@@ -306,12 +378,72 @@ export default function RawArticles() {
         if (data.lastFetched) {
           setLastFetched(new Date(data.lastFetched));
         }
+        
+        // Fetch similar articles for all articles
+        fetchedArticles.forEach((article: RawArticle) => {
+          fetchSimilarArticlesCount(article.id);
+        });
       }
     } catch (error) {
       console.error('Error fetching articles:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchSimilarArticlesCount = async (articleId: string) => {
+    try {
+      setLoadingSimilar(prev => ({ ...prev, [articleId]: true }));
+      
+      const response = await fetch(`/api/similar-articles?articleId=${articleId}`, {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const similarArticles = (data.success && data.similarArticles) ? data.similarArticles : [];
+        // Update the article with similar count and articles
+        setArticles(prevArticles => 
+          prevArticles.map(article => 
+            article.id === articleId 
+              ? { 
+                  ...article, 
+                  similarCount: similarArticles.length,
+                  similarArticles: similarArticles
+                }
+              : article
+          )
+        );
+      } else {
+        // API error - set count to 0
+        setArticles(prevArticles => 
+          prevArticles.map(article => 
+            article.id === articleId 
+              ? { ...article, similarCount: 0, similarArticles: [] }
+              : article
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching similar articles count:', error);
+      // On error, set count to 0
+      setArticles(prevArticles => 
+        prevArticles.map(article => 
+          article.id === articleId 
+            ? { ...article, similarCount: 0, similarArticles: [] }
+            : article
+        )
+      );
+    } finally {
+      setLoadingSimilar(prev => ({ ...prev, [articleId]: false }));
+    }
+  };
+
+  const toggleSimilarArticles = (articleId: string) => {
+    setExpandedArticles(prev => ({
+      ...prev,
+      [articleId]: !prev[articleId]
+    }));
   };
 
   const runFetcher = async () => {
@@ -349,6 +481,26 @@ export default function RawArticles() {
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
+  const handleTimeRangeChange = (value: string) => {
+    setFilterTimeRange(value);
+    if (value !== 'custom') {
+      setCustomDateFrom('');
+      setCustomDateTo('');
+    }
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handleSourceChange = (value: string) => {
+    setFilterSource(value);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handleCustomDateChange = (from: string, to: string) => {
+    setCustomDateFrom(from);
+    setCustomDateTo(to);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
   const goToNextPage = () => {
     if (pagination.hasMore) {
       setPagination(prev => ({ ...prev, page: prev.page + 1 }));
@@ -362,10 +514,13 @@ export default function RawArticles() {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
     try {
-      return new Date(dateString).toLocaleString();
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'N/A';
+      return date.toLocaleString();
     } catch {
-      return dateString;
+      return 'N/A';
     }
   };
 
@@ -382,11 +537,11 @@ export default function RawArticles() {
     }
   };
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <HydrationSafe>
         <div className="min-h-screen bg-tech-gradient flex items-center justify-center">
-          <LoadingLogo message="LOADING RAW ARTICLES..." />
+          <LoadingLogo message="AUTHENTICATING..." />
         </div>
       </HydrationSafe>
     );
@@ -438,10 +593,10 @@ export default function RawArticles() {
             {/* Enhanced Stats Cards with Stagger Animation */}
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <CardSkeleton />
-                <CardSkeleton />
-                <CardSkeleton />
-                <CardSkeleton />
+                <SkeletonStatsCard />
+                <SkeletonStatsCard />
+                <SkeletonStatsCard />
+                <SkeletonStatsCard />
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -528,12 +683,12 @@ export default function RawArticles() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white">Search & Filter</h3>
-                    <p className="text-slate-400 text-sm">Find specific articles or filter by status</p>
+                    <p className="text-slate-400 text-sm">Find specific articles by date, source, or status</p>
                   </div>
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <input
@@ -543,6 +698,47 @@ export default function RawArticles() {
                     onChange={(e) => handleSearchChange(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all text-sm"
                   />
+                </div>
+
+                <div className="relative">
+                  <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <select
+                    value={filterTimeRange}
+                    onChange={(e) => handleTimeRangeChange(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all appearance-none cursor-pointer text-sm"
+                    title="Filter by time range"
+                  >
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="last3days">Last 3 Days</option>
+                    <option value="last7days">Last 7 Days</option>
+                    <option value="custom">Custom Range</option>
+                  </select>
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <Globe className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <select
+                    value={filterSource}
+                    onChange={(e) => handleSourceChange(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all appearance-none cursor-pointer text-sm"
+                    title="Filter by source"
+                  >
+                    <option value="all">All Sources</option>
+                    <option value="rss">RSS Feeds</option>
+                    <option value="reddit">Reddit</option>
+                    <option value="telegram">Telegram</option>
+                  </select>
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
 
                 <div className="relative">
@@ -565,6 +761,30 @@ export default function RawArticles() {
                   </div>
                 </div>
               </div>
+
+              {/* Custom Date Range Inputs */}
+              {filterTimeRange === 'custom' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-700/50">
+                  <div>
+                    <label className="block text-slate-400 text-sm mb-2">From Date</label>
+                    <input
+                      type="date"
+                      value={customDateFrom}
+                      onChange={(e) => handleCustomDateChange(e.target.value, customDateTo)}
+                      className="w-full px-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 text-sm mb-2">To Date</label>
+                    <input
+                      type="date"
+                      value={customDateTo}
+                      onChange={(e) => handleCustomDateChange(customDateFrom, e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all text-sm"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Enhanced Pagination Info */}
@@ -592,7 +812,9 @@ export default function RawArticles() {
 
             {/* Articles List */}
             <div className="space-y-3">
-              {articles.length === 0 ? (
+              {loading ? (
+                <ArticleListSkeleton />
+              ) : articles.length === 0 ? (
                 <div className="glass-panel-hover p-8 text-center">
                   <FileText className="h-16 w-16 text-slate-600 mx-auto mb-4" />
                   <h3 className="text-xl font-orbitron font-bold text-slate-400 mb-2">
@@ -609,10 +831,12 @@ export default function RawArticles() {
                 articles.map((article) => {
                   // Use id field (not _id which is OpenSearch document ID)
                   const articleId = article.id;
+                  const isExpanded = expandedArticles[articleId];
                   return (
-                  <Link key={articleId} href={`/admin/raw-articles/${articleId}`}>
-                    <div className="glass-panel-hover p-4 cursor-pointer transition-all duration-200 hover:border-neon-blue/30">
-                      <div className="space-y-2">
+                  <div key={articleId} className="glass-panel-hover p-4 transition-all duration-200">
+                    <Link href={`/admin/raw-articles/${articleId}`}>
+                      <div className="cursor-pointer hover:border-neon-blue/30">
+                        <div className="space-y-2">
                         {/* Header */}
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -626,7 +850,7 @@ export default function RawArticles() {
                               </span>
                               <span className="text-slate-500 font-rajdhani text-xs flex items-center">
                                 <Calendar className="h-2.5 w-2.5 mr-1" />
-                                {formatDate(article.published_dt)}
+                                Published: {formatDate(article.published)}
                               </span>
                             </div>
                             <h3 className="text-base font-orbitron font-bold text-white mb-1.5 break-words">
@@ -681,6 +905,32 @@ export default function RawArticles() {
                                 <span>{article.nested_links.length} nested links</span>
                               </div>
                             )}
+
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (article.similarCount && article.similarCount > 0) {
+                                  toggleSimilarArticles(articleId);
+                                }
+                              }}
+                              className="flex items-center space-x-1.5 text-slate-500 font-rajdhani text-xs"
+                              disabled={!article.similarCount || article.similarCount === 0}
+                            >
+                              <FileText className="h-3 w-3 text-cyan-400" />
+                              {loadingSimilar[articleId] ? (
+                                <span className="text-cyan-400">Finding similar...</span>
+                              ) : article.similarCount !== undefined ? (
+                                <span className={`${article.similarCount > 0 ? 'text-cyan-400 underline cursor-pointer hover:text-cyan-300 transition-colors' : 'text-slate-500'}`}>
+                                  {article.similarCount} similar article{article.similarCount !== 1 ? 's' : ''}
+                                  {article.similarCount > 0 && (
+                                    <span className="ml-1">{isExpanded ? '▲' : '▼'}</span>
+                                  )}
+                                </span>
+                              ) : (
+                                <span className="text-slate-500">Checking...</span>
+                              )}
+                            </button>
                           </div>
 
                           <span className="text-neon-blue font-rajdhani text-xs">
@@ -690,6 +940,30 @@ export default function RawArticles() {
                       </div>
                     </div>
                   </Link>
+
+                  {/* Expandable Similar Articles Section */}
+                  {isExpanded && article.similarArticles && article.similarArticles.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-slate-700/50">
+                      <h4 className="text-xs font-rajdhani font-bold text-cyan-400 mb-2 flex items-center">
+                        <FileText className="h-3 w-3 mr-1" />
+                        Similar Articles ({article.similarArticles.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {article.similarArticles.map((similar) => (
+                          <Link key={similar.id} href={`/admin/raw-articles/${similar.id}`}>
+                            <div className="flex items-center space-x-2 p-2 bg-slate-900/50 rounded-lg border border-slate-700/50 hover:border-cyan-400/40 transition-all duration-200 cursor-pointer group">
+                              <FileText className="h-3 w-3 text-cyan-400 flex-shrink-0 group-hover:text-cyan-300" />
+                              <p className="text-slate-300 font-rajdhani text-xs group-hover:text-white transition-colors flex-1 line-clamp-1">
+                                {similar.title}
+                              </p>
+                              <ExternalLink className="h-3 w-3 text-slate-600 group-hover:text-cyan-400 transition-colors flex-shrink-0" />
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                   );
                 })
               )}

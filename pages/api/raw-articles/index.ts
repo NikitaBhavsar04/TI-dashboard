@@ -57,36 +57,102 @@ export default async function handler(
       const pageSize = parseInt(req.query.pageSize as string) || 50;
       const searchQuery = req.query.search as string || '';
       const statusFilter = req.query.status as string || '';
+      const timeRangeFilter = req.query.timeRange as string || '';
+      const sourceFilter = req.query.source as string || '';
+      const dateFrom = req.query.dateFrom as string || '';
+      const dateTo = req.query.dateTo as string || '';
       
       // Calculate offset for pagination
       const from = (page - 1) * pageSize;
 
       // Build query based on search and filter parameters
       let query: any = { match_all: {} };
+      const must: any[] = [];
       
-      if (searchQuery || statusFilter) {
-        const must: any[] = [];
+      // Search query
+      if (searchQuery) {
+        must.push({
+          multi_match: {
+            query: searchQuery,
+            fields: ['title^3', 'source^2', 'article_text', 'summary', 'cves'],
+            type: 'best_fields',
+            fuzziness: 'AUTO'
+          }
+        });
+      }
+      
+      // Status filter
+      if (statusFilter && statusFilter !== 'all') {
+        must.push({
+          term: { 'status.keyword': statusFilter }
+        });
+      }
+      
+      // Time range filter
+      if (timeRangeFilter && timeRangeFilter !== 'all') {
+        const now = new Date();
+        let startDate: Date | null = null;
         
-        if (searchQuery) {
+        switch (timeRangeFilter) {
+          case 'today':
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            break;
+          case 'last3days':
+            startDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+            break;
+          case 'last7days':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'custom':
+            if (dateFrom || dateTo) {
+              const rangeQuery: any = { range: { fetched_at: {} } };
+              if (dateFrom) {
+                rangeQuery.range.fetched_at.gte = dateFrom;
+              }
+              if (dateTo) {
+                // Add one day to include the entire end date
+                const endDate = new Date(dateTo);
+                endDate.setDate(endDate.getDate() + 1);
+                rangeQuery.range.fetched_at.lt = endDate.toISOString().split('T')[0];
+              }
+              must.push(rangeQuery);
+            }
+            break;
+        }
+        
+        if (startDate && timeRangeFilter !== 'custom') {
           must.push({
-            multi_match: {
-              query: searchQuery,
-              fields: ['title^3', 'source^2', 'article_text', 'summary', 'cves'],
-              type: 'best_fields',
-              fuzziness: 'AUTO'
+            range: {
+              fetched_at: {
+                gte: startDate.toISOString()
+              }
             }
           });
         }
+      }
+      
+      // Source filter
+      if (sourceFilter && sourceFilter !== 'all') {
+        // Match source_type field with exact values
+        const sourceTypeMap: { [key: string]: string } = {
+          'rss': 'RSS',
+          'reddit': 'REDDIT',
+          'telegram': 'TELEGRAM'
+        };
         
-        if (statusFilter && statusFilter !== 'all') {
+        const sourceType = sourceTypeMap[sourceFilter];
+        if (sourceType) {
           must.push({
-            term: { 'status.keyword': statusFilter }
+            match: {
+              source_type: sourceType
+            }
           });
         }
-        
+      }
+      
+      // Build final query
+      if (must.length > 0) {
         query = { bool: { must } };
-      } else if (statusFilter && statusFilter !== 'all') {
-        query = { term: { 'status.keyword': statusFilter } };
       }
 
       // Fetch articles from OpenSearch with pagination

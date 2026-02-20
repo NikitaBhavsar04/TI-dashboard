@@ -127,10 +127,13 @@ export default function RawArticleDetail() {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
     try {
-      return new Date(dateString).toLocaleString();
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'N/A';
+      return date.toLocaleString();
     } catch {
-      return dateString;
+      return 'N/A';
     }
   };
 
@@ -309,7 +312,7 @@ export default function RawArticleDetail() {
                     </span>
                     <span className="text-slate-500 font-rajdhani text-sm flex items-center">
                       <Calendar className="h-3 w-3 mr-1" />
-                      {formatDate(article.published_dt)}
+                      Published: {formatDate(article.published)}
                     </span>
                   </div>
                   <h1 className="text-3xl font-orbitron font-bold text-white mb-4 break-words">
