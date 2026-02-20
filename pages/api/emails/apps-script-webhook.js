@@ -14,6 +14,8 @@ export default async function handler(req, res) {
       emailId,
       status,
       trackingId,
+      advisoryId,
+      clientId,
       timestamp
     });
 
@@ -23,13 +25,16 @@ export default async function handler(req, res) {
 
     await connectDB();
 
-    // Find the email record by MongoDB _id
-    const emailDoc = await ScheduledEmail.findById(emailId);
+    // Find the email record by Apps Script email ID (not MongoDB _id)
+    const emailDoc = await ScheduledEmail.findOne({ appsScriptEmailId: emailId });
 
     if (!emailDoc) {
-      console.error(`❌ Email not found: ${emailId}`);
+      console.error(`❌ Email not found with appsScriptEmailId: ${emailId}`);
+      console.error(`   This usually means the webhook is using the wrong ID or the email was deleted`);
       return res.status(404).json({ error: 'Email not found' });
     }
+
+    console.log(`📧 Found email document: ${emailDoc._id} for Apps Script ID: ${emailId}`);
 
     // Update status based on Apps Script notification
     emailDoc.status = status; // 'sent', 'failed', etc.

@@ -511,19 +511,24 @@ export default async function handler(req, res) {
 
               // Store Apps Script email ID
               emailDoc.appsScriptEmailId = appsScriptResult.emailId;
+              emailDoc.schedulingMethod = 'apps-script';
               await emailDoc.save();
 
-              console.log(`Scheduled via Apps Script: ${appsScriptResult.emailId}`);
+              console.log(`✅ Scheduled via Apps Script: ${appsScriptResult.emailId}`);
+              console.log(`   MongoDB ID: ${emailDoc._id}`);
+              console.log(`   Scheduled time: ${scheduledAt.toISOString()}`);
 
             } catch (appsScriptError) {
               console.error('❌ Apps Script scheduling failed, using Agenda.js instead:', appsScriptError.message);
-              // Fallback to Agenda.js
+              // Fallback to Agenda.js only if Apps Script failed
               if (!agenda._ready) await agenda.start();
               await agenda.schedule(scheduledAt, 'send-scheduled-advisory-email', { 
-                emailId: emailDoc._id 
+                emailId: emailDoc._id.toString()
               });
               emailDoc.schedulingMethod = 'agenda-fallback';
+              emailDoc.appsScriptEmailId = null; // Clear any previous Apps Script ID
               await emailDoc.save();
+              console.log(`✅ Fallback: Scheduled via Agenda.js for ${emailDoc._id}`);
             }
 
           } else if (isScheduled) {

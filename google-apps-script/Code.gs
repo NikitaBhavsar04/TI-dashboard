@@ -54,7 +54,7 @@ function scheduleEmailCore(data) {
 
     for (const field of required) {
       if (!data[field]) {
-        return { success: false, error: ${field} is required };
+        return { success: false, error: `${field} is required` };
       }
     }
 
@@ -84,7 +84,7 @@ function scheduleEmailCore(data) {
     storeEmail(emailData);
     createTrigger();
 
-    Logger.log(Email ${emailId} scheduled);
+    Logger.log(`Email ${emailId} scheduled`);
 
     return {
       success: true,
@@ -131,6 +131,10 @@ function handleListEmails() {
 }
 
 function handleCheckStatus(data) {
+  if (!data.emailId) {
+    return createResponse(400, { error: 'emailId required' });
+  }
+
   const email = getEmail(data.emailId);
   if (!email) {
     return createResponse(404, { error: 'Email not found' });
@@ -186,7 +190,7 @@ function sendEmailNow(emailData) {
 
     notifyBackend(emailData.id, 'sent', emailData);
 
-    Logger.log(Email sent: ${emailData.id});
+    Logger.log(`Email sent: ${emailData.id}`);
 
   } catch (error) {
     emailData.status = 'failed';
@@ -235,7 +239,7 @@ function cleanupOldEmails() {
 
   if (emails.length !== emailsToKeep.length) {
     SCRIPT_PROPERTIES.setProperty(PENDING_EMAILS_KEY, JSON.stringify(emailsToKeep));
-    Logger.log(Cleaned up ${emails.length - emailsToKeep.length} old emails);
+    Logger.log(`Cleaned up ${emails.length - emailsToKeep.length} old emails`);
   }
 }
 
@@ -265,7 +269,7 @@ function generateEmailId() {
   const newCounter = counter + 1;
   SCRIPT_PROPERTIES.setProperty(EMAIL_COUNTER_KEY, newCounter.toString());
 
-  return EMAIL_${Date.now()}_${newCounter};
+  return `EMAIL_${Date.now()}_${newCounter}`;
 }
 
 function createResponse(statusCode, data) {
@@ -296,7 +300,7 @@ function notifyBackend(emailId, status, emailData) {
       errorMessage: emailData.error || null
     };
 
-    Logger.log(Notifying backend: ${emailId} - ${status});
+    Logger.log(`Notifying backend: ${emailId} - ${status}`);
 
     const response = UrlFetchApp.fetch(webhookUrl, {
       method: 'post',
@@ -305,7 +309,7 @@ function notifyBackend(emailId, status, emailData) {
       muteHttpExceptions: true
     });
 
-    Logger.log(Backend response: ${response.getResponseCode()});
+    Logger.log(`Backend response: ${response.getResponseCode()}`);
 
   } catch (error) {
     Logger.log('Webhook error: ' + error.toString());

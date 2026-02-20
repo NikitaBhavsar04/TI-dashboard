@@ -110,6 +110,12 @@ export default async function handler(
         ? response.body.hits.total
         : response.body.hits.total.value;
       
+      // Get the last fetched article (first in sorted results)
+      const lastFetchedArticle = articles.length > 0 ? articles[0] : null;
+      const lastFetchedTime = lastFetchedArticle?.fetched_at || null;
+      const lastFetchedTitle = lastFetchedArticle?.title || null;
+      const lastFetchedSource = lastFetchedArticle?.source || null;
+      
       return res.status(200).json({ 
         articles,
         pagination: {
@@ -119,7 +125,13 @@ export default async function handler(
           totalPages: Math.ceil(totalHits / pageSize),
           hasMore: from + pageSize < totalHits,
           hasPrev: page > 1
-        }
+        },
+        lastFetched: lastFetchedTime,
+        lastArticle: lastFetchedArticle ? {
+          title: lastFetchedTitle,
+          source: lastFetchedSource,
+          fetched_at: lastFetchedTime
+        } : null
       });
     } catch (error: any) {
       console.error('Error fetching articles from OpenSearch:', error);
