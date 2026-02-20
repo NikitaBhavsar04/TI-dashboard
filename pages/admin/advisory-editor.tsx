@@ -195,21 +195,59 @@ export default function AdvisoryEditor() {
   };
 
   const handleIPSweep = async () => {
-    if (!advisory || !advisory.advisory_id || advisory.is_new) {
-      toast.error('Please save the advisory first before running IP sweep');
+    if (!advisory) {
+      toast.error('Advisory data not loaded');
       return;
     }
 
     try {
       setSweeping(true);
-      console.log('[EDITOR] Starting IP sweep for:', advisory.advisory_id);
+      let advisoryId = advisory.advisory_id;
+
+      // If advisory is new (unsaved), save it first before running IP sweep
+      if (advisory.is_new) {
+        console.log('[EDITOR] Advisory is new, auto-saving before IP sweep...');
+        toast.info('Saving advisory first...');
+        
+        try {
+          const advisoryToSave = {
+            ...advisory,
+            created_at: advisory.created_at || new Date().toISOString(),
+            timestamp: advisory.timestamp || new Date().toISOString()
+          };
+          delete advisoryToSave.is_new;
+
+          const saveResponse = await fetch('/api/eagle-nest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(advisoryToSave)
+          });
+          
+          const saveData = await saveResponse.json();
+          if (!saveData.success) {
+            throw new Error(saveData.error || 'Failed to save advisory');
+          }
+          
+          // Update the advisory state with the saved version
+          setAdvisory({ ...advisory, is_new: false });
+          toast.success('Advisory saved successfully!');
+        } catch (saveError: any) {
+          console.error('[EDITOR] Auto-save failed:', saveError);
+          toast.error(`Failed to save advisory: ${saveError.message}`);
+          setSweeping(false);
+          return;
+        }
+      }
+
+      console.log('[EDITOR] Starting IP sweep for:', advisoryId);
       toast.success('IP Sweep started... This may take a moment.');
 
       const response = await fetch('/api/advisory/ip-sweep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ advisory_id: advisory.advisory_id })
+        body: JSON.stringify({ advisory_id: advisoryId })
       });
 
       const data = await response.json();
@@ -957,30 +995,31 @@ export default function AdvisoryEditor() {
                   </div>
                   <button
                     onClick={handleIPSweep}
-                    disabled={sweeping || advisory.is_new || !advisory.advisory_id}
+                    disabled={sweeping || !advisory}
                     className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-lg text-white hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-orbitron font-bold shadow-lg shadow-purple-500/20"
+                    title={advisory.is_new ? 'Advisory will be auto-saved before running IP sweep' : 'Scan firewall logs for detected IOCs'}
                   >
                     {sweeping ? (
                       <>
                         <Radar className="h-5 w-5 animate-spin" />
-                        <span>Scanning...</span>
+                        <span>{advisory.is_new ? 'Saving & Scanning...' : 'Scanning...'}</span>
                       </>
                     ) : (
                       <>
                         <Shield className="h-5 w-5" />
-                        <span>Run IP Sweep</span>
+                        <span>{advisory.is_new ? 'Save & Run IP Sweep' : 'Run IP Sweep'}</span>
                       </>
                     )}
                   </button>
                 </div>
 
                 {advisory.is_new && (
-                  <div className="bg-yellow-500/10 border border-yellow-400/30 rounded-lg p-4 flex items-start space-x-3">
-                    <AlertTriangle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4 flex items-start space-x-3">
+                    <AlertTriangle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <div className="text-yellow-400 font-rajdhani font-semibold">Advisory Not Saved</div>
+                      <div className="text-blue-400 font-rajdhani font-semibold">Auto-Save Enabled</div>
                       <div className="text-slate-300 font-rajdhani text-sm">
-                        Please save this advisory first before running IP sweep
+                        This advisory will be automatically saved before running IP sweep
                       </div>
                     </div>
                   </div>
