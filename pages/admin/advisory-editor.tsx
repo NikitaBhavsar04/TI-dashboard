@@ -182,9 +182,9 @@ export default function AdvisoryEditor() {
       mitre: [],
       mbc: [],
       iocs: [],
-      recommendations: [],
-      patch_details: [],
-      references: [],
+      recommendations: [''],
+      patch_details: [''],
+      references: [''],
       sources: [],
       is_new: true // Flag to indicate this is a new advisory
     };
@@ -290,7 +290,11 @@ export default function AdvisoryEditor() {
       const advisoryToSave = {
         ...advisory,
         created_at: advisory.created_at || new Date().toISOString(),
-        timestamp: advisory.timestamp || new Date().toISOString()
+        timestamp: advisory.timestamp || new Date().toISOString(),
+        // Filter out empty strings from recommendations, patch_details, and references
+        recommendations: (advisory.recommendations || []).filter((r: string) => r.trim()),
+        patch_details: (advisory.patch_details || []).filter((p: string) => p.trim()),
+        references: (advisory.references || []).filter((ref: string) => ref.trim())
       };
 
       // Remove the is_new flag before saving
@@ -941,44 +945,146 @@ export default function AdvisoryEditor() {
 
               {/* Recommendations */}
               <div>
-                <label className="block text-white font-orbitron font-bold mb-2">Recommendations</label>
-                <textarea
-                  value={advisory.recommendations?.join('\n') || ''}
-                  onChange={(e) => setAdvisory({...advisory, recommendations: e.target.value.split('\n').filter(r => r.trim())})}
-                  rows={6}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani"
-                  placeholder="Enter each recommendation on a new line"
-                />
+                <div className="flex items-center justify-between mb-4">
+                  <label className="block text-white font-orbitron font-bold">Recommendations</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newRecs = [...(advisory.recommendations || []), ''];
+                      setAdvisory({ ...advisory, recommendations: newRecs });
+                    }}
+                    className="flex items-center space-x-1 px-3 py-1 bg-blue-500/20 border border-blue-400/30 rounded text-blue-400 hover:bg-blue-500/30 transition-all text-xs font-orbitron"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>Add Recommendation</span>
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {(advisory.recommendations || []).map((rec: string, index: number) => (
+                    <div key={index} className="relative group">
+                      <input
+                        type="text"
+                        value={rec}
+                        onChange={(e) => {
+                          const newRecs = [...advisory.recommendations];
+                          newRecs[index] = e.target.value;
+                          setAdvisory({ ...advisory, recommendations: newRecs });
+                        }}
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani pr-12"
+                        placeholder={`Recommendation ${index + 1}`}
+                      />
+                      {(advisory.recommendations || []).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newRecs = advisory.recommendations.filter((_: any, i: number) => i !== index);
+                            setAdvisory({ ...advisory, recommendations: newRecs });
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-red-500/20 border border-red-400/30 rounded-full text-red-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/40"
+                          title="Delete recommendation"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Patch Details */}
               <div>
-                <label className="block text-white font-orbitron font-bold mb-2">Patch Details</label>
-                <textarea
-                  value={advisory.patch_details?.join('\n') || advisory.patch_details || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setAdvisory({
-                      ...advisory, 
-                      patch_details: value.split('\n').filter(p => p.trim())
-                    });
-                  }}
-                  rows={4}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani"
-                  placeholder="Enter patch details"
-                />
+                <div className="flex items-center justify-between mb-4">
+                  <label className="block text-white font-orbitron font-bold">Patch Details</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newPatches = [...(advisory.patch_details || []), ''];
+                      setAdvisory({ ...advisory, patch_details: newPatches });
+                    }}
+                    className="flex items-center space-x-1 px-3 py-1 bg-blue-500/20 border border-blue-400/30 rounded text-blue-400 hover:bg-blue-500/30 transition-all text-xs font-orbitron"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>Add Patch Detail</span>
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {(advisory.patch_details || []).map((patch: string, index: number) => (
+                    <div key={index} className="relative group">
+                      <input
+                        type="text"
+                        value={patch}
+                        onChange={(e) => {
+                          const newPatches = [...advisory.patch_details];
+                          newPatches[index] = e.target.value;
+                          setAdvisory({ ...advisory, patch_details: newPatches });
+                        }}
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani pr-12"
+                        placeholder={`Patch Detail ${index + 1}`}
+                      />
+                      {(advisory.patch_details || []).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newPatches = advisory.patch_details.filter((_: any, i: number) => i !== index);
+                            setAdvisory({ ...advisory, patch_details: newPatches });
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-red-500/20 border border-red-400/30 rounded-full text-red-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/40"
+                          title="Delete patch detail"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* References */}
               <div>
-                <label className="block text-white font-orbitron font-bold mb-2">References (one per line)</label>
-                <textarea
-                  value={advisory.references?.join('\n') || ''}
-                  onChange={(e) => setAdvisory({...advisory, references: e.target.value.split('\n').filter(r => r.trim())})}
-                  rows={4}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani"
-                  placeholder="Enter each reference URL on a new line"
-                />
+                <div className="flex items-center justify-between mb-4">
+                  <label className="block text-white font-orbitron font-bold">References</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newRefs = [...(advisory.references || []), ''];
+                      setAdvisory({ ...advisory, references: newRefs });
+                    }}
+                    className="flex items-center space-x-1 px-3 py-1 bg-blue-500/20 border border-blue-400/30 rounded text-blue-400 hover:bg-blue-500/30 transition-all text-xs font-orbitron"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>Add Reference</span>
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {(advisory.references || []).map((ref: string, index: number) => (
+                    <div key={index} className="relative group">
+                      <input
+                        type="text"
+                        value={ref}
+                        onChange={(e) => {
+                          const newRefs = [...advisory.references];
+                          newRefs[index] = e.target.value;
+                          setAdvisory({ ...advisory, references: newRefs });
+                        }}
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani pr-12"
+                        placeholder={`Reference URL ${index + 1} (e.g., https://example.com)`}
+                      />
+                      {(advisory.references || []).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newRefs = advisory.references.filter((_: any, i: number) => i !== index);
+                            setAdvisory({ ...advisory, references: newRefs });
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-red-500/20 border border-red-400/30 rounded-full text-red-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/40"
+                          title="Delete reference"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* IP Sweep Section */}
