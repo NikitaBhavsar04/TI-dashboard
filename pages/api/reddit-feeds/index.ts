@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
+import { requireAuth, requireAdmin } from '@/lib/auth';
 
 const CONFIG_PATH = path.join(process.cwd(), 'backend', 'config.yaml');
 
@@ -29,6 +30,9 @@ export default async function handler(
 ) {
   if (req.method === 'GET') {
     try {
+      // Require authentication to view Reddit subreddits
+      requireAuth(req);
+
       // Read config.yaml
       const fileContents = fs.readFileSync(CONFIG_PATH, 'utf8');
       const config = yaml.load(fileContents) as ConfigData;
@@ -47,7 +51,13 @@ export default async function handler(
         success: true,
         subreddits 
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Insufficient permissions') {
+        return res.status(401).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error reading config.yaml:', error);
       return res.status(500).json({ 
         success: false,
@@ -59,6 +69,9 @@ export default async function handler(
   
   else if (req.method === 'POST') {
     try {
+      // Require admin role to add subreddits
+      requireAdmin(req);
+
       const { subreddit } = req.body;
 
       if (!subreddit || typeof subreddit !== 'string') {
@@ -117,7 +130,13 @@ export default async function handler(
         message: 'Subreddit added successfully',
         subreddits: config.reddit.subreddits
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+        return res.status(error.message === 'Authentication required' ? 401 : 403).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error adding subreddit:', error);
       return res.status(500).json({ 
         success: false,
@@ -128,6 +147,9 @@ export default async function handler(
   
   else if (req.method === 'DELETE') {
     try {
+      // Require admin role to delete subreddits
+      requireAdmin(req);
+
       const { subreddit } = req.body;
 
       if (!subreddit || typeof subreddit !== 'string') {
@@ -176,7 +198,13 @@ export default async function handler(
         message: 'Subreddit removed successfully',
         subreddits: config.reddit.subreddits
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+        return res.status(error.message === 'Authentication required' ? 401 : 403).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error removing subreddit:', error);
       return res.status(500).json({ 
         success: false,
@@ -187,6 +215,9 @@ export default async function handler(
   
   else if (req.method === 'PATCH') {
     try {
+      // Require admin role to modify subreddits
+      requireAdmin(req);
+
       const { subreddit, enabled } = req.body;
 
       if (!subreddit || typeof subreddit !== 'string') {
@@ -246,7 +277,13 @@ export default async function handler(
         message: `Subreddit ${enabled ? 'enabled' : 'disabled'} successfully`,
         subreddits: config.reddit.subreddits
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+        return res.status(error.message === 'Authentication required' ? 401 : 403).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error toggling subreddit:', error);
       return res.status(500).json({ 
         success: false,

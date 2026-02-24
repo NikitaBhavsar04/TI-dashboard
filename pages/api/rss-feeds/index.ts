@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
+import { requireAuth, requireAdmin } from '@/lib/auth';
 
 const CONFIG_PATH = path.join(process.cwd(), 'backend', 'config.yaml');
 
@@ -28,6 +29,9 @@ export default async function handler(
 ) {
   if (req.method === 'GET') {
     try {
+      // Require authentication to view RSS feeds
+      requireAuth(req);
+
       // Read config.yaml
       const fileContents = fs.readFileSync(CONFIG_PATH, 'utf8');
       const config = yaml.load(fileContents) as ConfigData;
@@ -46,7 +50,13 @@ export default async function handler(
         success: true,
         feeds 
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Insufficient permissions') {
+        return res.status(401).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error reading config.yaml:', error);
       return res.status(500).json({ 
         success: false,
@@ -58,6 +68,9 @@ export default async function handler(
   
   else if (req.method === 'POST') {
     try {
+      // Require admin role to add RSS feeds
+      requireAdmin(req);
+
       const { url } = req.body;
 
       if (!url || typeof url !== 'string') {
@@ -114,7 +127,13 @@ export default async function handler(
         message: 'RSS feed added successfully',
         feeds: config.sources.rss
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+        return res.status(error.message === 'Authentication required' ? 401 : 403).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error adding RSS feed:', error);
       return res.status(500).json({ 
         success: false,
@@ -125,6 +144,9 @@ export default async function handler(
   
   else if (req.method === 'DELETE') {
     try {
+      // Require admin role to delete RSS feeds
+      requireAdmin(req);
+
       const { url } = req.body;
 
       if (!url || typeof url !== 'string') {
@@ -173,7 +195,13 @@ export default async function handler(
         message: 'RSS feed removed successfully',
         feeds: config.sources.rss
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+        return res.status(error.message === 'Authentication required' ? 401 : 403).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error removing RSS feed:', error);
       return res.status(500).json({ 
         success: false,
@@ -184,6 +212,9 @@ export default async function handler(
   
   else if (req.method === 'PATCH') {
     try {
+      // Require admin role to modify RSS feeds
+      requireAdmin(req);
+
       const { url, enabled } = req.body;
 
       if (!url || typeof url !== 'string') {
@@ -243,7 +274,13 @@ export default async function handler(
         message: `RSS feed ${enabled ? 'enabled' : 'disabled'} successfully`,
         feeds: config.sources.rss
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+        return res.status(error.message === 'Authentication required' ? 401 : 403).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error toggling RSS feed:', error);
       return res.status(500).json({ 
         success: false,
