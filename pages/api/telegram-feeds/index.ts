@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
+import { requireAuth, requireAdmin } from '@/lib/auth';
 
 const CONFIG_PATH = path.join(process.cwd(), 'backend', 'config.yaml');
 
@@ -29,6 +30,9 @@ export default async function handler(
 ) {
   if (req.method === 'GET') {
     try {
+      // Require authentication to view Telegram channels
+      requireAuth(req);
+
       // Read config.yaml
       const fileContents = fs.readFileSync(CONFIG_PATH, 'utf8');
       const config = yaml.load(fileContents) as ConfigData;
@@ -47,7 +51,13 @@ export default async function handler(
         success: true,
         channels 
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Insufficient permissions') {
+        return res.status(401).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error reading config.yaml:', error);
       return res.status(500).json({ 
         success: false,
@@ -59,6 +69,9 @@ export default async function handler(
   
   else if (req.method === 'POST') {
     try {
+      // Require admin role to add Telegram channels
+      requireAdmin(req);
+
       const { channel } = req.body;
 
       if (!channel || typeof channel !== 'string') {
@@ -117,7 +130,13 @@ export default async function handler(
         message: 'Telegram channel added successfully',
         channels: config.telegram.channels
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+        return res.status(error.message === 'Authentication required' ? 401 : 403).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error adding Telegram channel:', error);
       return res.status(500).json({ 
         success: false,
@@ -128,6 +147,9 @@ export default async function handler(
   
   else if (req.method === 'DELETE') {
     try {
+      // Require admin role to delete Telegram channels
+      requireAdmin(req);
+
       const { channel } = req.body;
 
       if (!channel || typeof channel !== 'string') {
@@ -176,7 +198,13 @@ export default async function handler(
         message: 'Telegram channel removed successfully',
         channels: config.telegram.channels
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+        return res.status(error.message === 'Authentication required' ? 401 : 403).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error removing Telegram channel:', error);
       return res.status(500).json({ 
         success: false,
@@ -187,6 +215,9 @@ export default async function handler(
   
   else if (req.method === 'PATCH') {
     try {
+      // Require admin role to modify Telegram channels
+      requireAdmin(req);
+
       const { channel, enabled } = req.body;
 
       if (!channel || typeof channel !== 'string') {
@@ -246,7 +277,13 @@ export default async function handler(
         message: `Telegram channel ${enabled ? 'enabled' : 'disabled'} successfully`,
         channels: config.telegram.channels
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'Authentication required' || error.message === 'Admin access required') {
+        return res.status(error.message === 'Authentication required' ? 401 : 403).json({ 
+          success: false,
+          error: error.message 
+        });
+      }
       console.error('Error toggling Telegram channel:', error);
       return res.status(500).json({ 
         success: false,
