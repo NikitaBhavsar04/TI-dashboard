@@ -158,27 +158,26 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json'
-      };
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
       const response = await fetch(`/api/scheduled-emails/${emailId}/send-now`, {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
       });
 
       if (response.ok) {
-        fetchScheduledEmails(); // Refresh the list
+        // Immediately update local state so UI reflects 'sent' without waiting for refresh
+        setScheduledEmails(prev =>
+          prev.map(email =>
+            email._id === emailId
+              ? { ...email, status: 'sent', sentAt: new Date().toISOString() }
+              : email
+          )
+        );
         alert('Email sent successfully');
+        fetchScheduledEmails(); // Also refresh from server to get accurate data
       } else {
         const result = await response.json();
-        alert(`Failed to send: ${result.message}`);
+        alert(`Failed to send: ${result.message || result.error}`);
       }
     } catch (error) {
       alert('Failed to send email');
@@ -415,13 +414,16 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                       </button>
                     </>
                   )}
-                  <button
-                    onClick={() => handleDelete(email._id)}
-                    className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {/* super_admin can delete any email; admin can only delete pending */}
+                  {(email.status === 'pending' || user?.role === 'super_admin') && (
+                    <button
+                      onClick={() => handleDelete(email._id)}
+                      className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

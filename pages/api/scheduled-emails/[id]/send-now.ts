@@ -1,11 +1,21 @@
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getUserFromRequest } from '@/lib/auth';
+import { verifyToken } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import ScheduledEmail from '@/models/ScheduledEmail';
-import nodemailer from 'nodemailer';
 import crypto from 'crypto';
-import { generateAdvisory4EmailTemplate } from '@/lib/advisory4TemplateGenerator';
+import { Client as OpenSearchClient } from '@opensearch-project/opensearch';
+const { generateAdvisory4EmailTemplate } = require('@/lib/advisory4TemplateGenerator');
+
+// OpenSearch client — same config as agenda.js and send-advisory.js
+const osClient = new OpenSearchClient({
+  node: process.env.OPENSEARCH_URL || `https://${process.env.OPENSEARCH_HOST}:${process.env.OPENSEARCH_PORT || '9200'}`,
+  ssl: { rejectUnauthorized: false },
+  ...(process.env.OPENSEARCH_USERNAME && process.env.OPENSEARCH_PASSWORD
+    ? { auth: { username: process.env.OPENSEARCH_USERNAME, password: process.env.OPENSEARCH_PASSWORD } }
+    : {})
+});
+const ADVISORY_INDEX = 'ti-generated-advisories';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -16,97 +26,163 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     await dbConnect();
-    const tokenPayload = getUserFromRequest(req);
-    if (!tokenPayload) {
-      return res.status(401).json({ message: 'No valid token provided' });
-    }
+
+    // Auth check — same pattern as all other working API endpoints
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    const tokenPayload = verifyToken(token);
+    if (!tokenPayload) return res.status(401).json({ message: 'Invalid or expired token' });
     if (tokenPayload.role !== 'admin' && tokenPayload.role !== 'super_admin') {
       return res.status(403).json({ message: 'Admin access required' });
     }
 
-    // Fetch scheduled email and advisory
+    // Fetch the scheduled email from MongoDB
     const scheduledEmail = await ScheduledEmail.findById(id);
     if (!scheduledEmail) {
       return res.status(404).json({ message: 'Scheduled email not found' });
     }
-    // TODO: Fetch advisory from OpenSearch or other source
-    const advisory = null;
-    if (!advisory) {
-      return res.status(404).json({ message: 'Advisory not found' });
+
+    if (scheduledEmail.status === 'sent') {
+      return res.status(400).json({ message: 'Email has already been sent' });
     }
 
-    // Generate email HTML content using the template generator
-    const emailHtml = generateAdvisory4EmailTemplate(advisory, scheduledEmail.customMessage || '');
+    // Fetch advisory from OpenSearch
+    console.log(`[SEND-NOW] Fetching advisory from OpenSearch: ${scheduledEmail.advisoryId}`);
+    let advisory: any;
+    try {
+      const osResponse = await osClient.get({
+        index: ADVISORY_INDEX,
+        id: scheduledEmail.advisoryId
+      });
+      if (!osResponse.body._source) {
+        return res.status(404).json({ message: 'Advisory not found in OpenSearch' });
+      }
+      advisory = { ...osResponse.body._source, _id: scheduledEmail.advisoryId };
+      console.log(`[SEND-NOW] Advisory loaded: ${advisory.title || advisory.advisory_id}`);
+    } catch (osErr: any) {
+      console.error('[SEND-NOW] OpenSearch fetch failed:', osErr.message);
+      return res.status(500).json({ message: 'Failed to fetch advisory from OpenSearch', error: osErr.message });
+    }
 
-    // Generate tracking ID if not exists
+    // Build IOC detection data for this client (mirrors agenda.js logic)
+    let iocDetectionData: any = null;
+    if (advisory.ip_sweep && Array.isArray(advisory.ip_sweep.impacted_clients) && advisory.ip_sweep.impacted_clients.length > 0) {
+      const impacted = advisory.ip_sweep.impacted_clients.find((ic: any) =>
+        ic.client_id === scheduledEmail.clientId || ic.client_name === scheduledEmail.clientName
+      );
+      if (impacted && impacted.matches && impacted.matches.length > 0) {
+        iocDetectionData = {
+          client_name: impacted.client_name || impacted.client_id || scheduledEmail.clientName,
+          checked_at: advisory.ip_sweep.checked_at,
+          match_count: impacted.matches.length,
+          matches: impacted.matches
+        };
+      } else {
+        const fallback = advisory.ip_sweep.impacted_clients.find((ic: any) => ic.matches && ic.matches.length > 0);
+        if (fallback) {
+          iocDetectionData = {
+            client_name: scheduledEmail.clientName || scheduledEmail.clientId || fallback.client_name,
+            checked_at: advisory.ip_sweep.checked_at,
+            match_count: fallback.matches.length,
+            matches: fallback.matches
+          };
+        }
+      }
+    }
+
+    // Generate email HTML using the same template as the scheduler
+    const emailBody: string = generateAdvisory4EmailTemplate(advisory, scheduledEmail.customMessage || '', iocDetectionData);
+
+    // Generate / reuse tracking ID
     if (!scheduledEmail.trackingId) {
       scheduledEmail.trackingId = crypto.randomBytes(32).toString('hex');
       await scheduledEmail.save();
     }
 
-    // Inject tracking pixel into email body
+    // Inject tracking pixel
     const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
-    if (!baseUrl) {
-      return res.status(500).json({ message: 'Application URL not configured' });
-    }
     const trackingPixelUrl = `${baseUrl}/api/track-email/${scheduledEmail.trackingId}`;
     const trackingPixel = `<img src="${trackingPixelUrl}" width="1" height="1" style="display:block;width:1px;height:1px;" alt="" />`;
-    let trackedEmailHtml = emailHtml;
-    if (emailHtml.includes('</body>')) {
-      trackedEmailHtml = emailHtml.replace('</body>', `${trackingPixel}</body>`);
-    } else {
-      trackedEmailHtml = emailHtml + trackingPixel;
-    }
+    const trackedEmailBody = emailBody.includes('</body>')
+      ? emailBody.replace('</body>', `${trackingPixel}</body>`)
+      : emailBody + trackingPixel;
 
-    // Setup nodemailer transporter
+    // Create SMTP transporter — fallback if Graph API is not configured
+    const nodemailer = require('nodemailer');
+    const { sendMailViaGraph, isGraphMailerAvailable } = require('@/lib/graphMailer');
+
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
+      host: process.env.SMTP_HOST || 'smtp.office365.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false,
       auth: {
         user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        pass: process.env.SMTP_PASS
       },
-    });
+      tls: { rejectUnauthorized: false }
+    } as any);
 
-    // Send email
-    const mailOptions = {
+    const recipients = Array.isArray(scheduledEmail.to) ? scheduledEmail.to : [scheduledEmail.to];
+    const mailOptions: any = {
       from: process.env.SMTP_USER,
-      to: scheduledEmail.to,
-      cc: scheduledEmail.cc && scheduledEmail.cc.length > 0 ? scheduledEmail.cc : undefined,
-      bcc: scheduledEmail.bcc && scheduledEmail.bcc.length > 0 ? scheduledEmail.bcc : undefined,
+      to: recipients.join(', '),
       subject: scheduledEmail.subject,
-      html: trackedEmailHtml,
+      html: trackedEmailBody
     };
-    await transporter.sendMail(mailOptions);
+    if (scheduledEmail.cc && scheduledEmail.cc.length > 0) {
+      mailOptions.cc = Array.isArray(scheduledEmail.cc) ? scheduledEmail.cc.join(', ') : scheduledEmail.cc;
+    }
+    if (scheduledEmail.bcc && scheduledEmail.bcc.length > 0) {
+      mailOptions.bcc = Array.isArray(scheduledEmail.bcc) ? scheduledEmail.bcc.join(', ') : scheduledEmail.bcc;
+    }
 
-    // Update scheduled email status
+    console.log(`[SEND-NOW] Sending email to: ${mailOptions.to}`);
+
+    if (isGraphMailerAvailable()) {
+      console.log('[SEND-NOW] Using Microsoft Graph API (SMTP AUTH bypass)...');
+      await sendMailViaGraph({
+        from: process.env.SMTP_USER,
+        to: recipients,
+        cc: scheduledEmail.cc,
+        bcc: scheduledEmail.bcc,
+        subject: scheduledEmail.subject,
+        html: trackedEmailBody
+      });
+      console.log('[SEND-NOW] Email sent via Microsoft Graph API!');
+    } else {
+      console.log('[SEND-NOW] Using SMTP...');
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`[SEND-NOW] Email sent via SMTP! Message ID: ${info.messageId}`);
+    }
+
+    // Mark as sent in MongoDB
     scheduledEmail.status = 'sent';
     scheduledEmail.sentAt = new Date();
     await scheduledEmail.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Email sent successfully',
+      messageId: info.messageId,
       recipients: {
-        to: scheduledEmail.to.length,
-        cc: scheduledEmail.cc ? scheduledEmail.cc.length : 0,
-        bcc: scheduledEmail.bcc ? scheduledEmail.bcc.length : 0,
-      },
+        to: recipients.length,
+        cc: scheduledEmail.cc?.length || 0,
+        bcc: scheduledEmail.bcc?.length || 0
+      }
     });
+
   } catch (error: any) {
-    console.error('Send now API error:', error);
+    console.error('[SEND-NOW] Error:', error);
     try {
       await ScheduledEmail.findByIdAndUpdate(id, {
         status: 'failed',
         errorMessage: error.message,
-        $inc: { retryCount: 1 },
+        $inc: { retryCount: 1 }
       });
-    } catch (updateError) {
-      console.error('Failed to update scheduled email status:', updateError);
-    }
-    res.status(500).json({
+    } catch (_) {}
+    return res.status(500).json({
       message: 'Failed to send email',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
+      error: error.message
     });
   }
 }
+

@@ -1,11 +1,12 @@
 /**
  * API Endpoint: Check Scheduled Email Status
- * 
- * Check the status of a scheduled email in Google Apps Script
+ *
+ * Returns the current status of a scheduled email from MongoDB.
  */
 
-import dbConnect from '../../../lib/mongodb';
-import EmailTracking from '../../../models/EmailTracking';
+import dbConnect from '../../../lib/db';
+import ScheduledEmail from '../../../models/ScheduledEmail';
+import { verifyToken } from '../../../lib/auth';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -13,75 +14,41 @@ export default async function handler(req, res) {
   }
 
   try {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const decoded = verifyToken(token);
+    if (!decoded || !['admin', 'super_admin'].includes(decoded.role)) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
     await dbConnect();
 
-    const { emailId, trackingId } = req.query;
-
-    if (!emailId && !trackingId) {
-      return res.status(400).json({
-        error: 'Either emailId or trackingId is required'
-      });
+    const { emailId } = req.query;
+    if (!emailId) {
+      return res.status(400).json({ error: 'emailId is required' });
     }
 
-    const appsScriptUrl = process.env.APPS_SCRIPT_URL;
-    if (!appsScriptUrl) {
-      return res.status(500).json({
-        error: 'APPS_SCRIPT_URL not configured'
-      });
-    }
-
-    let appsScriptEmailId = emailId;
-
-    // If trackingId provided, fetch the appsScriptEmailId
-    if (!appsScriptEmailId && trackingId) {
-      const tracking = await EmailTracking.findOne({ trackingId });
-      if (tracking && tracking.appsScriptEmailId) {
-        appsScriptEmailId = tracking.appsScriptEmailId;
-      } else {
-        return res.status(404).json({
-          error: 'Email ID not found for tracking ID'
-        });
-      }
-    }
-
-    // Send status check request to Apps Script
-    const payload = {
-      action: 'status',
-      emailId: appsScriptEmailId
-    };
-
-    const response = await fetch(appsScriptUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Apps Script returned status ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (!result.data || !result.data.success) {
-      throw new Error(result.data?.error || 'Failed to check status');
-    }
-
-    // Also fetch local tracking data
-    let localTracking = null;
-    if (trackingId) {
-      localTracking = await EmailTracking.findOne({ trackingId });
+    const emailDoc = await ScheduledEmail.findById(emailId).lean();
+    if (!emailDoc) {
+      return res.status(404).json({ error: 'Email not found' });
     }
 
     return res.status(200).json({
       success: true,
-      appsScript: result.data.email,
-      localTracking: localTracking
+      email: {
+        id: emailDoc._id,
+        to: emailDoc.to,
+        subject: emailDoc.subject,
+        status: emailDoc.status,
+        scheduledDate: emailDoc.scheduledDate,
+        sentAt: emailDoc.sentAt,
+        errorMessage: emailDoc.errorMessage,
+        schedulingMethod: emailDoc.schedulingMethod
+      }
     });
 
   } catch (error) {
-    console.error('❌ Error checking status:', error);
+    console.error('❌ Error checking email status:', error);
     return res.status(500).json({
       error: 'Failed to check email status',
       details: error.message

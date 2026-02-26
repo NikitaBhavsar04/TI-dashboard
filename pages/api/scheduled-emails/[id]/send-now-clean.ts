@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getUserFromRequest } from '@/lib/auth';
+import { verifyToken } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import ScheduledEmail from '@/models/ScheduledEmail';
 import Advisory from '@/models/Advisory';
@@ -15,15 +15,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     await dbConnect();
-    
-    // Verify admin authentication
-    const tokenPayload = getUserFromRequest(req);
-    
-    if (!tokenPayload) {
-      return res.status(401).json({ message: 'No valid token provided' });
-    }
-
-    if (tokenPayload.role !== 'admin') {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    const tokenPayload = verifyToken(token);
+    if (!tokenPayload) return res.status(401).json({ message: 'Invalid or expired token' });
+    if (tokenPayload.role !== 'admin' && tokenPayload.role !== 'super_admin') {
       return res.status(403).json({ message: 'Admin access required' });
     }
 

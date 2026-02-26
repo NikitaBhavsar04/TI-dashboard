@@ -35,7 +35,6 @@ const ADVISORY_INDEX = 'ti-generated-advisories';
 const { generateAdvisory4EmailTemplate } = require('../../../lib/advisory4TemplateGenerator');
 
 const { agenda } = require('../../../lib/agenda');
-const appsScriptScheduler = require('../../../lib/appsScriptScheduler');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -337,7 +336,6 @@ export default async function handler(req, res) {
     // Schedule or send emails
     const scheduledEmails = [];
     let scheduledAt = new Date();
-    const useAppsScript = appsScriptScheduler.isAvailable() && isScheduled;
 
     if (isScheduled && scheduledDate && scheduledTime) {
       // User enters time in IST (Indian Standard Time = UTC+5:30)
@@ -367,16 +365,11 @@ export default async function handler(req, res) {
       scheduledAt = utcTime;
     }
 
-    // Decide scheduling method and ensure Agenda is started
-    if (useAppsScript) {
-      console.log('📧 Using Google Apps Script for scheduling (cloud-based, 24/7)');
-    } else {
-      // Always start Agenda for both scheduled and immediate sends
-      console.log(isScheduled ? '⏰ Using Agenda.js for scheduling' : '⚡ Sending immediately via Agenda.js');
-      if (!agenda._ready) {
-        await agenda.start();
-        console.log('✅ Agenda started and ready');
-      }
+    // Always use Agenda.js for scheduling and immediate sends
+    console.log(isScheduled ? '⏰ Using Agenda.js for scheduling' : '⚡ Sending immediately via Agenda.js');
+    if (!agenda._ready) {
+      await agenda.start();
+      console.log('✅ Agenda started and ready');
     }
 
     for (const emailJob of emailJobs) {
@@ -472,66 +465,11 @@ export default async function handler(req, res) {
           emailJob.scheduledDate = scheduledAt;
           emailJob.sentAt = undefined;
           emailJob.trackingEnabled = trackingOptions.enableTracking || false;
-          emailJob.schedulingMethod = useAppsScript ? 'apps-script' : 'agenda';
+          emailJob.schedulingMethod = 'agenda';
           
           const emailDoc = await ScheduledEmail.create(emailJob);
 
-          if (useAppsScript) {
-            // Use Google Apps Script for reliable cloud-based scheduling
-            try {
-              // Ensure all required fields are present
-              const toEmails = Array.isArray(emailJob.to) ? emailJob.to.join(', ') : emailJob.to;
-            
-              if (!toEmails || !emailJob.subject || !emailJob.body) {
-                throw new Error('Missing required email fields');
-              }
-
-              console.log(`📤 Scheduling via Apps Script for: ${toEmails}`);
-
-              // Prepare CC and BCC for Apps Script
-              const ccEmails = emailJob.cc && emailJob.cc.length > 0 
-                ? (Array.isArray(emailJob.cc) ? emailJob.cc.join(', ') : emailJob.cc)
-                : null;
-              const bccEmails = emailJob.bcc && emailJob.bcc.length > 0 
-                ? (Array.isArray(emailJob.bcc) ? emailJob.bcc.join(', ') : emailJob.bcc)
-                : null;
-
-              const appsScriptResult = await appsScriptScheduler.scheduleEmail({
-                to: toEmails,
-                subject: emailJob.subject,
-                htmlBody: emailJob.body,
-                scheduledTime: scheduledAt.toISOString(),
-                replyTo: process.env.SMTP_USER,
-                cc: ccEmails,
-                bcc: bccEmails,
-                trackingId: emailJob.trackingData?.[0]?.trackingId,
-                advisoryId: advisoryId,
-                clientId: emailJob.clientId
-              });
-
-              // Store Apps Script email ID
-              emailDoc.appsScriptEmailId = appsScriptResult.emailId;
-              emailDoc.schedulingMethod = 'apps-script';
-              await emailDoc.save();
-
-              console.log(`✅ Scheduled via Apps Script: ${appsScriptResult.emailId}`);
-              console.log(`   MongoDB ID: ${emailDoc._id}`);
-              console.log(`   Scheduled time: ${scheduledAt.toISOString()}`);
-
-            } catch (appsScriptError) {
-              console.error('❌ Apps Script scheduling failed, using Agenda.js instead:', appsScriptError.message);
-              // Fallback to Agenda.js only if Apps Script failed
-              if (!agenda._ready) await agenda.start();
-              await agenda.schedule(scheduledAt, 'send-scheduled-advisory-email', { 
-                emailId: emailDoc._id.toString()
-              });
-              emailDoc.schedulingMethod = 'agenda-fallback';
-              emailDoc.appsScriptEmailId = null; // Clear any previous Apps Script ID
-              await emailDoc.save();
-              console.log(`✅ Fallback: Scheduled via Agenda.js for ${emailDoc._id}`);
-            }
-
-          } else if (isScheduled) {
+          if (isScheduled) {
             // Schedule the email for later using Agenda.js
             console.log(`⏰ Scheduling job for ${emailDoc._id} at ${scheduledAt.toISOString()}`);
             await agenda.schedule(scheduledAt, 'send-scheduled-advisory-email', { 
@@ -550,7 +488,7 @@ export default async function handler(req, res) {
             id: emailDoc._id,
             to: emailJob.to,
             clientName: emailJob.clientName || null,
-            method: useAppsScript ? 'apps-script' : 'agenda'
+            method: 'agenda'
           });
 
         } catch (error) {

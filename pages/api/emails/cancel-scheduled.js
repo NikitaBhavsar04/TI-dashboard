@@ -1,11 +1,12 @@
 /**
  * API Endpoint: Cancel Scheduled Email
- * 
- * Cancel a scheduled email in Google Apps Script
+ *
+ * Cancels a pending scheduled email in Agenda.js and marks it cancelled in MongoDB.
  */
 
-import dbConnect from '../../../lib/mongodb';
-import EmailTracking from '../../../models/EmailTracking';
+import dbConnect from '../../../lib/db';
+import ScheduledEmail from '../../../models/ScheduledEmail';
+import { verifyToken } from '../../../lib/auth';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -13,78 +14,46 @@ export default async function handler(req, res) {
   }
 
   try {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const decoded = verifyToken(token);
+    if (!decoded || !['admin', 'super_admin'].includes(decoded.role)) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
     await dbConnect();
 
-    const { emailId, trackingId } = req.body;
+    const { emailId } = req.body;
+    if (!emailId) {
+      return res.status(400).json({ error: 'emailId is required' });
+    }
 
-    if (!emailId && !trackingId) {
+    const emailDoc = await ScheduledEmail.findById(emailId);
+    if (!emailDoc) {
+      return res.status(404).json({ error: 'Email not found' });
+    }
+
+    if (emailDoc.status !== 'pending') {
       return res.status(400).json({
-        error: 'Either emailId or trackingId is required'
+        error: `Cannot cancel email with status "${emailDoc.status}"`
       });
     }
 
-    const appsScriptUrl = process.env.APPS_SCRIPT_URL;
-    if (!appsScriptUrl) {
-      return res.status(500).json({
-        error: 'APPS_SCRIPT_URL not configured'
-      });
+    // Cancel in Agenda.js
+    try {
+      const { agenda } = require('../../../lib/agenda');
+      await agenda.cancel({ 'data.emailId': emailId });
+      console.log(`✅ Agenda job cancelled for email: ${emailId}`);
+    } catch (agendaErr) {
+      console.warn('⚠️ Agenda cancel warning:', agendaErr.message);
+      // Continue — still mark as cancelled in DB
     }
 
-    let appsScriptEmailId = emailId;
+    emailDoc.status = 'cancelled';
+    emailDoc.cancelledAt = new Date();
+    await emailDoc.save();
 
-    // If trackingId provided, fetch the appsScriptEmailId
-    if (!appsScriptEmailId && trackingId) {
-      const tracking = await EmailTracking.findOne({ trackingId });
-      if (tracking && tracking.appsScriptEmailId) {
-        appsScriptEmailId = tracking.appsScriptEmailId;
-      } else {
-        return res.status(404).json({
-          error: 'Email ID not found for tracking ID'
-        });
-      }
-    }
-
-    console.log('🚫 Cancelling scheduled email:', appsScriptEmailId);
-
-    // Send cancellation request to Apps Script
-    const payload = {
-      action: 'cancel',
-      emailId: appsScriptEmailId
-    };
-
-    const response = await fetch(appsScriptUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Apps Script returned status ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (!result.data || !result.data.success) {
-      throw new Error(result.data?.error || 'Failed to cancel email');
-    }
-
-    console.log('Email cancelled successfully');
-
-    // Update tracking record
-    if (trackingId) {
-      await EmailTracking.findOneAndUpdate(
-        { trackingId },
-        {
-          $set: {
-            status: 'cancelled',
-            cancelledAt: new Date(),
-            lastUpdated: new Date()
-          }
-        }
-      );
-    }
+    console.log(`✅ Email ${emailId} marked as cancelled in MongoDB`);
 
     return res.status(200).json({
       success: true,
@@ -98,4 +67,6 @@ export default async function handler(req, res) {
       details: error.message
     });
   }
+}
+
 }
