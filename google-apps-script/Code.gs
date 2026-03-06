@@ -1,14 +1,15 @@
-// ==============================================
+// =====================================================
 // CONFIGURATION
-// ==============================================
+// =====================================================
 
 const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
 const PENDING_EMAILS_KEY = 'PENDING_EMAILS';
 const EMAIL_COUNTER_KEY = 'EMAIL_COUNTER';
 
-// ==============================================
+
+// =====================================================
 // WEB APP ENDPOINT
-// ==============================================
+// =====================================================
 
 function doPost(e) {
   try {
@@ -20,13 +21,17 @@ function doPost(e) {
 
     switch (data.action) {
       case 'schedule':
-        return handleScheduleEmail(data);
+        return createResponse(200, scheduleEmailCore(data));
+
       case 'cancel':
-        return handleCancelEmail(data);
+        return createResponse(200, cancelEmail(data.emailId));
+
       case 'list':
-        return handleListEmails();
+        return createResponse(200, getAllEmails());
+
       case 'status':
-        return handleCheckStatus(data);
+        return createResponse(200, getEmail(data.emailId));
+
       default:
         return createResponse(400, { error: 'Invalid action' });
     }
@@ -44,124 +49,85 @@ function doGet() {
   });
 }
 
-// ==============================================
-// CORE EMAIL SCHEDULING LOGIC
-// ==============================================
+
+// =====================================================
+// SCHEDULING CORE
+// =====================================================
 
 function scheduleEmailCore(data) {
-  try {
-    const required = ['to', 'subject', 'htmlBody', 'scheduledTime'];
 
-    for (const field of required) {
-      if (!data[field]) {
-        return { success: false, error: `${field} is required` };
-      }
+  const required = ['to', 'subject', 'htmlBody', 'scheduledTime'];
+  for (const field of required) {
+    if (!data[field]) {
+      return { success: false, error: field + ' is required' };
     }
-
-    const emailId = generateEmailId();
-
-    const scheduledTime = new Date(data.scheduledTime);
-    if (isNaN(scheduledTime.getTime())) {
-      return { success: false, error: 'Invalid scheduledTime format' };
-    }
-
-    const emailData = {
-      id: emailId,
-      to: data.to,
-      subject: data.subject,
-      htmlBody: data.htmlBody,
-      replyTo: data.replyTo || null,
-      cc: data.cc || null,
-      bcc: data.bcc || null,
-      trackingId: data.trackingId || null,
-      advisoryId: data.advisoryId || null,
-      clientId: data.clientId || null,
-      scheduledTime: scheduledTime.toISOString(),
-      createdAt: new Date().toISOString(),
-      status: 'scheduled'
-    };
-
-    storeEmail(emailData);
-    createTrigger();
-
-    Logger.log(`Email ${emailId} scheduled`);
-
-    return {
-      success: true,
-      emailId,
-      scheduledTime: scheduledTime.toISOString()
-    };
-
-  } catch (error) {
-    return { success: false, error: error.toString() };
-  }
-}
-
-// ==============================================
-// HANDLERS
-// ==============================================
-
-function handleScheduleEmail(data) {
-  const result = scheduleEmailCore(data);
-  if (!result.success) return createResponse(400, result);
-  return createResponse(200, result);
-}
-
-function handleCancelEmail(data) {
-  if (!data.emailId) {
-    return createResponse(400, { error: 'emailId required' });
   }
 
-  const email = getEmail(data.emailId);
-  if (!email) {
-    return createResponse(404, { error: 'Email not found' });
+  const scheduledTime = new Date(data.scheduledTime);
+  if (isNaN(scheduledTime.getTime())) {
+    return { success: false, error: 'Invalid scheduledTime format' };
   }
 
-  email.status = 'cancelled';
-  storeEmail(email);
+  const emailId = generateEmailId();
 
-  return createResponse(200, { success: true });
-}
+  const emailData = {
+    id: emailId,
+    to: data.to,
+    subject: data.subject,
+    htmlBody: data.htmlBody,
+    cc: data.cc || null,
+    bcc: data.bcc || null,
+    replyTo: data.replyTo || null,
+    trackingId: data.trackingId || null,
+    advisoryId: data.advisoryId || null,
+    clientId: data.clientId || null,
+    scheduledTime: scheduledTime.toISOString(),
+    createdAt: new Date().toISOString(),
+    status: 'scheduled'
+  };
 
-function handleListEmails() {
-  return createResponse(200, {
+  storeEmail(emailData);
+  ensureTrigger();
+
+  Logger.log("Scheduled email: " + emailId);
+
+  return {
     success: true,
-    emails: getAllEmails()
-  });
+    emailId,
+    scheduledTime: scheduledTime.toISOString()
+  };
 }
 
-function handleCheckStatus(data) {
-  if (!data.emailId) {
-    return createResponse(400, { error: 'emailId required' });
-  }
 
-  const email = getEmail(data.emailId);
-  if (!email) {
-    return createResponse(404, { error: 'Email not found' });
-  }
-
-  return createResponse(200, { success: true, email });
-}
-
-// ==============================================
-// EMAIL SENDING ENGINE
-// ==============================================
+// =====================================================
+// SCHEDULER (RUNS EVERY MINUTE)
+// =====================================================
 
 function sendScheduledEmail() {
+
   const emails = getAllEmails();
   const now = new Date();
 
-  emails.forEach(email => {
-    if (email.status !== 'scheduled') return;
+  Logger.log("Scheduler running. Queue size: " + emails.length);
+
+  for (let i = 0; i < emails.length; i++) {
+
+    const email = emails[i];
+    if (email.status !== 'scheduled') continue;
 
     const scheduledTime = new Date(email.scheduledTime);
+
     if (now >= scheduledTime) {
+      Logger.log("Sending email: " + email.id);
       sendEmailNow(email);
     }
-  });
-
-  cleanupOldEmails();
+  }
 }
+
+
+// =====================================================
+// EMAIL SENDING ENGINE
+// =====================================================
 
 function sendEmailNow(emailData) {
   try {
@@ -171,9 +137,9 @@ function sendEmailNow(emailData) {
       name: 'Threat Intelligence Advisory'
     };
 
+    if (emailData.cc && emailData.cc !== 'none') options.cc = emailData.cc;
+    if (emailData.bcc && emailData.bcc !== 'none') options.bcc = emailData.bcc;
     if (emailData.replyTo) options.replyTo = emailData.replyTo;
-    if (emailData.cc) options.cc = emailData.cc;
-    if (emailData.bcc) options.bcc = emailData.bcc;
 
     const plainText = emailData.htmlBody.replace(/<[^>]+>/g, ' ');
 
@@ -184,35 +150,32 @@ function sendEmailNow(emailData) {
       options
     );
 
-    emailData.status = 'sent';
-    emailData.sentAt = new Date().toISOString();
-    storeEmail(emailData);
+    Logger.log("Email SENT: " + emailData.id);
 
     notifyBackend(emailData.id, 'sent', emailData);
 
-    Logger.log(`Email sent: ${emailData.id}`);
+    // 🔥 IMPORTANT: remove after send
+    deleteEmailFromQueue(emailData.id);
 
   } catch (error) {
-    emailData.status = 'failed';
-    emailData.error = error.toString();
-    emailData.failedAt = new Date().toISOString();
-    storeEmail(emailData);
+
+    Logger.log("Email FAILED: " + emailData.id + " " + error);
 
     notifyBackend(emailData.id, 'failed', emailData);
+
+    // also remove failed mails to prevent storage overflow
+    deleteEmailFromQueue(emailData.id);
   }
 }
 
-// ==============================================
+
+// =====================================================
 // STORAGE
-// ==============================================
+// =====================================================
 
 function storeEmail(emailData) {
   const emails = getAllEmails();
-  const index = emails.findIndex(e => e.id === emailData.id);
-
-  if (index >= 0) emails[index] = emailData;
-  else emails.push(emailData);
-
+  emails.push(emailData);
   SCRIPT_PROPERTIES.setProperty(PENDING_EMAILS_KEY, JSON.stringify(emails));
 }
 
@@ -225,51 +188,49 @@ function getEmail(id) {
   return getAllEmails().find(e => e.id === id);
 }
 
-function cleanupOldEmails() {
+function deleteEmailFromQueue(emailId) {
   const emails = getAllEmails();
-  const now = new Date();
-  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const filtered = emails.filter(e => e.id !== emailId);
+  SCRIPT_PROPERTIES.setProperty(PENDING_EMAILS_KEY, JSON.stringify(filtered));
+  Logger.log("Removed from queue: " + emailId);
+}
 
-  const emailsToKeep = emails.filter(email => {
-    if (email.status === 'scheduled') return true;
-    if (email.sentAt && new Date(email.sentAt) > oneDayAgo) return true;
-    if (email.failedAt && new Date(email.failedAt) > oneDayAgo) return true;
-    return false;
-  });
+function cancelEmail(id) {
+  const emails = getAllEmails().filter(e => e.id !== id);
+  SCRIPT_PROPERTIES.setProperty(PENDING_EMAILS_KEY, JSON.stringify(emails));
+  return { success: true };
+}
 
-  if (emails.length !== emailsToKeep.length) {
-    SCRIPT_PROPERTIES.setProperty(PENDING_EMAILS_KEY, JSON.stringify(emailsToKeep));
-    Logger.log(`Cleaned up ${emails.length - emailsToKeep.length} old emails`);
+
+// =====================================================
+// TRIGGER MANAGEMENT
+// =====================================================
+
+function ensureTrigger() {
+
+  const triggers = ScriptApp.getProjectTriggers();
+  const exists = triggers.some(t => t.getHandlerFunction() === 'sendScheduledEmail');
+
+  if (!exists) {
+    ScriptApp.newTrigger('sendScheduledEmail')
+      .timeBased()
+      .everyMinutes(1)
+      .create();
+
+    Logger.log("Trigger created");
   }
 }
 
-// ==============================================
-// TRIGGERS
-// ==============================================
 
-function setupRecurringTrigger() {
-  ScriptApp.newTrigger('sendScheduledEmail')
-    .timeBased()
-    .everyMinutes(1)
-    .create();
-}
-
-function createTrigger() {
-  const triggers = ScriptApp.getProjectTriggers();
-  const exists = triggers.some(t => t.getHandlerFunction() === 'sendScheduledEmail');
-  if (!exists) setupRecurringTrigger();
-}
-
-// ==============================================
+// =====================================================
 // UTILITIES
-// ==============================================
+// =====================================================
 
 function generateEmailId() {
   const counter = parseInt(SCRIPT_PROPERTIES.getProperty(EMAIL_COUNTER_KEY) || '0');
   const newCounter = counter + 1;
   SCRIPT_PROPERTIES.setProperty(EMAIL_COUNTER_KEY, newCounter.toString());
-
-  return `EMAIL_${Date.now()}_${newCounter}`;
+  return "EMAIL_" + Date.now() + "_" + newCounter;
 }
 
 function createResponse(statusCode, data) {
@@ -282,12 +243,14 @@ function createResponse(statusCode, data) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ==============================================
-// WEBHOOK NOTIFICATION
-// ==============================================
+
+// =====================================================
+// WEBHOOK BACKEND NOTIFY
+// =====================================================
 
 function notifyBackend(emailId, status, emailData) {
   try {
+
     const webhookUrl = 'https://ti.eagleyesoc.ai/api/emails/apps-script-webhook';
 
     const payload = {
@@ -296,22 +259,27 @@ function notifyBackend(emailId, status, emailData) {
       trackingId: emailData.trackingId,
       advisoryId: emailData.advisoryId,
       clientId: emailData.clientId,
-      timestamp: new Date().toISOString(),
-      errorMessage: emailData.error || null
+      timestamp: new Date().toISOString()
     };
 
-    Logger.log(`Notifying backend: ${emailId} - ${status}`);
-
-    const response = UrlFetchApp.fetch(webhookUrl, {
+    UrlFetchApp.fetch(webhookUrl, {
       method: 'post',
       contentType: 'application/json',
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
     });
 
-    Logger.log(`Backend response: ${response.getResponseCode()}`);
-
   } catch (error) {
-    Logger.log('Webhook error: ' + error.toString());
+    Logger.log("Webhook error: " + error);
   }
+}
+
+
+// =====================================================
+// RESET (RUN ONCE IF STORAGE FULL)
+// =====================================================
+
+function RESET_ALL_SCHEDULED_EMAILS() {
+  SCRIPT_PROPERTIES.deleteAllProperties();
+  Logger.log("Storage cleared.");
 }

@@ -1,6 +1,6 @@
 // Migration endpoint to update all scheduled emails with from field
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getUserFromRequest } from '@/lib/auth';
+import { verifyToken } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import ScheduledEmail from '@/models/ScheduledEmail';
 
@@ -10,13 +10,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Verify super admin authentication
-    const tokenPayload = getUserFromRequest(req);
-    
-    if (!tokenPayload) {
-      return res.status(401).json({ message: 'No valid token provided' });
-    }
-
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    const tokenPayload = verifyToken(token);
+    if (!tokenPayload) return res.status(401).json({ message: 'Invalid or expired token' });
     if (tokenPayload.role !== 'super_admin') {
       return res.status(403).json({ message: 'Super admin access required' });
     }

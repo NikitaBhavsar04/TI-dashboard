@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -274,6 +274,9 @@ export default function RawArticles() {
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
   const [loadingSimilar, setLoadingSimilar] = useState<{[key: string]: boolean}>({});
   const [expandedArticles, setExpandedArticles] = useState<{[key: string]: boolean}>({});
+  // Tracks article IDs whose similar articles have already been fetched for the current page.
+  // Cleared on page/filter changes so fresh data is loaded for new pages.
+  const fetchedSimilarIds = useRef<Set<string>>(new Set());
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
     pageSize: 25,
@@ -330,6 +333,9 @@ export default function RawArticles() {
     try {
       if (!background) {
         setLoading(true);
+        // Clear the similar-articles cache whenever we load a new set of articles
+        // (page change, filter change, etc.) so each new page fetches fresh data.
+        fetchedSimilarIds.current = new Set();
       }
       const currentPage = resetPage ? 1 : pagination.page;
       const params = new URLSearchParams({
@@ -392,6 +398,10 @@ export default function RawArticles() {
   };
 
   const fetchSimilarArticlesCount = async (articleId: string) => {
+    // Skip if we've already fetched similar articles for this article in the current page view.
+    if (fetchedSimilarIds.current.has(articleId)) return;
+    fetchedSimilarIds.current.add(articleId);
+
     try {
       setLoadingSimilar(prev => ({ ...prev, [articleId]: true }));
       

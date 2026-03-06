@@ -1,62 +1,7 @@
-// Webhook endpoint for Google Apps Script to notify when emails are sent
-import { connectDB } from '../../../lib/db';
-import ScheduledEmail from '../../../models/ScheduledEmail';
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  try {
-    const { emailId, status, trackingId, advisoryId, clientId, timestamp, errorMessage } = req.body;
-
-    console.log(`📥 Apps Script webhook received:`, {
-      emailId,
-      status,
-      trackingId,
-      advisoryId,
-      clientId,
-      timestamp
-    });
-
-    if (!emailId || !status) {
-      return res.status(400).json({ error: 'emailId and status are required' });
-    }
-
-    await connectDB();
-
-    // Find the email record by Apps Script email ID (not MongoDB _id)
-    const emailDoc = await ScheduledEmail.findOne({ appsScriptEmailId: emailId });
-
-    if (!emailDoc) {
-      console.error(`❌ Email not found with appsScriptEmailId: ${emailId}`);
-      console.error(`   This usually means the webhook is using the wrong ID or the email was deleted`);
-      return res.status(404).json({ error: 'Email not found' });
-    }
-
-    console.log(`📧 Found email document: ${emailDoc._id} for Apps Script ID: ${emailId}`);
-
-    // Update status based on Apps Script notification
-    emailDoc.status = status; // 'sent', 'failed', etc.
-    emailDoc.sentAt = new Date(timestamp || Date.now());
-    
-    if (errorMessage) {
-      emailDoc.errorMessage = errorMessage;
-    }
-
-    await emailDoc.save();
-
-    console.log(`✅ Email status updated via webhook: ${emailId} -> ${status}`);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Status updated successfully',
-      emailId,
-      status
-    });
-
-  } catch (error) {
-    console.error('❌ Webhook error:', error);
-    return res.status(500).json({ error: error.message });
-  }
+// This endpoint is no longer in use.
+// Email scheduling has been migrated from Google Apps Script to Agenda.js (SMTP/M365).
+export default function handler(req, res) {
+  return res.status(410).json({
+    error: 'This endpoint is no longer in use. Email scheduling now uses Agenda.js.'
+  });
 }
