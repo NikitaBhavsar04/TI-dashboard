@@ -197,27 +197,27 @@ import {
 
 
 const ArticleListSkeleton = () => (
-  <div className="space-y-4">
+  <div className="space-y-3">
     {[1, 2, 3, 4, 5].map((i) => (
       <div key={i} className="glass-panel-hover p-4 border border-slate-700/50 rounded-lg">
-        <div className="flex justify-between items-start mb-4">
-          <div className="w-3/4 space-y-3">
+        <div className="flex justify-between items-start mb-2">
+          <div className="w-3/4 space-y-2">
             <div className="flex space-x-2 items-center">
-              <div className="h-5 bg-slate-700/70 rounded w-16 animate-pulse"></div>
-              <div className="h-5 bg-slate-700/70 rounded w-20 animate-pulse"></div>
-              <div className="h-5 bg-slate-700/70 rounded w-28 animate-pulse"></div>
+              <div className="h-4 bg-slate-700/70 rounded w-16 animate-pulse"></div>
+              <div className="h-4 bg-slate-700/70 rounded w-20 animate-pulse"></div>
+              <div className="h-4 bg-slate-700/70 rounded w-28 animate-pulse"></div>
             </div>
-            <div className="h-5 bg-slate-700/70 rounded w-3/4 animate-pulse"></div>
-            <div className="h-4 bg-slate-700/50 rounded w-5/6 animate-pulse"></div>
+            <div className="h-4 bg-slate-700/70 rounded w-3/4 animate-pulse"></div>
+            <div className="h-3 bg-slate-700/50 rounded w-5/6 animate-pulse"></div>
           </div>
-          <div className="h-8 bg-slate-700/70 rounded w-16 flex-shrink-0 animate-pulse"></div>
+          <div className="h-7 bg-slate-700/70 rounded w-16 flex-shrink-0 animate-pulse"></div>
         </div>
-        <div className="flex justify-between items-center pt-3 border-t border-slate-700/30">
+        <div className="flex justify-between items-center pt-2 border-t border-slate-700/30">
           <div className="flex space-x-3">
-            <div className="h-4 bg-slate-700/60 rounded w-20 animate-pulse"></div>
-            <div className="h-4 bg-slate-700/60 rounded w-28 animate-pulse"></div>
+            <div className="h-3 bg-slate-700/60 rounded w-20 animate-pulse"></div>
+            <div className="h-3 bg-slate-700/60 rounded w-28 animate-pulse"></div>
           </div>
-          <div className="h-4 bg-slate-700/60 rounded w-32 animate-pulse"></div>
+          <div className="h-3 bg-slate-700/60 rounded w-32 animate-pulse"></div>
         </div>
       </div>
     ))}
@@ -568,18 +568,18 @@ export default function RawArticles() {
 
           {/* Modern Sticky Header */}
           <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50 shadow-2xl">
-            <div className="w-full mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 2xl:px-16 py-4">
+            <div className="w-full px-2 sm:px-3 lg:px-4 py-3">
               <div className="flex items-center justify-between">
                 {/* Left: Title & Description */}
                 <div className="flex items-center space-x-4">
                   <div className="p-2 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl backdrop-blur-sm border border-cyan-500/30">
-                    <FileText className="h-6 w-6 text-cyan-400" />
+                    <FileText className="h-5 w-5 text-cyan-400" />
                   </div>
                   <div>
-                    <h1 className="font-orbitron font-bold text-2xl md:text-3xl bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                    <h1 className="font-orbitron font-bold text-xl md:text-2xl bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                       Raw Articles Feed
                     </h1>
-                    <p className="font-rajdhani text-base text-slate-400 mt-1">
+                    <p className="font-rajdhani text-sm text-slate-400 mt-0.5">
                       Real-time threat intelligence from security sources
                     </p>
                   </div>
@@ -598,28 +598,28 @@ export default function RawArticles() {
             </div>
           </header>
 
-          <main className="w-full mx-auto px-3 sm:px-4 lg:px-8 xl:px-12 2xl:px-16 py-8">
+          <main className="w-full px-2 sm:px-3 lg:px-4 py-5">
 
             {/* Enhanced Stats Cards with Stagger Animation */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                 <SkeletonStatsCard />
                 <SkeletonStatsCard />
                 <SkeletonStatsCard />
                 <SkeletonStatsCard />
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                 {/* Total Articles */}
-                <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-cyan-900/20 border-2 border-cyan-500/30 rounded-lg p-4 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 card-hover-enhanced">
-                  <div className="flex items-center justify-between mb-3">
+                <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-cyan-900/20 border-2 border-cyan-500/30 rounded-lg p-3 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 card-hover-enhanced">
+                  <div className="flex items-center justify-between mb-2">
                     <p className="text-slate-400 text-sm">Total Articles</p>
-                    <div className="p-2 bg-gradient-to-br from-cyan-500/30 to-cyan-500/10 border border-cyan-500/20 rounded-lg">
+                    <div className="p-1.5 bg-gradient-to-br from-cyan-500/30 to-cyan-500/10 border border-cyan-500/20 rounded-lg">
                       <FileText className="h-4 w-4 text-cyan-400" />
                     </div>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-white mb-1">
+                    <p className="text-2xl font-bold text-white mb-0.5">
                       {totalArticles}
                     </p>
                     <p className="text-cyan-400 text-xs">
@@ -629,15 +629,15 @@ export default function RawArticles() {
                 </div>
 
                 {/* Current Page */}
-                <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-orange-900/20 border-2 border-orange-500/30 rounded-lg p-4 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 card-hover-enhanced">
-                  <div className="flex items-center justify-between mb-3">
+                <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-orange-900/20 border-2 border-orange-500/30 rounded-lg p-3 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 card-hover-enhanced">
+                  <div className="flex items-center justify-between mb-2">
                     <p className="text-slate-400 text-sm">Current Page</p>
-                    <div className="p-2 bg-gradient-to-br from-orange-500/30 to-orange-500/10 border border-orange-500/20 rounded-lg">
+                    <div className="p-1.5 bg-gradient-to-br from-orange-500/30 to-orange-500/10 border border-orange-500/20 rounded-lg">
                       <FileText className="h-4 w-4 text-orange-400" />
                     </div>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white mb-1">
+                  <p className="text-2xl font-bold text-white mb-0.5">
                     {articles.length}
                   </p>
                   <p className="text-orange-400 text-xs">
@@ -647,15 +647,15 @@ export default function RawArticles() {
               </div>
 
               {/* CVEs Count */}
-              <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-purple-900/20 border-2 border-purple-500/30 rounded-lg p-4 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 card-hover-enhanced">
-                <div className="flex items-center justify-between mb-3">
+              <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-purple-900/20 border-2 border-purple-500/30 rounded-lg p-3 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 card-hover-enhanced">
+                <div className="flex items-center justify-between mb-2">
                   <p className="text-slate-400 text-sm">CVEs Detected</p>
-                  <div className="p-2 bg-gradient-to-br from-purple-500/30 to-purple-500/10 border border-purple-500/20 rounded-lg">
+                  <div className="p-1.5 bg-gradient-to-br from-purple-500/30 to-purple-500/10 border border-purple-500/20 rounded-lg">
                     <Hash className="h-4 w-4 text-purple-400" />
                   </div>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-white mb-1">
+                  <p className="text-2xl font-bold text-white mb-0.5">
                     {articles.reduce((sum, a) => sum + (Array.isArray(a.cves) ? a.cves.length : 0), 0)}
                   </p>
                   <p className="text-purple-400 text-xs">
@@ -665,15 +665,15 @@ export default function RawArticles() {
               </div>
 
               {/* Last Fetched */}
-              <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-green-900/20 border-2 border-green-500/30 rounded-lg p-4 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 card-hover-enhanced">
-                <div className="flex items-center justify-between mb-3">
+              <div className="stagger-item backdrop-blur-md bg-gradient-to-br from-slate-800/50 to-green-900/20 border-2 border-green-500/30 rounded-lg p-3 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 card-hover-enhanced">
+                <div className="flex items-center justify-between mb-2">
                   <p className="text-slate-400 text-sm">Last Fetched</p>
-                  <div className="p-2 bg-gradient-to-br from-green-500/30 to-green-500/10 border border-green-500/20 rounded-lg">
+                  <div className="p-1.5 bg-gradient-to-br from-green-500/30 to-green-500/10 border border-green-500/20 rounded-lg">
                     <Clock className="h-4 w-4 text-green-400" />
                   </div>
                 </div>
                 <div>
-                  <p className="text-white text-lg font-semibold mb-1">
+                  <p className="text-white text-base font-semibold mb-0.5">
                     {lastFetched ? new Date(lastFetched).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never'}
                   </p>
                   <p className="text-green-400 text-xs">
@@ -685,37 +685,37 @@ export default function RawArticles() {
             )}
 
             {/* Professional Search & Filter Section */}
-            <div className="backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 mb-6 shadow-2xl">
-              <div className="flex items-center justify-between mb-4">
+            <div className="backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-2xl p-4 mb-4 shadow-2xl">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-500/20 border border-blue-400/30 rounded-lg">
-                    <Search className="h-5 w-5 text-blue-400" />
+                  <div className="p-1.5 bg-blue-500/20 border border-blue-400/30 rounded-lg">
+                    <Search className="h-4 w-4 text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Search & Filter</h3>
-                    <p className="text-slate-400 text-sm">Find specific articles by date, source, or status</p>
+                    <h3 className="text-base font-bold text-white">Search & Filter</h3>
+                    <p className="text-slate-400 text-xs">Find specific articles by date, source, or status</p>
                   </div>
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Search articles, sources, CVEs..."
                     value={searchQuery}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all text-sm"
+                    className="w-full pl-10 pr-3 py-2 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all text-sm"
                   />
                 </div>
 
                 <div className="relative">
-                  <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <select
                     value={filterTimeRange}
                     onChange={(e) => handleTimeRangeChange(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all appearance-none cursor-pointer text-sm"
+                    className="w-full pl-10 pr-3 py-2 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all appearance-none cursor-pointer text-sm"
                     title="Filter by time range"
                   >
                     <option value="all">All Time</option>
@@ -724,19 +724,19 @@ export default function RawArticles() {
                     <option value="last7days">Last 7 Days</option>
                     <option value="custom">Custom Range</option>
                   </select>
-                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
                 </div>
 
                 <div className="relative">
-                  <Globe className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <select
                     value={filterSource}
                     onChange={(e) => handleSourceChange(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all appearance-none cursor-pointer text-sm"
+                    className="w-full pl-10 pr-3 py-2 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all appearance-none cursor-pointer text-sm"
                     title="Filter by source"
                   >
                     <option value="all">All Sources</option>
@@ -744,19 +744,19 @@ export default function RawArticles() {
                     <option value="reddit">Reddit</option>
                     <option value="telegram">Telegram</option>
                   </select>
-                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
                 </div>
 
                 <div className="relative">
-                  <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <select
                     value={filterStatus}
                     onChange={(e) => handleFilterChange(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all appearance-none cursor-pointer text-sm"
+                    className="w-full pl-10 pr-3 py-2 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all appearance-none cursor-pointer text-sm"
                     title="Filter by status"
                   >
                     <option value="all">All Status</option>
@@ -764,8 +764,8 @@ export default function RawArticles() {
                     <option value="PROCESSED">Processed</option>
                     <option value="REJECTED">Rejected</option>
                   </select>
-                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -774,14 +774,14 @@ export default function RawArticles() {
 
               {/* Custom Date Range Inputs */}
               {filterTimeRange === 'custom' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-700/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-slate-700/50">
                   <div>
                     <label className="block text-slate-400 text-sm mb-2">From Date</label>
                     <input
                       type="date"
                       value={customDateFrom}
                       onChange={(e) => handleCustomDateChange(e.target.value, customDateTo)}
-                      className="w-full px-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all text-sm"
+                      className="w-full px-3 py-2 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all text-sm"
                     />
                   </div>
                   <div>
@@ -790,7 +790,7 @@ export default function RawArticles() {
                       type="date"
                       value={customDateTo}
                       onChange={(e) => handleCustomDateChange(customDateFrom, e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all text-sm"
+                      className="w-full px-3 py-2 bg-slate-900/70 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 transition-all text-sm"
                     />
                   </div>
                 </div>
@@ -798,10 +798,10 @@ export default function RawArticles() {
             </div>
 
             {/* Enhanced Pagination Info */}
-            <div className="backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 mb-6">
+            <div className="backdrop-blur-sm bg-slate-800/40 border border-slate-700/50 rounded-xl p-3 mb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="px-3 py-1 bg-cyan-500/10 border border-cyan-400/30 rounded-lg">
+                  <div className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-400/30 rounded-lg">
                     <span className="text-slate-400 text-sm">Showing</span>
                     <span className="text-white font-bold mx-1">{((pagination.page - 1) * pagination.pageSize) + 1}</span>
                     <span className="text-slate-400 text-sm">to</span>
@@ -811,7 +811,7 @@ export default function RawArticles() {
                     <span className="text-slate-400 text-sm ml-1">articles</span>
                   </div>
                 </div>
-                <div className="px-3 py-1 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+                <div className="px-2 py-0.5 bg-blue-500/10 border border-blue-400/30 rounded-lg">
                   <span className="text-slate-400 text-sm">Page</span>
                   <span className="text-white font-bold mx-1">{pagination.page}</span>
                   <span className="text-slate-400 text-sm">of</span>
@@ -825,12 +825,12 @@ export default function RawArticles() {
               {loading ? (
                 <ArticleListSkeleton />
               ) : articles.length === 0 ? (
-                <div className="glass-panel-hover p-8 text-center">
-                  <FileText className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-                  <h3 className="text-xl font-orbitron font-bold text-slate-400 mb-2">
+                <div className="glass-panel-hover p-6 text-center">
+                  <FileText className="h-12 w-12 text-slate-600 mx-auto mb-3" />
+                  <h3 className="text-lg font-orbitron font-bold text-slate-400 mb-1.5">
                     No Articles Found
                   </h3>
-                  <p className="text-slate-500 font-rajdhani mb-6">
+                  <p className="text-slate-500 font-rajdhani mb-4">
                     {totalArticles === 0 
                       ? 'Click "Fetch New Articles" to start collecting data'
                       : 'Try adjusting your search or filter criteria'
@@ -953,8 +953,8 @@ export default function RawArticles() {
 
                   {/* Expandable Similar Articles Section */}
                   {isExpanded && article.similarArticles && article.similarArticles.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-slate-700/50">
-                      <h4 className="text-xs font-rajdhani font-bold text-cyan-400 mb-2 flex items-center">
+                    <div className="mt-2 pt-2 border-t border-slate-700/50">
+                      <h4 className="text-xs font-rajdhani font-bold text-cyan-400 mb-1.5 flex items-center">
                         <FileText className="h-3 w-3 mr-1" />
                         Similar Articles ({article.similarArticles.length})
                       </h4>
@@ -981,19 +981,19 @@ export default function RawArticles() {
 
             {/* Pagination Controls */}
             {articles.length > 0 && (
-              <div className="glass-panel-hover p-3 mt-4">
+              <div className="glass-panel-hover p-2 mt-3">
                 <div className="flex items-center justify-between">
                   <button
                     onClick={goToPrevPage}
                     disabled={!pagination.hasPrev || loading}
-                    className="flex items-center space-x-2 px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-rajdhani font-medium text-sm"
+                    className="flex items-center space-x-2 px-3 py-1.5 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:bg-slate-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-rajdhani font-medium text-sm"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     <span>Previous</span>
                   </button>
 
                   <div className="text-center">
-                    <div className="text-white font-orbitron font-bold text-base">
+                    <div className="text-white font-orbitron font-bold text-sm">
                       Page {pagination.page} of {pagination.totalPages}
                     </div>
                     <div className="text-slate-400 font-rajdhani text-xs mt-0.5">
@@ -1004,7 +1004,7 @@ export default function RawArticles() {
                   <button
                     onClick={goToNextPage}
                     disabled={!pagination.hasMore || loading}
-                    className="flex items-center space-x-2 px-4 py-2 bg-neon-blue/10 border border-neon-blue/30 rounded-lg text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-rajdhani font-medium text-sm"
+                    className="flex items-center space-x-2 px-3 py-1.5 bg-neon-blue/10 border border-neon-blue/30 rounded-lg text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-rajdhani font-medium text-sm"
                   >
                     <span>Next</span>
                     <ArrowLeft className="h-4 w-4 rotate-180" />

@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { Eye, EyeOff, User, Lock, Shield, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, Shield } from 'lucide-react';
 import HydrationSafe from '@/components/HydrationSafe';
 import LoadingLogo from '@/components/LoadingLogo';
 import { motion } from 'framer-motion';
@@ -174,11 +174,7 @@ export default function Login() {
                 {isLoading ? (
                   <div className="spinner-neon w-4 h-4"></div>
                 ) : (
-                  <>
-                    <Lock className="w-4 h-4 group-hover:drop-shadow-[0_0_8px_rgba(0,212,255,0.8)] transition-all duration-300" />
-                    <span>Access Platform</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-300" />
-                  </>
+                  <span>Access Platform</span>
                 )}
               </button>
             </form>

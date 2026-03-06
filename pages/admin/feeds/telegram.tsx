@@ -155,45 +155,45 @@ export default function TelegramFeedsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
       
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 py-6">
+      <div className="relative z-10 w-full px-2 sm:px-3 lg:px-4 py-4">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-5"
         >
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-3">
             <div className="p-2 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 rounded-xl backdrop-blur-sm border border-blue-500/30">
-              <Radio className="h-6 w-6 text-blue-400" />
+              <Radio className="h-5 w-5 text-blue-400" />
             </div>
             <div>
-              <h1 className="font-orbitron font-bold text-2xl md:text-3xl bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+              <h1 className="font-orbitron font-bold text-xl md:text-2xl bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                 Telegram Feed Sources
               </h1>
-              <p className="font-rajdhani text-base text-slate-400 mt-1">
+              <p className="font-rajdhani text-sm text-slate-400 mt-1">
                 Manage Telegram channels for real-time threat intelligence updates
               </p>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
-            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-3 border border-gray-700/50">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-sm">Total Channels</p>
-                  <p className="text-2xl font-bold text-blue-400 mt-1">{channels.length}</p>
+                  <p className="text-xl font-bold text-blue-400 mt-1">{channels.length}</p>
                 </div>
-                <Radio className="h-10 w-10 text-blue-400/30" />
+                <Radio className="h-8 w-8 text-blue-400/30" />
               </div>
             </div>
-            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
+            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-3 border border-gray-700/50">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-sm">Active Channels</p>
-                  <p className="text-2xl font-bold text-green-400 mt-1">{activeChannels}</p>
+                  <p className="text-xl font-bold text-green-400 mt-1">{activeChannels}</p>
                 </div>
-                <CheckCircle className="h-10 w-10 text-green-400/30" />
+                <CheckCircle className="h-8 w-8 text-green-400/30" />
               </div>
             </div>
           </div>
@@ -203,10 +203,10 @@ export default function TelegramFeedsPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-5"
         >
-          <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-3 border border-gray-700/50">
+            <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
               <Plus className="h-4 w-4 text-blue-400" />
               Add New Telegram Channel
             </h2>
@@ -216,13 +216,13 @@ export default function TelegramFeedsPage() {
                 value={newChannel}
                 onChange={(e) => setNewChannel(e.target.value)}
                 placeholder="Enter Telegram channel name (e.g., IsacaRuSec)"
-                className="flex-1 px-4 py-2.5 bg-black/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                className="flex-1 px-4 py-2 bg-black/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                 disabled={adding}
               />
               <button
                 type="submit"
                 disabled={adding || !newChannel.trim()}
-                className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {adding ? (
                   <>
@@ -244,7 +244,7 @@ export default function TelegramFeedsPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mb-6"
+          className="mb-4"
         >
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -253,7 +253,7 @@ export default function TelegramFeedsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search Telegram channels..."
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors backdrop-blur-sm"
+              className="w-full pl-10 pr-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors backdrop-blur-sm"
             />
           </div>
         </motion.div>
@@ -265,25 +265,25 @@ export default function TelegramFeedsPage() {
           transition={{ delay: 0.2 }}
         >
           {loading ? (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-12">
               <LoadingLogo message="Loading Telegram channels..." />
             </div>
           ) : filteredChannels.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
-              <Radio className="h-12 w-12 mx-auto mb-4 opacity-30" />
+              <Radio className="h-10 w-10 mx-auto mb-3 opacity-30" />
               <p className="text-lg">
                 {searchQuery ? 'No Telegram channels found matching your search' : 'No Telegram channels configured yet'}
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {filteredChannels.map((ch, index) => (
                 <motion.div
                   key={ch.channel}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className={`bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-4 border transition-all group ${
+                  className={`bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-3 border transition-all group ${
                     ch.enabled 
                       ? 'border-gray-700/50 hover:border-blue-500/50' 
                       : 'border-gray-800/50 opacity-60 hover:opacity-80'

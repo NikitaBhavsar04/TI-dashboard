@@ -254,7 +254,7 @@ export default function RawArticleDetail() {
 
           {/* Header */}
           <div className="glass-panel border-b border-slate-700/50">
-            <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="w-full px-3 sm:px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <Link href="/admin/raw-articles">
@@ -269,16 +269,16 @@ export default function RawArticleDetail() {
                   <button
                     onClick={handleGenerateAdvisory}
                     disabled={generating}
-                    className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-neon-blue/20 to-purple-500/20 border border-neon-blue/30 rounded-lg text-white hover:from-neon-blue/30 hover:to-purple-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-orbitron font-bold shadow-lg shadow-neon-blue/20"
+                    className="flex items-center space-x-2 px-5 py-2 bg-gradient-to-r from-neon-blue/20 to-purple-500/20 border border-neon-blue/30 rounded-lg text-white hover:from-neon-blue/30 hover:to-purple-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-orbitron font-bold shadow-lg shadow-neon-blue/20"
                   >
                     {generating ? (
                       <>
-                        <Loader className="h-5 w-5 animate-spin" />
+                        <Loader className="h-4 w-4 animate-spin" />
                         <span>Generating...</span>
                       </>
                     ) : (
                       <>
-                        <Zap className="h-5 w-5" />
+                        <Zap className="h-4 w-4" />
                         <span>Generate Advisory</span>
                       </>
                     )}
@@ -287,9 +287,9 @@ export default function RawArticleDetail() {
                     href={article.article_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-2 px-6 py-3 bg-neon-blue/10 border border-neon-blue/30 rounded-lg text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 font-rajdhani font-medium"
+                    className="flex items-center space-x-2 px-5 py-2 bg-neon-blue/10 border border-neon-blue/30 rounded-lg text-neon-blue hover:bg-neon-blue/20 transition-all duration-200 font-rajdhani font-medium"
                   >
-                    <ExternalLink className="h-5 w-5" />
+                    <ExternalLink className="h-4 w-4" />
                     <span>View Original</span>
                   </a>
                 </div>
@@ -297,12 +297,12 @@ export default function RawArticleDetail() {
             </div>
           </div>
 
-          <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="w-full px-3 sm:px-4 py-5">
             {/* Article Header */}
-            <div className="glass-panel-hover p-8 mb-6">
-              <div className="flex items-start justify-between mb-6">
+            <div className="glass-panel-hover p-5 mb-4">
+              <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-4">
+                  <div className="flex items-center space-x-3 mb-3">
                     <span className={`px-3 py-1 rounded-lg text-xs font-rajdhani font-medium border ${getStatusColor(article.status)}`}>
                       {article.status}
                     </span>
@@ -315,19 +315,19 @@ export default function RawArticleDetail() {
                       Published: {formatDate(article.published)}
                     </span>
                   </div>
-                  <h1 className="text-3xl font-orbitron font-bold text-white mb-4 break-words">
+                  <h1 className="text-2xl font-orbitron font-bold text-white mb-3 break-words">
                     {article.title}
                   </h1>
 
                   {/* CVEs */}
                   {article.cves.length > 0 && (
-                    <div className="flex items-center space-x-2 mb-4">
-                      <Hash className="h-5 w-5 text-purple-400" />
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Hash className="h-4 w-4 text-purple-400" />
                       <div className="flex flex-wrap gap-2">
                         {article.cves.map((cve) => (
                           <span
                             key={cve}
-                            className="px-3 py-1 bg-purple-500/20 border border-purple-400/30 rounded text-purple-300 text-sm font-rajdhani font-medium break-all"
+                            className="px-2 py-0.5 bg-purple-500/20 border border-purple-400/30 rounded text-purple-300 text-xs font-rajdhani font-medium break-all"
                           >
                             {cve}
                           </span>
@@ -339,7 +339,7 @@ export default function RawArticleDetail() {
               </div>
 
               {/* Metadata */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-700/50">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-slate-700/50">
                 <div className="flex items-center space-x-2 text-slate-400 font-rajdhani text-sm">
                   <Clock className="h-4 w-4" />
                   <span>Fetched: {formatDate(article.fetched_at)}</span>
@@ -360,31 +360,31 @@ export default function RawArticleDetail() {
             </div>
 
             {/* Article Content */}
-            <div className="glass-panel-hover p-8 mb-6">
-              <h2 className="text-xl font-orbitron font-bold text-white mb-4 flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-neon-blue" />
+            <div className="glass-panel-hover p-5 mb-4">
+              <h2 className="text-lg font-orbitron font-bold text-white mb-3 flex items-center">
+                <FileText className="h-4 w-4 mr-2 text-neon-blue" />
                 Article Content
               </h2>
-              <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap break-words">
+              <div className="text-slate-300 font-rajdhani text-base leading-relaxed whitespace-pre-wrap break-words text-justify max-w-full px-2">
                 {article.article_text}
               </div>
             </div>
 
             {/* Nested Links */}
             {article.nested_links.length > 0 && (
-              <div className="glass-panel-hover p-8 mb-6">
-                <h2 className="text-xl font-orbitron font-bold text-white mb-4 flex items-center">
-                  <LinkIcon className="h-5 w-5 mr-2 text-neon-blue" />
+              <div className="glass-panel-hover p-5 mb-4">
+                <h2 className="text-lg font-orbitron font-bold text-white mb-3 flex items-center">
+                  <LinkIcon className="h-4 w-4 mr-2 text-neon-blue" />
                   Nested Links ({article.nested_links.length})
                 </h2>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {article.nested_links.map((link, index) => (
                     <a
                       key={index}
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center space-x-2 p-3 bg-slate-900/50 rounded-lg border border-slate-700/50 hover:border-neon-blue/30 transition-all duration-200 group max-w-full"
+                      className="flex items-center space-x-2 p-2 bg-slate-900/50 rounded-lg border border-slate-700/50 hover:border-neon-blue/30 transition-all duration-200 group max-w-full"
                     >
                       <ExternalLink className="h-4 w-4 text-neon-blue flex-shrink-0" />
                       <span className="text-slate-300 font-rajdhani text-sm group-hover:text-neon-blue transition-colors truncate break-all">
@@ -398,9 +398,9 @@ export default function RawArticleDetail() {
 
             {/* Similar Articles */}
             {article.cves.length > 0 && (
-              <div className="glass-panel-hover p-8">
-                <h2 className="text-xl font-orbitron font-bold text-white mb-4 flex items-center">
-                  <AlignLeft className="h-5 w-5 mr-2 text-purple-400" />
+              <div className="glass-panel-hover p-5">
+                <h2 className="text-lg font-orbitron font-bold text-white mb-3 flex items-center">
+                  <AlignLeft className="h-4 w-4 mr-2 text-purple-400" />
                   Similar Articles
                   {loadingSimilar && (
                     <Loader className="h-4 w-4 ml-2 animate-spin text-purple-400" />
@@ -408,19 +408,19 @@ export default function RawArticleDetail() {
                 </h2>
                 
                 {loadingSimilar ? (
-                  <div className="text-center py-8">
+                  <div className="text-center py-6">
                     <div className="text-slate-400 font-rajdhani">
                       Finding similar articles based on CVEs...
                     </div>
                   </div>
                 ) : similarArticles.length > 0 ? (
-                  <div className="space-y-3">
-                    <p className="text-slate-400 font-rajdhani text-sm mb-4">
+                  <div className="space-y-2">
+                    <p className="text-slate-400 font-rajdhani text-sm mb-3">
                       Found {similarArticles.length} article{similarArticles.length !== 1 ? 's' : ''} with matching CVEs from different sources
                     </p>
                     {similarArticles.map((similar) => (
                       <Link key={similar.id} href={`/admin/raw-articles/${similar.id}`}>
-                        <div className="flex items-center space-x-3 p-4 bg-slate-900/50 rounded-lg border border-slate-700/50 hover:border-purple-400/40 transition-all duration-200 cursor-pointer group">
+                        <div className="flex items-center space-x-3 p-3 bg-slate-900/50 rounded-lg border border-slate-700/50 hover:border-purple-400/40 transition-all duration-200 cursor-pointer group">
                           <FileText className="h-4 w-4 text-purple-400 flex-shrink-0 group-hover:text-purple-300" />
                           <p className="text-slate-200 font-rajdhani text-sm group-hover:text-white transition-colors flex-1">
                             {similar.title}
@@ -431,7 +431,7 @@ export default function RawArticleDetail() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 bg-slate-900/30 rounded-lg border border-slate-700/30">
+                  <div className="text-center py-6 bg-slate-900/30 rounded-lg border border-slate-700/30">
                     <FileText className="h-12 w-12 text-slate-600 mx-auto mb-3 opacity-50" />
                     <p className="text-slate-400 font-rajdhani">
                       No similar articles found with matching CVEs

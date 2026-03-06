@@ -215,26 +215,26 @@ export default function EagleNestDetail() {
 
   return (
     <HydrationSafe>
-      <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-20">
+      <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="relative z-10">
           <Head>
             <title>{advisory.title} - Eagle Nest - EaglEye IntelDesk</title>
           </Head>
 
           {/* Header */}
-          <div className="glass-panel border-b border-slate-700/50 py-6">
-            <div className="max-w-7xl mx-auto px-6">
+          <div className="glass-panel border-b border-slate-700/50 py-2">
+            <div className="max-w-full mx-auto px-3 sm:px-4">
               <div className="flex items-center justify-between">
                 {/* Left Logo */}
                 <div className="flex items-center space-x-3">
                   <img 
                     src="/forensiccybertech-logo.png" 
                     alt="Forensic Cyber Tech" 
-                    className="h-10 w-auto"
+                    className="h-8 w-auto"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
-                  <div className="hidden sm:block">
-                    <div className="font-orbitron font-bold text-neon-blue text-lg">
+                  <div className="hidden md:block">
+                    <div className="font-orbitron font-bold text-neon-blue text-base">
                       Forensic Cyber Tech
                     </div>
                     <div className="font-rajdhani text-xs text-slate-400">
@@ -245,8 +245,8 @@ export default function EagleNestDetail() {
 
                 {/* Right Logo */}
                 <div className="flex items-center space-x-3">
-                  <div className="hidden sm:block text-right">
-                    <div className="font-orbitron font-bold text-neon-purple text-lg">
+                  <div className="hidden md:block text-right">
+                    <div className="font-orbitron font-bold text-neon-purple text-base">
                       EaglEye IntelDesk
                     </div>
                     <div className="font-rajdhani text-xs text-slate-400">
@@ -256,7 +256,7 @@ export default function EagleNestDetail() {
                   <img 
                     src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiCL2GuXkm4vnkAnNz1yA4Kxlg-jjKIOdohivr_s_uCRQ5z1gYjlSJX139c7I-iR-2i3sCVQK3kmP3_ZRvvBezy_m5eB-sX9N3cn42lJbi5PveE90jfqPt4Luc52J6nU1MTIWZGkdBzT76fTVru6Wk8RafSOcgNzPumjNLay5fUxQ_YIihCHQ7Us1_-wVMV/s400/Eagleye-S.png" 
                     alt="EagleEye" 
-                    className="h-10 w-auto"
+                    className="h-8 w-auto"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                 </div>
@@ -266,23 +266,23 @@ export default function EagleNestDetail() {
 
           {/* Navigation */}
           <div className="sticky top-0 z-40 bg-cyber-gradient backdrop-blur-md border-b border-neon-blue/20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="max-w-full mx-auto px-3 sm:px-4 py-2">
               <div className="flex items-center justify-between">
                 <button 
                   onClick={() => router.push('/admin/eagle-nest')}
-                  className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105"
+                  className="flex items-center space-x-2 px-3 py-1.5 glass-panel-hover transition-all duration-300 hover:scale-105"
                 >
                   <ArrowLeft className="h-4 w-4 text-neon-blue" />
-                  <span className="text-white font-rajdhani font-medium">Back to Eagle Nest</span>
+                  <span className="text-white font-rajdhani font-medium text-sm">Back to Eagle Nest</span>
                 </button>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
                   {/* Send Email dropdown - Admin only */}
                   {hasRole('admin') && (
                     <div className="relative email-dropdown">
                       <button
                         onClick={() => setShowEmailDropdown(!showEmailDropdown)}
-                        className="relative flex items-center space-x-2 px-5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 hover:border-emerald-400/50 rounded-lg transition-all duration-300 hover:scale-105 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-400/40 backdrop-blur-sm group overflow-hidden"
+                        className="relative flex items-center space-x-2 px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 hover:border-emerald-400/50 rounded-lg transition-all duration-300 hover:scale-105 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-400/40 backdrop-blur-sm group overflow-hidden text-sm"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-300/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700"></div>
                         <Mail className="h-4 w-4 text-emerald-300 group-hover:text-emerald-200 relative z-10 transition-colors duration-300" />
@@ -321,10 +321,10 @@ export default function EagleNestDetail() {
 
                   <button 
                     onClick={() => copyToClipboard(JSON.stringify(advisory, null, 2), 'json')}
-                    className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105"
+                    className="flex items-center space-x-1.5 px-2.5 py-1.5 glass-panel-hover transition-all duration-300 hover:scale-105"
                   >
-                    <Copy className="h-4 w-4 text-neon-cyan" />
-                    <span className="hidden sm:inline text-white font-rajdhani font-medium">Copy JSON</span>
+                    <Copy className="h-3.5 w-3.5 text-neon-cyan" />
+                    <span className="hidden lg:inline text-white font-rajdhani font-medium text-sm">Copy JSON</span>
                   </button>
                   
                   <button 
@@ -337,36 +337,36 @@ export default function EagleNestDetail() {
                       linkElement.setAttribute('download', exportFileDefaultName);
                       linkElement.click();
                     }}
-                    className="flex items-center space-x-2 px-4 py-2 glass-panel-hover transition-all duration-300 hover:scale-105"
+                    className="flex items-center space-x-1.5 px-2.5 py-1.5 glass-panel-hover transition-all duration-300 hover:scale-105"
                   >
-                    <Download className="h-4 w-4 text-neon-cyan" />
-                    <span className="hidden sm:inline text-white font-rajdhani font-medium">Export JSON</span>
+                    <Download className="h-3.5 w-3.5 text-neon-cyan" />
+                    <span className="hidden lg:inline text-white font-rajdhani font-medium text-sm">Export JSON</span>
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="w-full mx-auto px-2 sm:px-3 lg:px-4 py-2">
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-3">
               
               {/* Main Content */}
-              <div className="lg:col-span-3 space-y-8">
+              <div className="xl:col-span-3 space-y-3">
                 
                 {/* Title and Metadata */}
                 <motion.div 
-                  className="glass-panel-hover p-8"
+                  className="glass-panel-hover p-3"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
                 >
-                  <div className="space-y-6">
+                  <div className="space-y-2">
                     <div>
-                      <h1 className="font-orbitron font-bold text-3xl lg:text-4xl text-white mb-4 leading-tight">
+                      <h1 className="font-orbitron font-bold text-xl sm:text-2xl lg:text-3xl text-white mb-2 leading-tight">
                         {advisory.title || 'Untitled Advisory'}
                       </h1>
                       
-                      <div className="flex flex-wrap items-center gap-4 mb-6">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
                         {advisory.criticality && (
                           <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border ${getCriticalityColor(advisory.criticality)}`}>
                             {getSeverityIcon(advisory.criticality)}
@@ -404,7 +404,7 @@ export default function EagleNestDetail() {
                     </div>
 
                     {/* Quick Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t border-slate-700/50">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-700/50">
                       {advisory.threat_type && (
                         <div className="flex items-start space-x-3">
                           <AlertTriangle className="h-5 w-5 text-orange-400 mt-0.5" />
@@ -448,8 +448,8 @@ export default function EagleNestDetail() {
 
                     {/* CVEs */}
                     {advisory.cves && advisory.cves.length > 0 && (
-                      <div className="mt-6">
-                        <label className="block text-slate-400 font-rajdhani text-sm mb-4">CVE IDENTIFIERS</label>
+                      <div className="mt-3">
+                        <label className="block text-slate-400 font-rajdhani text-sm mb-2">CVE IDENTIFIERS</label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                           {advisory.cves.map((cve: string, index: number) => (
                             <div key={index} className="flex items-center justify-between p-3 bg-orange-500/10 border border-orange-400/30 rounded-lg hover:border-orange-400/50 transition-all duration-200">
@@ -471,23 +471,19 @@ export default function EagleNestDetail() {
 
                     {/* CVSS Scores */}
                     {advisory.cvss && Object.keys(advisory.cvss).length > 0 && (
-                      <div className="mt-6">
-                        <label className="block text-slate-400 font-rajdhani text-sm mb-4">CVSS SCORES</label>
-                        <div className="space-y-3">
+                      <div className="mt-3">
+                        <label className="block text-slate-400 font-rajdhani text-sm mb-2">CVSS SCORES</label>
+                        <div className="space-y-2">
                           {Object.entries(advisory.cvss).map(([cve, data]: [string, any], index: number) => (
-                            <div key={index} className="flex items-center justify-between p-4 bg-cyan-500/10 border border-cyan-400/30 rounded-lg hover:border-cyan-400/50 transition-all duration-200">
+                            <div key={index} className="flex items-center justify-between p-3 bg-cyan-500/10 border border-cyan-400/30 rounded-lg hover:border-cyan-400/50 transition-all duration-200">
                               <div className="flex items-center space-x-3">
-                                <Shield className="h-5 w-5 text-cyan-400" />
-                                <div>
-                                  <div className="font-mono text-cyan-300 font-semibold">{cve}</div>
-                                  <div className="text-slate-400 text-xs font-rajdhani mt-1">{data.criticality || 'N/A'}</div>
-                                </div>
+                                <Shield className="h-4 w-4 text-cyan-400" />
+                                <span className="font-mono text-cyan-300 font-semibold text-sm">{cve}</span>
+                                <span className="text-slate-400 text-xs font-rajdhani uppercase">{data.criticality || 'N/A'}</span>
                               </div>
-                              <div className="flex items-center space-x-3">
-                                <div className="text-right">
-                                  <div className="text-white font-orbitron font-bold text-lg">{data.score || 'N/A'}</div>
-                                  <div className="text-slate-400 text-xs font-rajdhani">CVSS Score</div>
-                                </div>
+                              <div className="flex items-center space-x-1">
+                                <span className="text-white font-orbitron font-bold text-base">{data.score || 'N/A'}</span>
+                                <span className="text-slate-400 text-xs font-rajdhani">CVSS</span>
                               </div>
                             </div>
                           ))}
@@ -500,21 +496,21 @@ export default function EagleNestDetail() {
                 {/* Executive Summary */}
                 {advisory.exec_summary_parts && advisory.exec_summary_parts.length > 0 && (
                   <motion.div 
-                    className="glass-panel-hover p-8"
+                    className="glass-panel-hover p-3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
                   >
-                    <div className="flex items-center space-x-3 mb-6 p-4 bg-blue-500/10 border border-blue-400/30 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-400/50">
-                        <FileText className="h-5 w-5 text-blue-400" />
+                    <div className="flex items-center space-x-2 mb-3 p-2 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/50">
+                        <FileText className="h-4 w-4 text-blue-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white"> EXECUTIVE SUMMARY</h2>
+                      <h2 className="font-orbitron font-bold text-lg text-white">EXECUTIVE SUMMARY</h2>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                       {advisory.exec_summary_parts.map((part: string, index: number) => (
-                        <div key={index} className="prose prose-invert max-w-none bg-slate-800/30 border border-slate-600/50 rounded-lg p-6">
+                        <div key={index} className="prose prose-invert max-w-none bg-slate-800/30 border border-slate-600/50 rounded-lg p-3">
                           <p className="text-slate-300 font-rajdhani text-base leading-relaxed text-justify">
                             {part}
                           </p>
@@ -527,22 +523,22 @@ export default function EagleNestDetail() {
                 {/* Affected Systems & Targets */}
                 {(advisory.affected_product || advisory.sectors?.length > 0 || advisory.regions?.length > 0) && (
                   <motion.div 
-                    className="glass-panel-hover p-8"
+                    className="glass-panel-hover p-3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.25 }}
                   >
-                    <div className="flex items-center space-x-3 mb-6 p-4 bg-red-500/10 border border-red-400/30 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/20 border border-red-400/50">
-                        <Target className="h-5 w-5 text-red-400" />
+                    <div className="flex items-center space-x-2 mb-3 p-2 bg-red-500/10 border border-red-400/30 rounded-lg">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/20 border border-red-400/50">
+                        <Target className="h-4 w-4 text-red-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white">AFFECTED SYSTEMS & TARGETS</h2>
+                      <h2 className="font-orbitron font-bold text-lg text-white">AFFECTED SYSTEMS & TARGETS</h2>
                     </div>
 
                     {/* Affected Products */}
                     {advisory.affected_product && (
-                      <div className="mb-6">
-                        <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Affected Products</h3>
+                      <div className="mb-3">
+                        <h3 className="font-orbitron font-semibold text-base text-white mb-2">Affected Products</h3>
                         <div className="flex flex-wrap gap-2">
                           {advisory.affected_product.split(',').map((product: string, index: number) => (
                             <div key={index} className="px-3 py-1 rounded-full bg-red-500/20 border border-red-400/30 text-red-300 font-rajdhani text-sm">
@@ -555,8 +551,8 @@ export default function EagleNestDetail() {
 
                     {/* Target Sectors */}
                     {advisory.sectors && advisory.sectors.length > 0 && (
-                      <div className="mb-6">
-                        <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Target Sectors</h3>
+                      <div className="mb-3">
+                        <h3 className="font-orbitron font-semibold text-base text-white mb-2">Target Sectors</h3>
                         <div className="flex flex-wrap gap-2">
                           {advisory.sectors.map((sector: string, index: number) => (
                             <div key={index} className="px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-300 font-rajdhani text-sm">
@@ -570,7 +566,7 @@ export default function EagleNestDetail() {
                     {/* Regions */}
                     {advisory.regions && advisory.regions.length > 0 && (
                       <div>
-                        <h3 className="font-orbitron font-semibold text-lg text-white mb-4">Regions</h3>
+                        <h3 className="font-orbitron font-semibold text-base text-white mb-2">Regions</h3>
                         <div className="flex flex-wrap gap-2">
                           {advisory.regions.map((region: string, index: number) => (
                             <div key={index} className="flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 font-rajdhani text-sm">
@@ -587,39 +583,39 @@ export default function EagleNestDetail() {
                 {/* MITRE ATT&CK */}
                 {advisory.mitre && advisory.mitre.length > 0 && (
                   <motion.div 
-                    className="glass-panel-hover p-8"
+                    className="glass-panel-hover p-3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.3 }}
                   >
-                    <div className="flex items-center space-x-3 mb-6 p-4 bg-green-500/10 border border-green-400/30 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500/20 border border-green-400/50">
-                        <Shield className="h-5 w-5 text-green-400" />
+                    <div className="flex items-center space-x-2 mb-3 p-2 bg-green-500/10 border border-green-400/30 rounded-lg">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500/20 border border-green-400/50">
+                        <Shield className="h-4 w-4 text-green-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white"> MITRE ATT&CK FRAMEWORK</h2>
+                      <h2 className="font-orbitron font-bold text-lg text-white">MITRE ATT&CK FRAMEWORK</h2>
                     </div>
 
                     <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
                       <table className="w-full">
                         <thead className="bg-green-500/10 border-b border-green-400/30">
                           <tr>
-                            <th className="text-left text-green-300 font-rajdhani font-semibold text-sm py-4 px-6">TACTIC NAME</th>
-                            <th className="text-left text-green-300 font-rajdhani font-semibold text-sm py-4 px-6">TECHNIQUE ID</th>
-                            <th className="text-left text-green-300 font-rajdhani font-semibold text-sm py-4 px-6">TECHNIQUE</th>
+                            <th className="text-left text-green-300 font-rajdhani font-semibold text-sm py-2 px-4">TACTIC NAME</th>
+                            <th className="text-left text-green-300 font-rajdhani font-semibold text-sm py-2 px-4">TECHNIQUE ID</th>
+                            <th className="text-left text-green-300 font-rajdhani font-semibold text-sm py-2 px-4">TECHNIQUE</th>
                           </tr>
                         </thead>
                         <tbody>
                           {advisory.mitre.map((tactic: any, index: number) => (
                             <tr key={index} className="border-b border-slate-700/50 hover:bg-green-500/10 transition-colors">
-                              <td className="py-4 px-6 text-white font-orbitron font-semibold">
+                              <td className="py-2 px-4 text-white font-orbitron font-semibold text-sm">
                                 {tactic.tactic || tactic.tacticName || tactic.name || 'N/A'}
                               </td>
-                              <td className="py-4 px-6">
+                              <td className="py-2 px-4">
                                 <span className="inline-block text-green-400 font-mono bg-green-500/10 border border-green-400/30 rounded px-2 py-1">
                                   {tactic.id || tactic.tid || tactic.techniqueId || 'N/A'}
                                 </span>
                               </td>
-                              <td className="py-4 px-6 text-slate-300 font-rajdhani">
+                              <td className="py-2 px-4 text-slate-300 font-rajdhani text-sm">
                                 {tactic.technique || tactic.techniques?.[0] || 'N/A'}
                               </td>
                             </tr>
@@ -633,38 +629,38 @@ export default function EagleNestDetail() {
                 {/* MBC */}
                 {advisory.mbc && advisory.mbc.length > 0 && (
                   <motion.div 
-                    className="glass-panel-hover p-8"
+                    className="glass-panel-hover p-3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.35 }}
                   >
-                    <div className="flex items-center space-x-3 mb-6 p-4 bg-amber-500/10 border border-amber-400/30 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-400/50">
-                        <Activity className="h-5 w-5 text-amber-400" />
+                    <div className="flex items-center space-x-2 mb-3 p-2 bg-amber-500/10 border border-amber-400/30 rounded-lg">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/50">
+                        <Activity className="h-4 w-4 text-amber-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white"> MALWARE BEHAVIOR CATALOG</h2>
+                      <h2 className="font-orbitron font-bold text-lg text-white">MALWARE BEHAVIOR CATALOG</h2>
                     </div>
 
                     <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
                       <table className="w-full">
                         <thead className="bg-amber-500/10 border-b border-amber-400/30">
                           <tr>
-                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-4 px-6">BEHAVIOR</th>
-                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-4 px-6">OBJECTIVE</th>
-                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-4 px-6">CONFIDENCE</th>
-                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-4 px-6">EVIDENCE</th>
+                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-2 px-4">BEHAVIOR</th>
+                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-2 px-4">OBJECTIVE</th>
+                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-2 px-4">CONFIDENCE</th>
+                            <th className="text-left text-amber-300 font-rajdhani font-semibold text-sm py-2 px-4">EVIDENCE</th>
                           </tr>
                         </thead>
                         <tbody>
                           {advisory.mbc.map((behavior: any, index: number) => (
                             <tr key={index} className="border-b border-slate-700/50 hover:bg-amber-500/10 transition-colors">
-                              <td className="py-4 px-6 text-white font-rajdhani font-semibold">
+                              <td className="py-2 px-4 text-white font-rajdhani font-semibold text-sm">
                                 {behavior.behavior || 'N/A'}
                               </td>
-                              <td className="py-4 px-6 text-slate-300 font-rajdhani">
+                              <td className="py-2 px-4 text-slate-300 font-rajdhani text-sm">
                                 {behavior.objective || 'N/A'}
                               </td>
-                              <td className="py-4 px-6">
+                              <td className="py-2 px-4">
                                 {behavior.confidence && (
                                   <span className={`inline-block px-2 py-1 rounded text-xs font-rajdhani font-semibold ${
                                     behavior.confidence === 'High' ? 'bg-green-500/20 border border-green-400/30 text-green-300' :
@@ -677,7 +673,7 @@ export default function EagleNestDetail() {
                                 )}
                                 {!behavior.confidence && <span className="text-slate-500">N/A</span>}
                               </td>
-                              <td className="py-4 px-6 text-slate-300 font-rajdhani text-sm max-w-md">
+                              <td className="py-2 px-4 text-slate-300 font-rajdhani text-xs max-w-md">
                                 {behavior.evidence || 'N/A'}
                               </td>
                             </tr>
@@ -688,46 +684,46 @@ export default function EagleNestDetail() {
                   </motion.div>
                 )}
 
-                {/* IOCs (Indicators of Compromise) */}
+                {/* IOCs (Indicators ofCompromise) */}
                 {advisory.iocs && advisory.iocs.length > 0 && (
                   <motion.div 
-                    className="glass-panel-hover p-8"
+                    className="glass-panel-hover p-3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.38 }}
                   >
-                    <div className="flex items-center space-x-3 mb-6 p-4 bg-red-500/10 border border-red-400/30 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/20 border border-red-400/50">
-                        <Eye className="h-5 w-5 text-red-400" />
+                    <div className="flex items-center space-x-2 mb-3 p-2 bg-red-500/10 border border-red-400/30 rounded-lg">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/20 border border-red-400/50">
+                        <Eye className="h-4 w-4 text-red-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white">🔍 INDICATORS OF COMPROMISE (IOCs)</h2>
+                      <h2 className="font-orbitron font-bold text-lg text-white">🔍 INDICATORS OF COMPROMISE (IOCs)</h2>
                     </div>
 
                     <div className="overflow-x-auto bg-slate-800/30 border border-slate-600/50 rounded-lg">
                       <table className="w-full">
                         <thead className="bg-red-500/10 border-b border-red-400/30">
                           <tr>
-                            <th className="text-left text-red-300 font-rajdhani font-semibold text-sm py-4 px-6">TYPE</th>
-                            <th className="text-left text-red-300 font-rajdhani font-semibold text-sm py-4 px-6">VALUE</th>
-                            <th className="text-center text-red-300 font-rajdhani font-semibold text-sm py-4 px-6">ACTIONS</th>
+                            <th className="text-left text-red-300 font-rajdhani font-semibold text-sm py-2 px-4">TYPE</th>
+                            <th className="text-left text-red-300 font-rajdhani font-semibold text-sm py-2 px-4">VALUE</th>
+                            <th className="text-center text-red-300 font-rajdhani font-semibold text-sm py-2 px-4">ACTIONS</th>
                           </tr>
                         </thead>
                         <tbody>
                           {advisory.iocs.map((ioc: any, index: number) => (
                             <tr key={index} className="border-b border-slate-700/50 hover:bg-red-500/10 transition-colors">
-                              <td className="py-4 px-6">
+                              <td className="py-2 px-4">
                                 <span className="inline-block text-red-400 font-mono bg-red-500/10 border border-red-400/30 rounded px-2 py-1 uppercase text-xs font-semibold">
                                   {ioc.type || 'N/A'}
                                 </span>
                               </td>
-                              <td className="py-4 px-6">
+                              <td className="py-2 px-4">
                                 <div className="flex items-center space-x-2">
                                   <span className="text-slate-300 font-mono text-sm break-all">
                                     {ioc.value || 'N/A'}
                                   </span>
                                 </div>
                               </td>
-                              <td className="py-4 px-6 text-center">
+                              <td className="py-2 px-4 text-center">
                                 <button
                                   onClick={() => copyToClipboard(ioc.value, `ioc-${index}`)}
                                   className="p-2 rounded bg-red-500/20 hover:bg-red-500/30 transition-all duration-200 inline-flex items-center space-x-1"
@@ -750,54 +746,54 @@ export default function EagleNestDetail() {
                 {/* IP Sweep Results - Admin/Super Admin Only */}
                 {hasRole('admin') && advisory.ip_sweep && advisory.ip_sweep.impacted_clients && (
                   <motion.div
-                    className="glass-panel-hover p-8"
+                    className="glass-panel-hover p-3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.39 }}
                   >
-                    <div className="flex items-center space-x-3 mb-6 p-4 bg-amber-500/10 border border-amber-400/30 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-400/50">
-                        <Activity className="h-5 w-5 text-amber-400" />
+                    <div className="flex items-center space-x-2 mb-3 p-2 bg-amber-500/10 border border-amber-400/30 rounded-lg">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/50">
+                        <Activity className="h-4 w-4 text-amber-400" />
                       </div>
                       <div className="flex-1">
-                        <h2 className="font-orbitron font-bold text-xl text-white">🎯 IOC DETECTION RESULTS</h2>
-                        <p className="text-sm text-amber-300 mt-1 font-rajdhani">Last checked: {formatDate(advisory.ip_sweep.checked_at)}</p>
+                        <h2 className="font-orbitron font-bold text-lg text-white">🎯 IOC DETECTION RESULTS</h2>
+                        <p className="text-xs text-amber-300 font-rajdhani">Last checked: {formatDate(advisory.ip_sweep.checked_at)}</p>
                       </div>
                       {advisory.ip_sweep.impacted_clients.length === 0 ? (
-                        <div className="flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 border border-green-400/50 rounded-lg">
-                          <CheckCircle className="h-4 w-4 text-green-400" />
-                          <span className="text-green-300 font-rajdhani font-semibold text-sm">All Clear</span>
+                        <div className="flex items-center space-x-2 px-2.5 py-1 bg-green-500/20 border border-green-400/50 rounded-lg">
+                          <CheckCircle className="h-3.5 w-3.5 text-green-400" />
+                          <span className="text-green-300 font-rajdhani font-semibold text-xs">All Clear</span>
                         </div>
                       ) : (
-                        <div className="flex items-center space-x-2 px-3 py-1.5 bg-red-500/20 border border-red-400/50 rounded-lg">
-                          <AlertTriangle className="h-4 w-4 text-red-400" />
-                          <span className="text-red-300 font-rajdhani font-semibold text-sm">{advisory.ip_sweep.impacted_clients.length} Client(s) Affected</span>
+                        <div className="flex items-center space-x-2 px-2.5 py-1 bg-red-500/20 border border-red-400/50 rounded-lg">
+                          <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
+                          <span className="text-red-300 font-rajdhani font-semibold text-xs">{advisory.ip_sweep.impacted_clients.length} Client(s) Affected</span>
                         </div>
                       )}
                     </div>
 
                     {advisory.ip_sweep.impacted_clients.length === 0 ? (
-                      <div className="bg-green-500/10 border border-green-400/30 rounded-lg p-6 text-center">
-                        <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-3" />
-                        <p className="text-green-300 font-rajdhani text-lg font-semibold">No IOCs detected in client environments</p>
-                        <p className="text-slate-400 text-sm mt-2">All monitored clients are clear of the indicators listed in this advisory</p>
+                      <div className="bg-green-500/10 border border-green-400/30 rounded-lg p-4 text-center">
+                        <CheckCircle className="h-10 w-10 text-green-400 mx-auto mb-2" />
+                        <p className="text-green-300 font-rajdhani text-base font-semibold">No IOCs detected in client environments</p>
+                        <p className="text-slate-400 text-xs mt-1">All monitored clients are clear of the indicators listed in this advisory</p>
                       </div>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         {advisory.ip_sweep.impacted_clients.map((client: any, clientIndex: number) => (
-                          <div key={clientIndex} className="bg-red-500/10 border border-red-400/30 rounded-lg p-6">
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center space-x-3">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/20 border border-red-400/50">
-                                  <Server className="h-5 w-5 text-red-400" />
+                          <div key={clientIndex} className="bg-red-500/10 border border-red-400/30 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center space-x-2">
+                                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/20 border border-red-400/50">
+                                  <Server className="h-4 w-4 text-red-400" />
                                 </div>
                                 <div>
-                                  <h3 className="font-rajdhani font-bold text-lg text-white">{client.client_name}</h3>
-                                  <p className="text-sm text-slate-400">Client ID: {client.client_id}</p>
+                                  <h3 className="font-rajdhani font-bold text-base text-white">{client.client_name}</h3>
+                                  <p className="text-xs text-slate-400">Client ID: {client.client_id}</p>
                                 </div>
                               </div>
-                              <div className="px-3 py-1.5 bg-red-500/20 border border-red-400/50 rounded-lg">
-                                <span className="text-red-300 font-rajdhani font-semibold text-sm">{client.matches.length} Match(es)</span>
+                              <div className="px-2.5 py-1 bg-red-500/20 border border-red-400/50 rounded-lg">
+                                <span className="text-red-300 font-rajdhani font-semibold text-xs">{client.matches.length} Match(es)</span>
                               </div>
                             </div>
 
@@ -805,25 +801,25 @@ export default function EagleNestDetail() {
                               <table className="w-full">
                                 <thead className="bg-red-500/10 border-b border-red-400/30">
                                   <tr>
-                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-3 px-4">IOC</th>
-                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-3 px-4">FIELD</th>
-                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-3 px-4">LOG INDEX</th>
-                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-3 px-4">TIMESTAMP</th>
+                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-2 px-3">IOC</th>
+                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-2 px-3">FIELD</th>
+                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-2 px-3">LOG INDEX</th>
+                                    <th className="text-left text-red-300 font-rajdhani font-semibold text-xs py-2 px-3">TIMESTAMP</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {client.matches.map((match: any, matchIndex: number) => (
                                     <tr key={matchIndex} className="border-b border-slate-700/50 hover:bg-red-500/5 transition-colors">
-                                      <td className="py-3 px-4">
+                                      <td className="py-2 px-3">
                                         <span className="text-red-400 font-mono text-xs">{match.ioc}</span>
                                       </td>
-                                      <td className="py-3 px-4">
+                                      <td className="py-2 px-3">
                                         <span className="text-slate-300 font-mono text-xs uppercase">{match.matched_field}</span>
                                       </td>
-                                      <td className="py-3 px-4">
+                                      <td className="py-2 px-3">
                                         <span className="text-slate-300 font-mono text-xs">{match.log_index}</span>
                                       </td>
-                                      <td className="py-3 px-4">
+                                      <td className="py-2 px-3">
                                         <span className="text-slate-400 text-xs">{formatDate(match.timestamp)}</span>
                                       </td>
                                     </tr>
@@ -841,25 +837,25 @@ export default function EagleNestDetail() {
                 {/* Recommendations */}
                 {advisory.recommendations && advisory.recommendations.length > 0 && (
                   <motion.div 
-                    className="glass-panel-hover p-8"
+                    className="glass-panel-hover p-3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
                   >
-                    <div className="flex items-center space-x-3 mb-6 p-4 bg-green-500/10 border border-green-400/30 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500/20 border border-green-400/50">
-                        <CheckCircle className="h-5 w-5 text-green-400" />
+                    <div className="flex items-center space-x-2 mb-3 p-2 bg-green-500/10 border border-green-400/30 rounded-lg">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500/20 border border-green-400/50">
+                        <CheckCircle className="h-4 w-4 text-green-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white">SECURITY RECOMMENDATIONS</h2>
+                      <h2 className="font-orbitron font-bold text-lg text-white">SECURITY RECOMMENDATIONS</h2>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {advisory.recommendations.map((rec: string, index: number) => (
-                        <div key={index} className="flex items-start space-x-3 p-4 bg-green-500/10 border border-green-400/30 rounded-lg hover:border-green-400/50 transition-all duration-200">
-                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 border border-green-400/50 flex items-center justify-center mt-0.5">
+                        <div key={index} className="flex items-start space-x-2 p-3 bg-green-500/10 border border-green-400/30 rounded-lg hover:border-green-400/50 transition-all duration-200">
+                          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/20 border border-green-400/50 flex items-center justify-center mt-0.5">
                             <span className="text-green-300 text-xs font-bold">{index + 1}</span>
                           </div>
-                          <p className="text-slate-300 font-rajdhani text-base leading-relaxed flex-1">
+                          <p className="text-slate-300 font-rajdhani text-sm leading-relaxed flex-1">
                             {rec}
                           </p>
                         </div>
@@ -871,22 +867,22 @@ export default function EagleNestDetail() {
                 {/* Patch Details */}
                 {advisory.patch_details && advisory.patch_details.length > 0 && (
                   <motion.div 
-                    className="glass-panel-hover p-8"
+                    className="glass-panel-hover p-3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.45 }}
                   >
-                    <div className="flex items-center space-x-3 mb-6 p-4 bg-orange-500/10 border border-orange-400/30 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-500/20 border border-orange-400/50">
-                        <Download className="h-5 w-5 text-orange-400" />
+                    <div className="flex items-center space-x-2 mb-3 p-2 bg-orange-500/10 border border-orange-400/30 rounded-lg">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-500/20 border border-orange-400/50">
+                        <Download className="h-4 w-4 text-orange-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white"> PATCH DETAILS</h2>
+                      <h2 className="font-orbitron font-bold text-lg text-white">PATCH DETAILS</h2>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {advisory.patch_details.map((patch: string, index: number) => (
-                        <div key={index} className="p-4 bg-orange-500/10 border border-orange-400/30 rounded-lg">
-                          <p className="text-slate-300 font-rajdhani text-base leading-relaxed">
+                        <div key={index} className="p-3 bg-orange-500/10 border border-orange-400/30 rounded-lg">
+                          <p className="text-slate-300 font-rajdhani text-sm leading-relaxed">
                             {patch}
                           </p>
                         </div>
@@ -898,22 +894,22 @@ export default function EagleNestDetail() {
                 {/* References */}
                 {advisory.references && advisory.references.length > 0 && (
                   <motion.div 
-                    className="glass-panel-hover p-8"
+                    className="glass-panel-hover p-3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.5 }}
                   >
-                    <div className="flex items-center space-x-3 mb-6 p-4 bg-cyan-500/10 border border-cyan-400/30 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-cyan-500/20 border border-cyan-400/50">
-                        <FileText className="h-5 w-5 text-cyan-400" />
+                    <div className="flex items-center space-x-2 mb-3 p-2 bg-cyan-500/10 border border-cyan-400/30 rounded-lg">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50">
+                        <FileText className="h-4 w-4 text-cyan-400" />
                       </div>
-                      <h2 className="font-orbitron font-bold text-xl text-white"> REFERENCES</h2>
+                      <h2 className="font-orbitron font-bold text-lg text-white">REFERENCES</h2>
                     </div>
 
                     <div className="space-y-2">
                       {advisory.references.map((ref: string, index: number) => (
-                        <div key={index} className="flex items-center space-x-2 p-3 bg-cyan-500/10 border border-cyan-400/30 rounded-lg hover:border-cyan-400/50 transition-all duration-200">
-                          <Globe className="h-4 w-4 text-cyan-400 flex-shrink-0" />
+                        <div key={index} className="flex items-center space-x-2 p-2 bg-cyan-500/10 border border-cyan-400/30 rounded-lg hover:border-cyan-400/50 transition-all duration-200">
+                          <Globe className="h-3.5 w-3.5 text-cyan-400 flex-shrink-0" />
                           <a 
                             href={ref} 
                             target="_blank" 
@@ -930,16 +926,16 @@ export default function EagleNestDetail() {
               </div>
 
               {/* Sidebar */}
-              <div className="lg:col-span-1 space-y-6">
+              <div className="xl:col-span-1 space-y-3">
                 <motion.div 
-                  className="glass-panel-hover p-6 sticky top-24"
+                  className="glass-panel-hover p-3 sticky top-16"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.5 }}
                 >
-                  <h3 className="font-orbitron font-bold text-lg text-white mb-4">Advisory Info</h3>
+                  <h3 className="font-orbitron font-bold text-sm text-white mb-2">Advisory Info</h3>
                   
-                  <div className="space-y-4 text-sm">
+                  <div className="space-y-2 text-xs">
                     <div>
                       <div className="text-slate-400 font-rajdhani mb-1">Status</div>
                       <div className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 inline-block">
