@@ -430,12 +430,12 @@ export default function AdvisoryEditor() {
                 <select
                   value={advisory.criticality || 'MEDIUM'}
                   onChange={(e) => setAdvisory({...advisory, criticality: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani"
+                  className="w-full px-4 py-3 bg-slate-900/70 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani"
                 >
-                  <option value="LOW">LOW</option>
-                  <option value="MEDIUM">MEDIUM</option>
-                  <option value="HIGH">HIGH</option>
-                  <option value="CRITICAL">CRITICAL</option>
+                  <option value="LOW" className="bg-slate-800">LOW</option>
+                  <option value="MEDIUM" className="bg-slate-800">MEDIUM</option>
+                  <option value="HIGH" className="bg-slate-800">HIGH</option>
+                  <option value="CRITICAL" className="bg-slate-800">CRITICAL</option>
                 </select>
               </div>
 
@@ -456,12 +456,12 @@ export default function AdvisoryEditor() {
                 <select
                   value={advisory.tlp || 'AMBER'}
                   onChange={(e) => setAdvisory({...advisory, tlp: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani"
+                  className="w-full px-4 py-3 bg-slate-900/70 border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-neon-blue/50 font-rajdhani"
                 >
-                  <option value="WHITE">WHITE</option>
-                  <option value="GREEN">GREEN</option>
-                  <option value="AMBER">AMBER</option>
-                  <option value="RED">RED</option>
+                  <option value="WHITE" className="bg-slate-800">WHITE</option>
+                  <option value="GREEN" className="bg-slate-800">GREEN</option>
+                  <option value="AMBER" className="bg-slate-800">AMBER</option>
+                  <option value="RED" className="bg-slate-800">RED</option>
                 </select>
               </div>
 
@@ -642,13 +642,13 @@ export default function AdvisoryEditor() {
                                 newCvss[cve] = { ...newCvss[cve], criticality: e.target.value };
                                 setAdvisory({ ...advisory, cvss: newCvss });
                               }}
-                              className="w-full bg-slate-900/50 border border-cyan-400/30 rounded px-2 py-1 text-cyan-400 font-rajdhani"
+                              className="w-full bg-slate-900/70 border border-cyan-400/30 rounded px-2 py-1 text-cyan-400 font-rajdhani"
                             >
-                              <option value="">Select</option>
-                              <option value="LOW">LOW</option>
-                              <option value="MEDIUM">MEDIUM</option>
-                              <option value="HIGH">HIGH</option>
-                              <option value="CRITICAL">CRITICAL</option>
+                              <option value="" className="bg-slate-800">Select</option>
+                              <option value="LOW" className="bg-slate-800 text-cyan-400">LOW</option>
+                              <option value="MEDIUM" className="bg-slate-800 text-cyan-400">MEDIUM</option>
+                              <option value="HIGH" className="bg-slate-800 text-cyan-400">HIGH</option>
+                              <option value="CRITICAL" className="bg-slate-800 text-cyan-400">CRITICAL</option>
                             </select>
                           </td>
                           <td className="py-4 px-6">
@@ -819,12 +819,12 @@ export default function AdvisoryEditor() {
                                   newMbc[idx] = { ...newMbc[idx], confidence: e.target.value };
                                   setAdvisory({ ...advisory, mbc: newMbc });
                                 }}
-                                className="w-full bg-slate-900/50 border border-amber-400/30 rounded px-2 py-1 text-amber-400 font-mono"
+                                className="w-full bg-slate-900/70 border border-amber-400/30 rounded px-2 py-1 text-amber-400 font-mono"
                               >
-                                <option value="">Select</option>
-                                <option value="High">High</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Low">Low</option>
+                                <option value="" className="bg-slate-800">Select</option>
+                                <option value="High" className="bg-slate-800 text-amber-400">High</option>
+                                <option value="Medium" className="bg-slate-800 text-amber-400">Medium</option>
+                                <option value="Low" className="bg-slate-800 text-amber-400">Low</option>
                               </select>
                             </td>
                             <td className="py-4 px-6">
@@ -889,19 +889,19 @@ export default function AdvisoryEditor() {
                                   newIocs[idx] = { ...newIocs[idx], type: e.target.value };
                                   setAdvisory({ ...advisory, iocs: newIocs });
                                 }}
-                                className="w-full bg-slate-900/50 border border-red-400/30 rounded px-2 py-1 text-red-400 font-mono uppercase"
+                                className="w-full bg-slate-900/70 border border-red-400/40 rounded-lg px-3 py-2 text-red-400 hover:border-red-400/60 focus:border-red-400/80 focus:outline-none focus:ring-2 focus:ring-red-400/20 font-mono uppercase text-sm transition-all"
                               >
-                                <option value="">Select Type</option>
-                                <option value="domain">DOMAIN</option>
-                                <option value="url">URL</option>
-                                <option value="ip">IP</option>
-                                <option value="ipv4">IPV4</option>
-                                <option value="hash">HASH</option>
-                                <option value="md5">MD5</option>
-                                <option value="sha1">SHA1</option>
-                                <option value="sha256">SHA256</option>
-                                <option value="email">EMAIL</option>
-                                <option value="file">FILE</option>
+                                <option value="" className="bg-slate-800 text-slate-400">Select Type</option>
+                                <option value="domain" className="bg-slate-800 text-red-400">DOMAIN</option>
+                                <option value="url" className="bg-slate-800 text-red-400">URL</option>
+                                <option value="ip" className="bg-slate-800 text-red-400">IP</option>
+                                <option value="ipv4" className="bg-slate-800 text-red-400">IPV4</option>
+                                <option value="hash" className="bg-slate-800 text-red-400">HASH</option>
+                                <option value="md5" className="bg-slate-800 text-red-400">MD5</option>
+                                <option value="sha1" className="bg-slate-800 text-red-400">SHA1</option>
+                                <option value="sha256" className="bg-slate-800 text-red-400">SHA256</option>
+                                <option value="email" className="bg-slate-800 text-red-400">EMAIL</option>
+                                <option value="file" className="bg-slate-800 text-red-400">FILE</option>
                               </select>
                             </td>
                             <td className="py-4 px-6">
@@ -913,7 +913,7 @@ export default function AdvisoryEditor() {
                                   newIocs[idx] = { ...newIocs[idx], value: e.target.value };
                                   setAdvisory({ ...advisory, iocs: newIocs });
                                 }}
-                                className="w-full bg-slate-900/50 border border-red-400/30 rounded px-2 py-1 text-white font-mono text-sm"
+                                className="w-full bg-slate-900/70 border border-red-400/40 rounded-lg px-3 py-2 text-white hover:border-red-400/60 focus:border-red-400/80 focus:outline-none focus:ring-2 focus:ring-red-400/20 font-mono text-sm transition-all"
                                 placeholder="IOC value"
                               />
                             </td>
@@ -924,7 +924,7 @@ export default function AdvisoryEditor() {
                                   const newIocs = advisory.iocs.filter((_: any, i: number) => i !== idx);
                                   setAdvisory({ ...advisory, iocs: newIocs });
                                 }}
-                                className="px-3 py-1 bg-red-600/70 hover:bg-red-600/90 text-white rounded font-rajdhani text-sm"
+                                className="px-3 py-1.5 bg-red-600/70 hover:bg-red-600/90 border border-red-500/50 text-white rounded-lg font-rajdhani text-sm transition-all"
                               >
                                 Remove
                               </button>
@@ -936,7 +936,7 @@ export default function AdvisoryEditor() {
                     <button
                       type="button"
                       onClick={() => setAdvisory({ ...advisory, iocs: [...(advisory.iocs || []), { type: '', value: '' }] })}
-                      className="mt-3 px-4 py-2 bg-red-600/70 hover:bg-red-600/90 text-white rounded font-orbitron"
+                      className="mt-3 px-4 py-2 bg-red-600/70 hover:bg-red-600/90 border border-red-500/50 text-white rounded-lg font-orbitron transition-all"
                     >
                       + Add IOC
                     </button>
