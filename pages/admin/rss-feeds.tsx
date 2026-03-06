@@ -161,45 +161,45 @@ export default function RSSFeedsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
       
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 py-6">
+      <div className="relative z-10 w-full px-2 sm:px-3 lg:px-4 py-4">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-5"
         >
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-3">
             <div className="p-2 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl backdrop-blur-sm border border-orange-500/30">
-              <Rss className="h-6 w-6 text-orange-400" />
+              <Rss className="h-5 w-5 text-orange-400" />
             </div>
             <div>
-              <h1 className="font-orbitron font-bold text-2xl md:text-3xl bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
+              <h1 className="font-orbitron font-bold text-xl md:text-2xl bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
                 RSS Feed Sources
               </h1>
-              <p className="font-rajdhani text-base text-slate-400 mt-1">
+              <p className="font-rajdhani text-sm text-slate-400 mt-1">
                 Manage RSS feed sources for threat intelligence gathering
               </p>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
-            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-3 border border-gray-700/50">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-sm">Total RSS Feeds</p>
-                  <p className="text-2xl font-bold text-orange-400 mt-1">{feeds.length}</p>
+                  <p className="text-xl font-bold text-orange-400 mt-1">{feeds.length}</p>
                 </div>
-                <Rss className="h-10 w-10 text-orange-400/30" />
+                <Rss className="h-8 w-8 text-orange-400/30" />
               </div>
             </div>
-            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
+            <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-3 border border-gray-700/50">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-sm">Active Sources</p>
-                  <p className="text-2xl font-bold text-green-400 mt-1">{activeFeeds}</p>
+                  <p className="text-xl font-bold text-green-400 mt-1">{activeFeeds}</p>
                 </div>
-                <CheckCircle className="h-10 w-10 text-green-400/30" />
+                <CheckCircle className="h-8 w-8 text-green-400/30" />
               </div>
             </div>
           </div>
@@ -209,10 +209,10 @@ export default function RSSFeedsPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-5"
         >
-          <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-3 border border-gray-700/50">
+            <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
               <Plus className="h-4 w-4 text-orange-400" />
               Add New RSS Feed
             </h2>
@@ -222,13 +222,13 @@ export default function RSSFeedsPage() {
                 value={newFeed}
                 onChange={(e) => setNewFeed(e.target.value)}
                 placeholder="Enter RSS feed URL (e.g., https://example.com/feed.xml)"
-                className="flex-1 px-4 py-2.5 bg-black/50 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 transition-colors"
+                className="flex-1 px-4 py-2 bg-black/50 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 transition-colors"
                 disabled={adding}
               />
               <button
                 type="submit"
                 disabled={adding || !newFeed.trim()}
-                className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {adding ? (
                   <>
@@ -272,7 +272,7 @@ export default function RSSFeedsPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mb-6"
+          className="mb-4"
         >
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -281,7 +281,7 @@ export default function RSSFeedsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search RSS feeds..."
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 transition-colors backdrop-blur-sm"
+              className="w-full pl-10 pr-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 transition-colors backdrop-blur-sm"
             />
           </div>
         </motion.div>
@@ -293,25 +293,25 @@ export default function RSSFeedsPage() {
           transition={{ delay: 0.2 }}
         >
           {loading ? (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-12">
               <LoadingLogo message="Loading RSS feeds..." />
             </div>
           ) : filteredFeeds.length === 0 ? (
-            <div className="text-center py-20 text-gray-400">
-              <Rss className="h-12 w-12 mx-auto mb-4 opacity-30" />
+            <div className="text-center py-12 text-gray-400">
+              <Rss className="h-10 w-10 mx-auto mb-3 opacity-30" />
               <p className="text-lg">
                 {searchQuery ? 'No RSS feeds found matching your search' : 'No RSS feeds configured yet'}
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {filteredFeeds.map((feed, index) => (
                 <motion.div
                   key={feed.url}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className={`bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-4 border transition-all group ${
+                  className={`bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-xl p-3 border transition-all group ${
                     feed.enabled 
                       ? 'border-gray-700/50 hover:border-orange-500/50' 
                       : 'border-gray-800/50 opacity-60 hover:opacity-80'

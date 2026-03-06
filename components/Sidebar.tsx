@@ -123,7 +123,7 @@ const menuItems = [
             <img 
               src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiCL2GuXkm4vnkAnNz1yA4Kxlg-jjKIOdohivr_s_uCRQ5z1gYjlSJX139c7I-iR-2i3sCVQK3kmP3_ZRvvBezy_m5eB-sX9N3cn42lJbi5PveE90jfqPt4Luc52J6nU1MTIWZGkdBzT76fTVru6Wk8RafSOcgNzPumjNLay5fUxQ_YIihCHQ7Us1_-wVMV/s400/Eagleye-S.png"
               alt="EaglEye Logo"
-              className="h-10 w-10 object-contain group-hover:scale-110 transition-transform duration-300"
+              className="h-8 w-8 object-contain group-hover:scale-110 transition-transform duration-300"
             />
             <div className="absolute inset-0 bg-cyan-400/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
@@ -164,7 +164,7 @@ const menuItems = [
                 <a
                   onClick={() => setIsMobileOpen(false)}
                   className={`
-                    group relative flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-3 py-3 rounded-lg
+                    group relative flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-2 py-2.5 rounded-lg
                     transition-all duration-300 cursor-pointer
                     ${active 
                       ? 'bg-cyan-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20' 
@@ -173,7 +173,7 @@ const menuItems = [
                   `}
                   style={{ pointerEvents: 'auto', position: 'relative', zIndex: 1 }}
                 >
-                  <Icon className={`h-7 w-7 transition-all duration-300 ${active ? '' : 'group-hover:scale-110'} ${isCollapsed ? '' : 'flex-shrink-0'}`} />
+                  <Icon className={`h-5 w-5 transition-all duration-300 ${active ? '' : 'group-hover:scale-110'} ${isCollapsed ? '' : 'flex-shrink-0'}`} />
                   {!isCollapsed && (
                     <span className="font-medium text-sm tracking-wide whitespace-nowrap">
                       {item.label}
@@ -201,8 +201,8 @@ const menuItems = [
           {hasRole('admin') && (
             isCollapsed ? (
               <TooltipPortal content="Admin Panel">
-                <Link href="/admin" onClick={() => setIsMobileOpen(false)} className="w-full flex items-center justify-center p-3 rounded-lg bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 text-blue-400 hover:text-white transition-all duration-300">
-                  <User className="h-6 w-6" />
+                <Link href="/admin" onClick={() => setIsMobileOpen(false)} className="w-full flex items-center justify-center p-2 rounded-lg bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 text-blue-400 hover:text-white transition-all duration-300">
+                  <User className="h-5 w-5" />
                 </Link>
               </TooltipPortal>
             ) : (
@@ -217,9 +217,9 @@ const menuItems = [
             <TooltipPortal content="Logout">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center p-3 rounded-lg bg-gradient-to-r from-red-600/20 to-red-700/20 hover:from-red-500/30 hover:to-red-600/30 border border-red-500/30 hover:border-red-400/50 text-white transition-all duration-300 group hover:shadow-lg hover:shadow-red-500/20"
+                className="w-full flex items-center justify-center p-2 rounded-lg bg-gradient-to-r from-red-600/20 to-red-700/20 hover:from-red-500/30 hover:to-red-600/30 border border-red-500/30 hover:border-red-400/50 text-white transition-all duration-300 group hover:shadow-lg hover:shadow-red-500/20"
               >
-                <LogOut className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
+                <LogOut className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
               </button>
             </TooltipPortal>
           ) : (
@@ -269,7 +269,7 @@ const menuItems = [
           bg-gradient-to-b from-slate-900/95 via-gray-950/95 to-slate-950/95
           backdrop-blur-xl border-r border-gray-700/50
           flex-col shadow-2xl overflow-visible
-          ${isCollapsed ? 'w-24' : 'w-64'}
+          ${isCollapsed ? 'w-16' : 'w-56'}
         `}
         style={{ isolation: 'unset' }}
       >
@@ -290,7 +290,7 @@ const menuItems = [
       </aside>
 
       {/* Spacer for content - Dynamic width */}
-      <div className={`${isCollapsed ? 'w-24' : 'w-64'} transition-all duration-300 flex-shrink-0 hidden md:block`} />
+      <div className={`${isCollapsed ? 'w-16' : 'w-56'} transition-all duration-300 flex-shrink-0 hidden md:block`} />
     </>
   );
 }

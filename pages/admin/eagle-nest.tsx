@@ -25,7 +25,7 @@ import {
   Plus
 } from 'lucide-react';
 
-type SortOption = 'newest' | 'oldest' | 'severity' | 'title';
+type SortOption = 'newest' | 'oldest' | 'severity' | 'title' | 'iocs';
 
 export default function EagleNest() {
   const [advisories, setAdvisories] = useState<any[]>([]);
@@ -134,19 +134,36 @@ export default function EagleNest() {
       );
     }
 
+    // IOCs filter
+    if (sortBy === 'iocs') {
+      result = result.filter(advisory =>
+        advisory.iocs && Array.isArray(advisory.iocs) && advisory.iocs.length > 0
+      );
+    }
+
     // Sorting
     result.sort((a, b) => {
       switch (sortBy) {
-        case 'newest':
-          return new Date(b.date_published || b.saved_to_eagle_nest_at).getTime() -
-                 new Date(a.date_published || a.saved_to_eagle_nest_at).getTime();
-        case 'oldest':
-          return new Date(a.date_published || a.saved_to_eagle_nest_at).getTime() -
-                 new Date(b.date_published || b.saved_to_eagle_nest_at).getTime();
-        case 'severity':
-          const severityOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+        case 'iocs':
+        case 'newest': {
+          const dateA = new Date(a.date_published || a.saved_to_eagle_nest_at || 0);
+          const dateB = new Date(b.date_published || b.saved_to_eagle_nest_at || 0);
+          const timeA = isNaN(dateA.getTime()) ? 0 : dateA.getTime();
+          const timeB = isNaN(dateB.getTime()) ? 0 : dateB.getTime();
+          return timeB - timeA;
+        }
+        case 'oldest': {
+          const dateA = new Date(a.date_published || a.saved_to_eagle_nest_at || 0);
+          const dateB = new Date(b.date_published || b.saved_to_eagle_nest_at || 0);
+          const timeA = isNaN(dateA.getTime()) ? 0 : dateA.getTime();
+          const timeB = isNaN(dateB.getTime()) ? 0 : dateB.getTime();
+          return timeA - timeB;
+        }
+        case 'severity': {
+          const severityOrder: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
           return (severityOrder[a.criticality?.toUpperCase()] || 4) -
                  (severityOrder[b.criticality?.toUpperCase()] || 4);
+        }
         case 'title':
           return (a.title || '').localeCompare(b.title || '');
         default:
@@ -260,25 +277,25 @@ export default function EagleNest() {
           </Head>
 
           {/* Main Container */}
-          <div className="w-full px-3 sm:px-4 lg:px-6 py-6 space-y-4">
+          <div className="w-full px-2 sm:px-3 lg:px-4 py-5 space-y-3">
             
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0"
+              className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0 gap-0 lg:gap-4"
             >
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl backdrop-blur-sm border border-cyan-500/30">
-                    <Shield className="h-6 w-6 text-cyan-400" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl backdrop-blur-sm border border-cyan-500/30 flex-shrink-0">
+                    <Shield className="h-5 w-5 text-cyan-400" />
                   </div>
-                  <div>
-                    <h1 className="font-orbitron font-bold text-2xl md:text-3xl bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                  <div className="min-w-0 flex-1">
+                    <h1 className="font-orbitron font-bold text-xl md:text-2xl bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                       Eagle Nest
                     </h1>
-                    <p className="font-rajdhani text-base text-slate-400 mt-1">
+                    <p className="font-rajdhani text-sm text-slate-400 mt-0.5 line-clamp-2">
                       Manually generated cybersecurity advisories with comprehensive threat intelligence.
                     </p>
                   </div>
@@ -363,7 +380,7 @@ export default function EagleNest() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-4"
             >
               {severityStats.map((stat, index) => (
                 <motion.div
@@ -375,7 +392,7 @@ export default function EagleNest() {
                   className={`
                     relative group transition-all duration-300
                     backdrop-blur-md bg-gradient-to-br ${stat.bgColor}
-                    rounded-lg p-3 border-2 ${stat.borderColor}
+                    rounded-lg p-2.5 border-2 ${stat.borderColor}
                     shadow-lg ${stat.glowColor} card-hover-glow
                     before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-br 
                     before:from-white/10 before:to-transparent before:opacity-0 
@@ -385,11 +402,11 @@ export default function EagleNest() {
                   `}
                 >
                   <div className="relative z-10 flex items-center space-x-2">
-                    <div className={`p-1.5 rounded-lg bg-gradient-to-br from-${stat.color}/30 to-${stat.color}/10 border border-${stat.color}/20`}>
+                    <div className={`p-1 rounded-lg bg-gradient-to-br from-${stat.color}/30 to-${stat.color}/10 border border-${stat.color}/20`}>
                       <stat.icon className={`w-4 h-4 text-${stat.color} drop-shadow-lg`} />
                     </div>
                     <div>
-                      <div className={`font-poppins font-bold text-lg text-${stat.color} drop-shadow-lg`}>
+                      <div className={`font-poppins font-bold text-base text-${stat.color} drop-shadow-lg`}>
                         {stat.count}
                       </div>
                       <div className="font-inter text-xs text-slate-300 opacity-80">
@@ -406,28 +423,28 @@ export default function EagleNest() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-xl border border-slate-700/50 shadow-2xl p-4 mb-6"
+              className="bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-xl border border-slate-700/50 shadow-2xl p-3 mb-4"
             >
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Search Bar */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                   <input
                     type="text"
                     placeholder="Search advisories, products, vendors..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 font-rajdhani text-sm"
+                    className="w-full pl-9 pr-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 font-rajdhani text-sm"
                   />
                 </div>
 
                 {/* Filter Toggle */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   <button
                     onClick={() => setShowFilters(!showFilters)}
                     className="
                       relative overflow-hidden group transition-all duration-300
-                      px-4 py-2 rounded-lg font-rajdhani font-semibold w-fit
+                      px-3 py-1.5 rounded-lg font-rajdhani font-semibold w-fit
                       bg-gradient-to-r from-amber-600/15 to-yellow-600/15
                       border-2 border-amber-500/40 backdrop-blur-md
                       text-amber-300 hover:text-white hover:border-amber-400
@@ -452,7 +469,7 @@ export default function EagleNest() {
                         onChange={(e) => setSortBy(e.target.value as SortOption)}
                         className="
                           appearance-none bg-slate-800/50 backdrop-blur-md border-2 border-slate-700/50
-                          rounded-xl px-4 py-2 text-sm font-rajdhani text-slate-300
+                          rounded-xl px-3 py-2 text-sm font-rajdhani text-slate-300
                           focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 focus:outline-none
                           hover:border-slate-600/50 transition-all duration-300 cursor-pointer
                           pr-10 min-w-[160px]
@@ -462,6 +479,7 @@ export default function EagleNest() {
                         <option value="oldest" className="bg-slate-800 text-slate-300">Oldest First</option>
                         <option value="severity" className="bg-slate-800 text-slate-300">By Severity</option>
                         <option value="title" className="bg-slate-800 text-slate-300">By Title</option>
+                        <option value="iocs" className="bg-slate-800 text-slate-300">IOCs Only</option>
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
@@ -475,7 +493,7 @@ export default function EagleNest() {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-700/50"
+                    className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-slate-700/50"
                   >
                     {/* Severity Filter */}
                     <div>
@@ -488,7 +506,7 @@ export default function EagleNest() {
                           onChange={(e) => setSelectedSeverity(e.target.value)}
                           className="
                             appearance-none bg-slate-800/50 backdrop-blur-md border-2 border-slate-700/50
-                            rounded-xl px-4 py-3 font-rajdhani text-slate-300 w-full
+                            rounded-xl px-3 py-2 font-rajdhani text-slate-300 w-full
                             focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 focus:outline-none
                             hover:border-slate-600/50 transition-all duration-300 cursor-pointer pr-10
                           "
@@ -510,7 +528,7 @@ export default function EagleNest() {
                         onClick={clearFilters}
                         className="
                           relative overflow-hidden group transition-all duration-300 w-full
-                          px-4 py-2 rounded-lg font-rajdhani font-semibold text-sm
+                          px-3 py-1.5 rounded-lg font-rajdhani font-semibold text-sm
                           bg-gradient-to-r from-pink-600/20 to-pink-500/20
                           border-2 border-pink-500/30 backdrop-blur-md
                           text-pink-300 hover:text-white hover:border-pink-400
@@ -533,85 +551,75 @@ export default function EagleNest() {
 
             {/* Advisories List */}
             {loading ? (
-              <div className="flex items-center justify-center py-20">
+              <div className="flex items-center justify-center py-12">
                 <LoadingLogo message="LOADING ADVISORIES..." />
               </div>
             ) : paginatedAdvisories.length === 0 ? (
-              <div className="text-center py-20 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl">
-                <Shield className="h-24 w-24 text-slate-600 mx-auto mb-6 opacity-50" />
-                <h3 className="text-2xl font-orbitron font-bold text-slate-400 mb-2">No Advisories Found</h3>
-                <p className="text-slate-500 font-rajdhani text-lg">
+              <div className="text-center py-12 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl">
+                <Shield className="h-16 w-16 text-slate-600 mx-auto mb-4 opacity-50" />
+                <h3 className="text-xl font-orbitron font-bold text-slate-400 mb-2">No Advisories Found</h3>
+                <p className="text-slate-500 font-rajdhani text-base">
                   {advisories.length === 0 
                     ? "Your Eagle Nest is empty. Generate advisories from raw articles to get started."
                     : "No advisories match your current filters."}
                 </p>
               </div>
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="space-y-3"
-              >
-                {paginatedAdvisories.map((advisory, index) => (
-                  <motion.div
+              <div className="space-y-2" key={`advisory-list-${sortBy}`}>
+                {paginatedAdvisories.map((advisory) => (
+                  <div
                     key={advisory.advisory_id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="relative"
+                    className="relative bg-gradient-to-br from-slate-900/60 to-slate-800/60 backdrop-blur-xl rounded-xl border border-slate-700/40 shadow-lg hover:border-amber-500/50 hover:bg-slate-800/70 transition-all duration-300 group"
                   >
                     <Link href={`/admin/eagle-nest/${advisory.advisory_id}`}>
-                      <div className="
-                        bg-gradient-to-br from-slate-900/60 to-slate-800/60 backdrop-blur-xl
-                        rounded-xl border border-slate-700/40 shadow-lg p-3 md:p-4 pr-32
-                        hover:border-amber-500/50 hover:bg-slate-800/70
-                        transition-all duration-300 cursor-pointer group
-                      ">
-                        {/* One-Liner Content */}
-                        <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2.5 md:p-3 pr-32 sm:pr-36 lg:pr-44 cursor-pointer">
+                        {/* Left Side Content - Title, ID, Product */}
+                        <div className="flex flex-col gap-1 min-w-0 overflow-hidden">
                           {/* Advisory Title */}
-                          <h3 className="font-orbitron font-semibold text-sm text-white truncate max-w-[40%] group-hover:text-amber-300 transition-colors">
+                          <h3 className="font-orbitron font-semibold text-sm text-white truncate group-hover:text-amber-300 transition-colors">
                             {advisory.title || 'Untitled Advisory'}
                           </h3>
                           
-                          {/* Advisory ID */}
-                          <span className="text-slate-500 font-mono text-xs whitespace-nowrap flex-shrink-0">
-                            {advisory.advisory_id}
-                          </span>
-                          
-                          {/* Product/Vendor */}
-                          {(advisory.affected_product || advisory.vendor) && (
-                            <span className="text-slate-400 text-xs truncate flex-shrink-0 max-w-[25%] hidden md:block">
-                              {advisory.affected_product || advisory.vendor}
+                          {/* Advisory ID and Product in a row */}
+                          <div className="flex items-center gap-3 text-xs">
+                            {/* Advisory ID */}
+                            <span className="text-slate-500 font-mono whitespace-nowrap">
+                              {advisory.advisory_id}
                             </span>
-                          )}
-                          
-                          {/* Criticality Badge */}
-                          <span className={`px-3 py-1 rounded-lg text-xs font-bold font-orbitron border ${getCriticalityColor(advisory.criticality)} whitespace-nowrap flex-shrink-0 shadow-lg`}>
-                            {advisory.criticality || 'MEDIUM'}
-                          </span>
+                            
+                            {/* Product/Vendor */}
+                            {(advisory.affected_product || advisory.vendor) && (
+                              <span className="text-slate-400 truncate">
+                                {advisory.affected_product || advisory.vendor}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </Link>
 
-                    {/* Action Buttons - Absolutely Positioned on Right */}
-                    <div className="absolute top-3 md:top-4 right-3 flex gap-2 z-10">
+                    {/* Action Buttons & Badge - Absolutely Positioned on Right */}
+                    <div className="absolute top-2.5 md:top-3 right-2 sm:right-3 flex items-center gap-1 sm:gap-1.5 z-20">
+                      {/* Criticality Badge */}
+                      <span className={`px-2 py-0.5 rounded-lg text-xs font-bold font-orbitron border ${getCriticalityColor(advisory.criticality)} whitespace-nowrap flex-shrink-0 shadow-lg`}>
+                        {advisory.criticality || 'MEDIUM'}
+                      </span>
+                      
                       <Link href={`/admin/eagle-nest/${advisory.advisory_id}`}>
                         <button 
                           onClick={(e) => e.stopPropagation()}
                           className="
-                            p-1.5 md:p-2 rounded-lg
+                            p-1.5 rounded-lg
                             bg-gradient-to-r from-amber-600/80 to-yellow-600/80
                             border border-amber-400/50 backdrop-blur-md
                             text-white hover:text-amber-100
                             shadow-lg shadow-amber-500/20 hover:shadow-amber-400/30
                             transition-all duration-300 hover:scale-110
                             group/view
-                          " 
+                          "
                           title="View Details"
                         >
-                          <Eye className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover/view:scale-110 transition-transform" />
+                          <Eye className="w-3.5 h-3.5 group-hover/view:scale-110 transition-transform" />
                         </button>
                       </Link>
                       
@@ -620,7 +628,7 @@ export default function EagleNest() {
                         <button 
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(advisory.advisory_id); }}
                           className="
-                            p-1.5 md:p-2 rounded-lg
+                            p-1.5 rounded-lg
                             bg-gradient-to-r from-red-600/80 to-red-500/80
                             border border-red-400/50 backdrop-blur-md
                             text-white hover:text-red-100
@@ -630,13 +638,13 @@ export default function EagleNest() {
                           "
                           title="Delete Advisory"
                         >
-                          <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover/delete:scale-110 transition-transform" />
+                          <Trash2 className="w-3.5 h-3.5 group-hover/delete:scale-110 transition-transform" />
                         </button>
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
-              </motion.div>
+              </div>
             )}
 
             {/* Pagination */}
@@ -644,19 +652,19 @@ export default function EagleNest() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-center space-x-2 mt-8"
+                className="flex items-center justify-center space-x-2 mt-5"
               >
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                   className="
-                    p-2 rounded-lg bg-slate-800/50 border border-slate-700/50
+                    p-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50
                     text-slate-300 hover:bg-slate-700/50 hover:border-amber-500/50
                     disabled:opacity-50 disabled:cursor-not-allowed
                     transition-all duration-200
                   "
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <ChevronLeft className="w-4 h-4" />
                 </button>
 
                 <div className="flex items-center space-x-2">
@@ -665,7 +673,7 @@ export default function EagleNest() {
                       key={page}
                       onClick={() => setCurrentPage(page)}
                       className={`
-                        px-4 py-2 rounded-lg font-rajdhani font-semibold
+                        px-3 py-1.5 rounded-lg font-rajdhani font-semibold text-sm
                         transition-all duration-200
                         ${currentPage === page
                           ? 'bg-amber-500/20 border-2 border-amber-500/50 text-amber-400'
@@ -682,13 +690,13 @@ export default function EagleNest() {
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                   className="
-                    p-2 rounded-lg bg-slate-800/50 border border-slate-700/50
+                    p-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50
                     text-slate-300 hover:bg-slate-700/50 hover:border-amber-500/50
                     disabled:opacity-50 disabled:cursor-not-allowed
                     transition-all duration-200
                   "
                 >
-                  <ChevronRight className="w-5 h-5" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </motion.div>
             )}

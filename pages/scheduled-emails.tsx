@@ -54,32 +54,32 @@ export default function ScheduledEmailsPage() {
       {/* Show content only if authenticated and admin */}
       {!loading && isAuthenticated && hasRole('admin') && (
         <>
-          <div className="relative min-h-screen bg-tech-gradient pt-8 pb-12 w-full overflow-x-hidden">
+          <div className="relative min-h-screen bg-tech-gradient pt-4 pb-4 w-full overflow-x-hidden">
             <div className="relative z-10 w-full">
               <Head>
                 <title>Scheduled Emails - EaglEye IntelDesk</title>
                 <meta name="description" content="Manage scheduled advisory emails" />
               </Head>
 
-              <div className="w-full px-4 sm:px-6 lg:px-8">
+              <div className="w-full px-2">
                 {/* Header */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
-                  className="mb-8"
+                  className="mb-4"
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                    <div className="mb-6 lg:mb-0">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="p-2 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-xl backdrop-blur-sm border border-violet-500/30">
-                          <Calendar className="h-6 w-6 text-violet-400" />
+                    <div className="mb-2 lg:mb-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-xl backdrop-blur-sm border border-violet-500/30">
+                          <Calendar className="h-5 w-5 text-violet-400" />
                         </div>
                         <div>
-                          <h1 className="font-orbitron font-bold text-2xl md:text-3xl bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
+                          <h1 className="font-orbitron font-bold text-xl md:text-2xl bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
                             Scheduled Emails
                           </h1>
-                          <p className="font-rajdhani text-base text-slate-400 mt-1">
+                          <p className="font-rajdhani text-sm text-slate-400 mt-0.5">
                             Manage and monitor scheduled advisory email notifications
                           </p>
                         </div>
