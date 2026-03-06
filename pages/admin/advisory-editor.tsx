@@ -204,40 +204,43 @@ export default function AdvisoryEditor() {
       setSweeping(true);
       let advisoryId = advisory.advisory_id;
 
-      // If advisory is new (unsaved), save it first before running IP sweep
-      if (advisory.is_new) {
-        console.log('[EDITOR] Advisory is new, auto-saving before IP sweep...');
-        toast.info('Saving advisory first...');
-        
-        try {
-          const advisoryToSave = {
-            ...advisory,
-            created_at: advisory.created_at || new Date().toISOString(),
-            timestamp: advisory.timestamp || new Date().toISOString()
-          };
-          delete advisoryToSave.is_new;
+      // Always save the current advisory state before running IP sweep
+      // This ensures manually added IPs/IOCs are persisted to the database
+      // so the IP sweep Python script can read them correctly.
+      console.log('[EDITOR] Auto-saving advisory before IP sweep to persist any manual IOC changes...');
+      toast.info('Saving advisory before sweep...');
 
-          const saveResponse = await fetch('/api/eagle-nest', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(advisoryToSave)
-          });
-          
-          const saveData = await saveResponse.json();
-          if (!saveData.success) {
-            throw new Error(saveData.error || 'Failed to save advisory');
-          }
-          
-          // Update the advisory state with the saved version
-          setAdvisory({ ...advisory, is_new: false });
-          toast.success('Advisory saved successfully!');
-        } catch (saveError: any) {
-          console.error('[EDITOR] Auto-save failed:', saveError);
-          toast.error(`Failed to save advisory: ${saveError.message}`);
-          setSweeping(false);
-          return;
+      try {
+        const advisoryToSave = {
+          ...advisory,
+          created_at: advisory.created_at || new Date().toISOString(),
+          timestamp: advisory.timestamp || new Date().toISOString(),
+          recommendations: (advisory.recommendations || []).filter((r: string) => r && r.trim()),
+          patch_details: (advisory.patch_details || []).filter((p: string) => p && p.trim()),
+          references: (advisory.references || []).filter((ref: string) => ref && ref.trim())
+        };
+        delete advisoryToSave.is_new;
+
+        const saveResponse = await fetch('/api/eagle-nest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(advisoryToSave)
+        });
+
+        const saveData = await saveResponse.json();
+        if (!saveData.success) {
+          throw new Error(saveData.error || 'Failed to save advisory');
         }
+
+        // Update the advisory state (mark as no longer new if it was)
+        setAdvisory({ ...advisory, is_new: false });
+        console.log('[EDITOR] Advisory saved successfully before IP sweep');
+      } catch (saveError: any) {
+        console.error('[EDITOR] Auto-save before IP sweep failed:', saveError);
+        toast.error(`Failed to save advisory before sweep: ${saveError.message}`);
+        setSweeping(false);
+        return;
       }
 
       console.log('[EDITOR] Starting IP sweep for:', advisoryId);
@@ -894,8 +897,8 @@ export default function AdvisoryEditor() {
                                 <option value="" className="bg-slate-800 text-slate-400">Select Type</option>
                                 <option value="domain" className="bg-slate-800 text-red-400">DOMAIN</option>
                                 <option value="url" className="bg-slate-800 text-red-400">URL</option>
-                                <option value="ip" className="bg-slate-800 text-red-400">IP</option>
-                                <option value="ipv4" className="bg-slate-800 text-red-400">IPV4</option>
+                                <option value="ipv4" className="bg-slate-800 text-red-400">IP / IPv4</option>
+                                <option value="ipv6" className="bg-slate-800 text-red-400">IPv6</option>
                                 <option value="hash" className="bg-slate-800 text-red-400">HASH</option>
                                 <option value="md5" className="bg-slate-800 text-red-400">MD5</option>
                                 <option value="sha1" className="bg-slate-800 text-red-400">SHA1</option>
@@ -1103,36 +1106,34 @@ export default function AdvisoryEditor() {
                     onClick={handleIPSweep}
                     disabled={sweeping || !advisory}
                     className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-lg text-white hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-orbitron font-bold shadow-lg shadow-purple-500/20"
-                    title={advisory.is_new ? 'Advisory will be auto-saved before running IP sweep' : 'Scan firewall logs for detected IOCs'}
+                    title="Advisory will be saved automatically before running IP sweep to ensure all manual IOC changes are included"
                   >
                     {sweeping ? (
                       <>
                         <Radar className="h-5 w-5 animate-spin" />
-                        <span>{advisory.is_new ? 'Saving & Scanning...' : 'Scanning...'}</span>
+                        <span>Saving & Scanning...</span>
                       </>
                     ) : (
                       <>
                         <Shield className="h-5 w-5" />
-                        <span>{advisory.is_new ? 'Save & Run IP Sweep' : 'Run IP Sweep'}</span>
+                        <span>Save & Run IP Sweep</span>
                       </>
                     )}
                   </button>
                 </div>
 
-                {advisory.is_new && (
-                  <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4 flex items-start space-x-3">
+                <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4 flex items-start space-x-3">
                     <AlertTriangle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <div className="text-blue-400 font-rajdhani font-semibold">Auto-Save Enabled</div>
+                      <div className="text-blue-400 font-rajdhani font-semibold">Auto-Save Before Sweep</div>
                       <div className="text-slate-300 font-rajdhani text-sm">
-                        This advisory will be automatically saved before running IP sweep
+                        Any unsaved changes (including manually added IPs/IOCs) will be saved to the database before the sweep runs
                       </div>
                     </div>
                   </div>
-                )}
 
                 {/* IP Sweep Results */}
-                {(advisory.ip_sweep || sweepResults) && !advisory.is_new && (
+                {(advisory.ip_sweep || sweepResults) && (
                   <div className="mt-4 bg-slate-800/30 border border-slate-600/50 rounded-lg p-6">
                     <div className="flex items-center space-x-3 mb-4">
                       <Clock className="h-5 w-5 text-slate-400" />

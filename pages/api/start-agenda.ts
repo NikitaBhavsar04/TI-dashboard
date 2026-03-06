@@ -31,13 +31,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Only start Agenda if not in production and not already started
-    if (process.env.NODE_ENV !== 'production') {
-      const { startAgenda } = require('../../lib/agenda');
-      global.agendaInstance = await startAgenda();
-      global.agendaStarted = true;
-      console.log('✅ Agenda started via API (singleton initialized)');
-    }
+    // Start Agenda in all environments (production and development)
+    const { startAgenda } = require('../../lib/agenda');
+    global.agendaInstance = await startAgenda();
+    global.agendaStarted = true;
+    console.log(`✅ Agenda started via API (singleton initialized) [env: ${process.env.NODE_ENV}]`);
 
     res.status(200).json({
       success: true,

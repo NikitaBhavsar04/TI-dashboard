@@ -53,6 +53,9 @@ RUN pip install --upgrade pip \
 # Copy backend (includes config.yaml inside backend folder)
 COPY backend ./backend
 
+# Copy Microsoft Graph mailer scripts
+COPY scripts ./scripts
+
 # Copy root-level templates folder (required for email generation)
 COPY templates ./templates
 

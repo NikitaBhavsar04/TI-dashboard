@@ -10,7 +10,7 @@ SMTP_SERVER = "smtp.office365.com"
 SMTP_PORT = 587
 
 EMAIL_ADDRESS = "threatintelligence@forensiccybertech.com"
-EMAIL_PASSWORD = "fclfyqfvzqpktmgm"
+EMAIL_PASSWORD = "jhhxqwxccfkbfxyt"
 
 # ==============================
 # CREATE MESSAGE

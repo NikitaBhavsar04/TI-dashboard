@@ -161,7 +161,7 @@ export default async function handler(req, res) {
       const scheduledEmail = new ScheduledEmail({
         advisoryId: mongoose.Types.ObjectId(advisoryId),
         recipientEmail: trackedEmail.to,
-        from: process.env.SMTP_USER,
+        from: process.env.FROM_EMAIL || process.env.SMTP_USER,
         sentByName: decoded.username,
         subject: trackedEmail.subject,
         htmlContent: trackedEmail.html,

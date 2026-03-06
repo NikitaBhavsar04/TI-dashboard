@@ -1,3 +1,4 @@
+<html>
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
     xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -7,7 +8,7 @@
     <meta name="viewport" content="width=device-width">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="x-apple-disable-message-reformatting">
-    <title>{{ title or 'Advisory' }}</title>
+    <title>Critical Vulnerability in System</title>
 
     <link
         href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Rajdhani:wght@500;600;700&display=swap"
@@ -107,7 +108,7 @@
                                                         style="text-align: center; padding: 0 15px;">
                                                         <h1 class="h1-mobile"
                                                             style="margin: 0; font-family: 'Rajdhani', Arial, sans-serif; font-size: 34px; line-height: 1.2; font-weight: 700; color: #ffffff; text-transform: uppercase;">
-                                                            {{ title or 'Advisory Title' }}
+                                                            Critical Vulnerability in System
                                                         </h1>
                                                     </td>
                                                     <td valign="middle" width="120" class="mobile-stack"
@@ -135,8 +136,7 @@
                                                                     <span
                                                                         style="display: block; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 700; font-size: 13px; text-transform: uppercase; color: rgba(255,255,255,0.9);">Criticality</span>
                                                                     <span
-                                                                        style="display: block; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 600; font-size: 20px; color: #ffffff; margin-top: 2px;">{{
-                                                                        criticality }}</span>
+                                                                        style="display: block; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 600; font-size: 20px; color: #ffffff; margin-top: 2px;">MEDIUM</span>
                                                                 </td>
                                                             </tr>
                                                         </table>
@@ -152,8 +152,7 @@
                                                                         style="display: block; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 700; font-size: 13px; text-transform: uppercase; color: rgba(255,255,255,0.9);">Threat
                                                                         Type</span>
                                                                     <span
-                                                                        style="display: block; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 600; font-size: 20px; color: #ffffff; margin-top: 2px;">{{
-                                                                        threat_type }}</span>
+                                                                        style="display: block; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 600; font-size: 20px; color: #ffffff; margin-top: 2px;">Unknown</span>
                                                                 </td>
                                                             </tr>
                                                         </table>
@@ -177,22 +176,22 @@
                                     <tr>
                                         <td
                                             style="padding: 8px 15px; color: #ffffff; font-family: 'Rajdhani', Arial, sans-serif; font-weight: 700; font-size: 16px;">
-                                            TLP: {{ tlp }}
+                                            TLP: CLEAR
                                         </td>
                                         <td style="padding: 8px 15px 8px 0;">
                                             <span
-                                                style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #999; background-color: {% if tlp == 'CLEAR' %}#FFFFFF{% else %}transparent{% endif %}; margin-right: 4px;"></span>
+                                                style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #999; background-color: #FFFFFF; margin-right: 4px;"></span>
                                             <span
-                                                style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #999; background-color: {% if tlp == 'GREEN' %}#2E7D32{% else %}transparent{% endif %}; margin-right: 4px;"></span>
+                                                style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #999; background-color: transparent; margin-right: 4px;"></span>
                                             <span
-                                                style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #999; background-color: {% if tlp in ['AMBER','AMBER+STRICT'] %}#F9A825{% else %}transparent{% endif %}; margin-right: 4px;"></span>
+                                                style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #999; background-color: transparent; margin-right: 4px;"></span>
                                             <span
-                                                style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #999; background-color: {% if tlp == 'RED' %}#C62828{% else %}transparent{% endif %};"></span>
+                                                style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #999; background-color: transparent;"></span>
                                         </td>
                                     </tr>
                                 </table>
                             </td>
-                            <td style="display:none; visibility:hidden; color:#F5F7FA; font-size:1px;">{{ advisory_id }}
+                            <td style="display:none; visibility:hidden; color:#F5F7FA; font-size:1px;">ADV-2023-001
                             </td>
                         </tr>
                     </table>
@@ -216,17 +215,7 @@
                                     </tr>
                                 </table>
 
-                                {% for para in exec_summary_parts %}
-                                <p style="margin: 15px 0 20px 0;
-         font-family: 'Roboto', Arial, sans-serif;
-         font-size: 16px;
-         line-height: 1.6;
-         color: #0B2233;
-         text-align: justify;">
-                                    {{ para }}
-                                </p>
-                                {% endfor %}
-
+                                <p style="margin: 15px 0 20px 0; font-family: 'Roboto', Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #0B2233; text-align: justify;">This is a test summary</p>
 
                                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                     <tr>
@@ -242,7 +231,7 @@
                                                             Affected Product</p>
                                                         <p
                                                             style="margin: 0; font-family: 'Roboto', Arial, sans-serif; font-size: 15px; color: rgba(255,255,255,0.92); word-break: break-word;">
-                                                            {{ affected_product }}</p>
+                                                            Not specified</p>
                                                     </td>
                                                 </tr>
                                             </table>
@@ -260,7 +249,7 @@
                                                             Target Sector</p>
                                                         <p
                                                             style="margin: 0; font-family: 'Roboto', Arial, sans-serif; font-size: 15px; color: rgba(255,255,255,0.92);">
-                                                            {{ sectors|join(', ') }}</p>
+                                                            Not specified</p>
                                                     </td>
                                                 </tr>
                                             </table>
@@ -278,7 +267,7 @@
                                                             Region</p>
                                                         <p
                                                             style="margin: 0; font-family: 'Roboto', Arial, sans-serif; font-size: 15px; color: rgba(255,255,255,0.92);">
-                                                            {{ regions|join(', ') }}</p>
+                                                            Not specified</p>
                                                     </td>
                                                 </tr>
                                             </table>
@@ -325,7 +314,7 @@
                color: #0B2233;
                padding: 8px 0;">
                                             <strong style="color: #0B1F33;">CVE:</strong>
-                                            <span style="margin-left: 5px;">{{ cves|join(', ') }}</span>
+                                            <span style="margin-left: 5px;">CVE-2023-1234</span>
                                         </td>
 
                                         <!-- RIGHT: CVSS SCORE ONLY -->
@@ -333,19 +322,10 @@
                font-size: 16px;
                color: #0B2233;
                padding: 8px 0;">
-                                            {% if cvss %}
-                                            {% set first = cvss.values() | list | first %}
-                                            <strong style="color: #0B1F33;">CVSS:</strong> <span
-                                                style="margin-left: 5px;">{{ first.score }}</span>
-                                            {% else %}
-                                            <strong style="color: #0B1F33;">CVSS:</strong> <span
-                                                style="color: #94A3B8; font-style: italic; margin-left: 5px;">Not
-                                                Available</span>
-                                            {% endif %}
+                                            <span style="color: #94A3B8; font-style: italic;"><strong>CVSS:</strong> Not Available</span>
                                         </td>
                                     </tr>
                                 </table>
-
 
                                 <div style="height: 10px;"></div>
 
@@ -369,97 +349,9 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% if mitre %}
-                                        {% for row in mitre %}
-                                        <tr
-                                            style="background-color: {% if loop.index is even %}#F7FAFD{% else %}#FFFFFF{% endif %};">
-                                            <td
-                                                style="padding: 10px; border-bottom: 1px solid #D7DEE8; font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233;">
-                                                {% if row.tactic or row.tacticName or row.name %}{{ row.tactic or row.tacticName or row.name }}{% endif %}</td>
-                                            <td
-                                                style="padding: 10px; border-bottom: 1px solid #D7DEE8; font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233;">
-                                                {% if row.id or row.techniqueId or row.technique_id %}{{ row.id or row.techniqueId or row.technique_id }}{% endif %}</td>
-                                            <td
-                                                style="padding: 10px; border-bottom: 1px solid #D7DEE8; font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233;">
-                                                {% if row.technique or (row.techniques and row.techniques[0]) %}{{ row.technique or row.techniques[0] }}{% endif %}</td>
-                                        </tr>
-                                        {% endfor %}
-                                        {% else %}
-                                        <tr>
-                                            <td colspan="3"
-                                                style="padding: 15px; border-bottom: 1px solid #D7DEE8; text-align: center; color: #94A3B8; font-style: italic; font-family: 'Roboto', Arial, sans-serif; font-size: 14px;">
-                                                MITRE ATT&CK mapping not available for this threat
-                                            </td>
-                                        </tr>
-                                        {% endif %}
+                                        <tr><td colspan="3" style="padding: 15px; border-bottom: 1px solid #D7DEE8; text-align: center; color: #94A3B8; font-style: italic; font-family: 'Roboto', Arial, sans-serif; font-size: 14px;">MITRE ATT&CK mapping not available for this threat</td></tr>
                                     </tbody>
                                 </table>
-                                {% if mbc %}
-                                <div style="height: 20px;"></div>
-
-                                <h3 style="margin: 0 0 10px 0;
-           font-family: 'Rajdhani', Arial, sans-serif;
-           font-size: 20px;
-           font-weight: 700;
-           color: #0B1F33;">
-                                    Malware Behavior Catalog (MBC)
-                                </h3>
-
-                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                                    style="border-collapse: collapse; width: 100%; margin-bottom: 10px;">
-                                    <thead>
-                                        <tr>
-                                            <th style="background-color: #0E2742; color: #ffffff; padding: 10px;
-                       font-family: 'Rajdhani', Arial, sans-serif;
-                       font-size: 14px; text-align: left; border-top-left-radius: 8px;">
-                                                Behavior
-                                            </th>
-                                            <th style="background-color: #0E2742; color: #ffffff; padding: 10px;
-                       font-family: 'Rajdhani', Arial, sans-serif;
-                       font-size: 14px; text-align: left;">
-                                                Objective
-                                            </th>
-                                            <th style="background-color: #0E2742; color: #ffffff; padding: 10px;
-                       font-family: 'Rajdhani', Arial, sans-serif;
-                       font-size: 14px; text-align: left;">
-                                                Confidence
-                                            </th>
-                                            <th style="background-color: #0E2742; color: #ffffff; padding: 10px;
-                       font-family: 'Rajdhani', Arial, sans-serif;
-                       font-size: 14px; text-align: left; border-top-right-radius: 8px;">
-                                                Evidence
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for b in mbc %}
-                                        <tr
-                                            style="background-color: {% if loop.index is even %}#F7FAFD{% else %}#FFFFFF{% endif %};">
-                                            <td style="padding: 10px; border-bottom: 1px solid #D7DEE8;
-                       font-family: 'Roboto', Arial, sans-serif;
-                       font-size: 14px; color: #0B2233;">
-                                                {{ b.behavior }}
-                                            </td>
-                                            <td style="padding: 10px; border-bottom: 1px solid #D7DEE8;
-                       font-family: 'Roboto', Arial, sans-serif;
-                       font-size: 14px; color: #0B2233;">
-                                                {{ b.objective }}
-                                            </td>
-                                            <td style="padding: 10px; border-bottom: 1px solid #D7DEE8;
-                       font-family: 'Roboto', Arial, sans-serif;
-                       font-size: 14px; color: #0B2233;">
-                                                {{ b.confidence }}
-                                            </td>
-                                            <td style="padding: 10px; border-bottom: 1px solid #D7DEE8;
-                       font-family: 'Roboto', Arial, sans-serif;
-                       font-size: 14px; color: #0B2233;">
-                                                {{ b.evidence }}
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                                {% endif %}
 
                             </td>
                         </tr>
@@ -471,21 +363,16 @@
                         </tr>
                     </table>
                     <!-- End Spacer -->
-                    {% if iocs and (
-                    iocs.ipv4 or
-                    iocs.domains or
-                    iocs.md5 or
-                    iocs.sha1 or
-                    iocs.sha256
-                    ) %}
+                    
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                        style="background-color: #FFFFFF; border: 1px solid #D7DEE8; border-radius: 12px; margin-top: 25px; box-shadow: 0 6px 18px rgba(11,31,51,.06);">
+                        style="background-color: #FFFFFF; border: 1px solid #D7DEE8; border-radius: 12px; margin-top: 15px; box-shadow: 0 6px 18px rgba(11,31,51,.06);">
                         <tr>
                             <td style="padding: 20px;">
                                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                     <tr>
                                         <td width="60" style="vertical-align: middle;">
-                                            <div style="height:6px; width:60px; border-radius:99px; background-color:#1FA4B8; background: linear-gradient(to right, #1FA4B8, #2C71C3);"></div>
+                                            <div style="height: 6px; width: 60px; border-radius: 99px; background-color: #1FA4B8; background: linear-gradient(to right, #1FA4B8, #2C71C3);">
+                                            </div>
                                         </td>
                                         <td style="padding-left: 10px; vertical-align: middle;">
                                             <h2 style="margin: 0;
@@ -498,166 +385,68 @@
                                         </td>
                                     </tr>
                                 </table>
-
                                 <div style="height: 15px;"></div>
 
-                                {% if iocs.ipv4 %}
-                                <h4 style="font-family: 'Rajdhani', Arial, sans-serif; color: #0B1F33;">IP Addresses
-                                </h4>
-                                <ul style="font-family: 'Roboto', Arial, sans-serif; font-size: 15px; color: #0B2233;">
-                                    {% for ip in iocs.ipv4 %}
-                                    <li>{{ ip }}</li>
-                                    {% endfor %}
-                                </ul>
-                                {% endif %}
-
-                                {% if iocs.domains %}
-                                <h4 style="font-family: 'Rajdhani', Arial, sans-serif; color: #0B1F33;">Domains</h4>
-                                <ul style="font-family: 'Roboto', Arial, sans-serif; font-size: 15px; color: #0B2233;">
-                                    {% for d in iocs.domains %}
-                                    <li>{{ d }}</li>
-                                    {% endfor %}
-                                </ul>
-                                {% endif %}
-
-                                {% if iocs.md5 %}
-                                <h4 style="font-family: 'Rajdhani', Arial, sans-serif; color: #0B1F33;">MD5 Hashes</h4>
-                                <ul
-                                    style="font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233; word-break: break-all;">
-                                    {% for h in iocs.md5 %}
-                                    <li>{{ h }}</li>
-                                    {% endfor %}
-                                </ul>
-                                {% endif %}
-
-                                {% if iocs.sha1 %}
-                                <h4 style="font-family: 'Rajdhani', Arial, sans-serif; color: #0B1F33;">SHA1 Hashes</h4>
-                                <ul
-                                    style="font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233; word-break: break-all;">
-                                    {% for h in iocs.sha1 %}
-                                    <li>{{ h }}</li>
-                                    {% endfor %}
-                                </ul>
-                                {% endif %}
-
-                                {% if iocs.sha256 %}
-                                <h4 style="font-family: 'Rajdhani', Arial, sans-serif; color: #0B1F33;">SHA256 Hashes
-                                </h4>
-                                <ul
-                                    style="font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233; word-break: break-all;">
-                                    {% for h in iocs.sha256 %}
-                                    <li>{{ h }}</li>
-                                    {% endfor %}
-                                </ul>
-                                {% endif %}
-
-                            </td>
-                        </tr>
-                    </table>
-                    {% endif %}
-
-                    {% if iocs and (
-                    iocs.ipv4 or
-                    iocs.domains or
-                    iocs.md5 or
-                    iocs.sha1 or
-                    iocs.sha256
-                    ) %}
-                    <!-- IOC Detection Results (Dedicated Advisory Only) -->
-                    {% if ioc_detection and (ioc_detection.match_count | default(0) | int) > 0 and ioc_detection.matches and (ioc_detection.matches | length) > 0 %}
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                        style="background-color: #FFFFFF; border: 1px solid #D7DEE8; border-radius: 12px; margin-top: 25px; box-shadow: 0 6px 18px rgba(11,31,51,.06);">
-                        <tr>
-                            <td style="padding: 20px;">
-                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                                    <tr>
-                                        <td width="60" style="vertical-align: middle;">
-                                            <div style="height: 6px; width: 60px; border-radius: 99px;
-                                            background: linear-gradient(to right, #1FA4B8, #2C71C3);">
-                                            </div>
-                                        </td>
-                                        <td style="padding-left: 10px; vertical-align: middle;">
-                                            <h2 style="margin: 0;
-                                   font-family: 'Rajdhani', Arial, sans-serif;
-                                   font-size: 24px;
-                                   font-weight: 700;
-                                   color: #0B1F33;">
-                                                IOC DETECTION ALERT
-                                            </h2>
-                                        </td>
-                                    </tr>
-                                </table>
-
-                                <div style="height: 15px;"></div>
-
-                                <div
-                                    style="background-color: #F2F8FF; border-left: 4px solid #1FA4B8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                                    <p
-                                        style="margin: 0; font-family: 'Roboto', Arial, sans-serif; font-size: 15px; color: #0B1F33; font-weight: 500;">
-                                        <strong>IMPORTANT:</strong> One or more Indicators of Compromise (IOCs) listed
-                                        in this advisory have been detected in your environment.
-                                    </p>
+                                <div style="border: 1px solid #D7DEE8; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; width: 100%;">
+                                        <thead>
+                                            <tr>
+                                                <th style="background-color: #0E2742; color: #ffffff; padding: 12px 10px; font-family: 'Rajdhani', Arial, sans-serif; font-size: 14px; text-align: left;">
+                                                    IP ADDRESSES
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="background-color: #FFFFFF;">
+                    <td style="padding: 10px; border-bottom: 1px solid #D7DEE8; font-family: 'Roboto', Arial, sans-serif; font-size: 15px; color: #0B2233;">192.168.1.1</td>
+                  </tr>
+<tr style="background-color: #F7FAFD;">
+                    <td style="padding: 10px; border-bottom: 1px solid #D7DEE8; font-family: 'Roboto', Arial, sans-serif; font-size: 15px; color: #0B2233;">10.0.0.1</td>
+                  </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
-
-                                <h3
-                                    style="margin: 0 0 10px 0; font-family: 'Rajdhani', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #0B1F33;">
-                                    Detection Details
-                                </h3>
-
-                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                                    style="border-collapse: collapse; width: 100%;">
-                                    <thead>
-                                        <tr>
-                                            <th
-                                                style="background-color: #0E2742; color: #ffffff; padding: 10px; font-family: 'Rajdhani', Arial, sans-serif; font-size: 14px; text-align: left; border-top-left-radius: 8px;">
-                                                IOC
-                                            </th>
-                                            <th
-                                                style="background-color: #0E2742; color: #ffffff; padding: 10px; font-family: 'Rajdhani', Arial, sans-serif; font-size: 14px; text-align: left;">
-                                                FIELD
-                                            </th>
-                                            <th
-                                                style="background-color: #0E2742; color: #ffffff; padding: 10px; font-family: 'Rajdhani', Arial, sans-serif; font-size: 14px; text-align: left; border-top-right-radius: 8px;">
-                                                FIRST SEEN
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for match in ioc_detection.matches %}
-                                        <tr
-                                            style="background-color: {% if loop.index is even %}#F7FAFD{% else %}#FFFFFF{% endif %};">
-                                            <td
-                                                style="padding: 10px; border-bottom: 1px solid #D7DEE8; font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233; font-family: monospace;">
-                                                {{ match.ioc }}
-                                            </td>
-                                            <td
-                                                style="padding: 10px; border-bottom: 1px solid #D7DEE8; font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233; text-transform: uppercase;">
-                                                {{ match.matched_field }}
-                                            </td>
-                                            <td
-                                                style="padding: 10px; border-bottom: 1px solid #D7DEE8; font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233;">
-                                                {{ match.timestamp }}
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-
-                                <div style="height: 15px;"></div>
-
-                                {% if (ioc_detection.checked_at | default('') | trim) and (ioc_detection.match_count | default(0) | int) > 0 %}
-                                <p
-                                    style="margin: 5px 0; font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #5F6C7B; font-style: italic;">
-                                    Detected at: {{ ioc_detection.checked_at }} | Total Matches: {{
-                                    ioc_detection.match_count }}
-                                </p>
-                                {% endif %}
-
+        
+                                <div style="border: 1px solid #D7DEE8; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; width: 100%;">
+                                        <thead>
+                                            <tr>
+                                                <th style="background-color: #0E2742; color: #ffffff; padding: 12px 10px; font-family: 'Rajdhani', Arial, sans-serif; font-size: 14px; text-align: left;">
+                                                    DOMAINS
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="background-color: #FFFFFF;">
+                    <td style="padding: 10px; border-bottom: 1px solid #D7DEE8; font-family: 'Roboto', Arial, sans-serif; font-size: 15px; color: #0B2233;">evil.com</td>
+                  </tr>
+<tr style="background-color: #F7FAFD;">
+                    <td style="padding: 10px; border-bottom: 1px solid #D7DEE8; font-family: 'Roboto', Arial, sans-serif; font-size: 15px; color: #0B2233;">bad.org</td>
+                  </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+        
+                                <h4 style="margin: 0 0 10px 0; font-family: 'Rajdhani', Arial, sans-serif; color: #0B1F33; font-size: 18px;">MD5 Hashes</h4>
+                                <ul style="font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233; word-break: break-all; margin-bottom: 20px;">
+                                    <li>d41d8cd98f00b204e9800998ecf8427e</li>
+                                </ul>
+        
+                                <h4 style="margin: 0 0 10px 0; font-family: 'Rajdhani', Arial, sans-serif; color: #0B1F33; font-size: 18px;">SHA1 Hashes</h4>
+                                <ul style="font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233; word-break: break-all; margin-bottom: 20px;">
+                                    <li>da39a3ee5e6b4b0d3255bfef95601890afd80709</li>
+                                </ul>
+        
+                                <h4 style="margin: 0 0 10px 0; font-family: 'Rajdhani', Arial, sans-serif; color: #0B1F33; font-size: 18px;">SHA256 Hashes</h4>
+                                <ul style="font-family: 'Roboto', Arial, sans-serif; font-size: 14px; color: #0B2233; word-break: break-all; margin-bottom: 20px;">
+                                    <li>e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</li>
+                                </ul>
+        
                             </td>
                         </tr>
                     </table>
-                    {% endif %}
-                    {% endif %}
+
+                    <!-- IOC Detection Results (Dedicated Advisory Only) -->
 
                     <!-- Spacer -->
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -686,15 +475,15 @@
                                 </table>
                                 <div style="height: 15px;"></div>
                                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                                    {% for rec in recommendations %}
                                     <tr>
-                                        <td width="20" valign="top"
-                                            style="padding-bottom: 8px; color: #1FA4B8; font-weight: 900;">✔</td>
-                                        <td valign="top"
-                                            style="padding-bottom: 8px; font-family: 'Roboto', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.92);">
-                                            {{ rec }}</td>
+                                        <td width="20" valign="top" style="padding-bottom: 8px; color: #1FA4B8; font-weight: 900;">✔</td>
+                                        <td valign="top" style="padding-bottom: 8px; font-family: 'Roboto', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.92);">Patch system immediately</td>
                                     </tr>
-                                    {% endfor %}
+<tr>
+                                        <td width="20" valign="top" style="padding-bottom: 8px; color: #1FA4B8; font-weight: 900;">✔</td>
+                                        <td valign="top" style="padding-bottom: 8px; font-family: 'Roboto', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.92);">Isolate from network</td>
+                                    </tr>
+
                                 </table>
                             </td>
                         </tr>
@@ -727,25 +516,11 @@
                                 </table>
                                 <div style="height: 15px;"></div>
                                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                                    {% if patch_details %}
-                                    {% for p in patch_details %}
                                     <tr>
-                                        <td width="20" valign="top"
-                                            style="padding-bottom: 8px; color: #1FA4B8; font-weight: 900;">✔</td>
-                                        <td valign="top"
-                                            style="padding-bottom: 8px; font-family: 'Roboto', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.92);">
-                                            {{ p }}</td>
+                                        <td width="20" valign="top" style="padding-bottom: 8px; color: #1FA4B8; font-weight: 900;">✔</td>
+                                        <td valign="top" style="padding-bottom: 8px; font-family: 'Roboto', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.92);">Apply patch KB123456</td>
                                     </tr>
-                                    {% endfor %}
-                                    {% else %}
-                                    <tr>
-                                        <td width="20" valign="top"
-                                            style="padding-bottom: 8px; color: #1FA4B8; font-weight: 900;">✔</td>
-                                        <td valign="top"
-                                            style="padding-bottom: 8px; font-family: 'Roboto', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.92);">
-                                            No patch details provided.</td>
-                                    </tr>
-                                    {% endif %}
+
                                 </table>
 
                                 <div style="height: 1px; background-color: rgba(255,255,255,0.2); margin: 20px 0;">
@@ -766,18 +541,19 @@
                                 </table>
                                 <div style="height: 15px;"></div>
                                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                                    {% for ref in references %}
                                     <tr>
-                                        <td width="20" valign="top"
-                                            style="padding-bottom: 8px; color: #1FA4B8; font-weight: 900;">✔</td>
-                                        <td valign="top"
-                                            style="padding-bottom: 8px; font-family: 'Roboto', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.92);">
-                                            <a href="{{ ref }}"
-                                                style="color: #2C71C3; color: #64B5F6; text-decoration: none;">{{ ref
-                                                }}</a>
+                                        <td width="20" valign="top" style="padding-bottom: 8px; color: #1FA4B8; font-weight: 900;">✔</td>
+                                        <td valign="top" style="padding-bottom: 8px; font-family: 'Roboto', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.92);">
+                                            <a href="https://example.com/vuln" style="color: #64B5F6; text-decoration: none;">https://example.com/vuln</a>
                                         </td>
                                     </tr>
-                                    {% endfor %}
+<tr>
+                                        <td width="20" valign="top" style="padding-bottom: 8px; color: #1FA4B8; font-weight: 900;">✔</td>
+                                        <td valign="top" style="padding-bottom: 8px; font-family: 'Roboto', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.92);">
+                                            <a href="https://example.org/details" style="color: #64B5F6; text-decoration: none;">https://example.org/details</a>
+                                        </td>
+                                    </tr>
+
                                 </table>
                             </td>
                         </tr>
@@ -798,4 +574,5 @@
     </center>
 </body>
 
+</html>
 </html>

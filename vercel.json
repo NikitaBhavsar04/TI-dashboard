@@ -3,12 +3,21 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/cron/process-emails",
+      "schedule": "* * * * *"
+    }
+  ],
   "functions": {
     "pages/api/**/*.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "pages/api/**/*.ts": {
-      "maxDuration": 30
+      "maxDuration": 60
+    },
+    "pages/api/cron/process-emails.ts": {
+      "maxDuration": 300
     }
   },
   "headers": [

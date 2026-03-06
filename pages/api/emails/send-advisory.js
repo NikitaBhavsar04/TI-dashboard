@@ -124,7 +124,8 @@ export default async function handler(req, res) {
           createdBy: decoded.userId,
           status: 'pending', // Always start as pending, mark as sent after successful delivery
           cc: cc || [],
-          bcc: bcc || []
+          bcc: bcc || [],
+          emailType // Store whether this is a general or dedicated advisory
         };
 
         if (recipient.type === 'client') {
@@ -162,7 +163,8 @@ export default async function handler(req, res) {
           emailJobs.push({
             ...emailData,
             clientName: client.name,
-            clientId: client.client_id // Add client_id for matching with IOC detection data
+            clientId: client.client_id, // Add client_id for matching with IOC detection data
+            emailType // Store whether this is a general or dedicated advisory
           });
 
         } else if (recipient.type === 'individual') {
@@ -352,7 +354,7 @@ export default async function handler(req, res) {
       const utcTime = new Date(userInputAsUTC.getTime() - istOffsetMs);
       const now = new Date();
       
-      console.log(`⏰ Scheduling: IST input=${dateTimeString}, UTC=${utcTime.toISOString()}, Current UTC=${now.toISOString()}`);
+      console.log(`⏰ Scheduling: IST input=${scheduledDate}T${scheduledTime} (IST), UTC=${utcTime.toISOString()}, Current UTC=${now.toISOString()}`);
       
       // Validate future time
       if (utcTime <= now) {
@@ -460,7 +462,7 @@ export default async function handler(req, res) {
           emailJob.body = jobBody;
 
           // Set tracking fields
-          emailJob.from = process.env.SMTP_USER;
+          emailJob.from = process.env.FROM_EMAIL || process.env.SMTP_USER;
           emailJob.sentByName = decoded.username;
           emailJob.scheduledDate = scheduledAt;
           emailJob.sentAt = undefined;
@@ -468,6 +470,20 @@ export default async function handler(req, res) {
           emailJob.schedulingMethod = 'agenda';
           
           const emailDoc = await ScheduledEmail.create(emailJob);
+
+          // Force-write body and emailType directly via the MongoDB driver,
+          // bypassing any cached Mongoose schema that may not yet know these fields.
+          // This guarantees the pre-generated IOC-aware (or plain) HTML body is
+          // persisted and used by the poller — no re-generation needed.
+          try {
+            await ScheduledEmail.collection.updateOne(
+              { _id: emailDoc._id },
+              { $set: { body: jobBody, emailType: emailType } }
+            );
+            console.log(`💾 [BODY-PERSIST] Stored body (${jobBody.length} chars) and emailType='${emailType}' for email ${emailDoc._id}`);
+          } catch (persistErr) {
+            console.error(`❌ [BODY-PERSIST] Failed to persist body for email ${emailDoc._id}:`, persistErr.message);
+          }
 
           if (isScheduled) {
             // Schedule the email for later using Agenda.js
