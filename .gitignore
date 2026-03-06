@@ -101,3 +101,12 @@ backend/workspace/
 
 # Archive folder
 archive/
+
+# Explicit secrets and certs
+# Private key for Microsoft Graph mailer (do NOT commit)
+/mailer.pem
+/mailer.key
+# If generator places keys in scripts/
+/scripts/*.pem
+# Optional: local secrets folder
+/secrets/

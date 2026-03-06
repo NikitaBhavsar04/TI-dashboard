@@ -55,16 +55,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       // Validate scheduled date if provided
-      if (scheduledDate) {
-// Force UTC interpretation by adding Z, then subtract 5.5h to get UTC equivalent of IST input
-      const dateStr = scheduledDate.includes('Z') ? scheduledDate : scheduledDate + 'Z';
-      const scheduleDateTime = new Date(dateStr);
+      // Accepts scheduledDate (YYYY-MM-DD) + scheduledTime (HH:mm) in IST, same as send-advisory.js
+      const { scheduledTime } = req.body;
+      if (scheduledDate && scheduledTime) {
+        // Build the datetime string and treat user input as IST, then convert to UTC
+        const dateTimeString = `${scheduledDate}T${scheduledTime}:00Z`;
+        const userInputAsUTC = new Date(dateTimeString);
+        if (isNaN(userInputAsUTC.getTime())) {
+          return res.status(400).json({ message: 'Invalid date or time format' });
+        }
         const istOffsetMs = 5.5 * 60 * 60 * 1000;
-        const scheduledAtUTC = new Date(scheduleDateTime.getTime() - istOffsetMs);
+        const scheduledAtUTC = new Date(userInputAsUTC.getTime() - istOffsetMs);
         const now = new Date();
-        
+        console.log(`⏰ [EDIT] IST input=${dateTimeString}, UTC=${scheduledAtUTC.toISOString()}, Current UTC=${now.toISOString()}`);
         if (scheduledAtUTC <= now) {
-          return res.status(400).json({ message: 'Scheduled time must be in the future' });
+          return res.status(400).json({ message: 'Scheduled time must be in the future (Indian Standard Time)' });
         }
         scheduledEmail.scheduledDate = scheduledAtUTC;
       }

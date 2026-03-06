@@ -64,34 +64,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ message: 'Failed to fetch advisory from OpenSearch', error: osErr.message });
     }
 
-    // Build IOC detection data for this client (mirrors agenda.js logic)
-    let iocDetectionData: any = null;
-    if (advisory.ip_sweep && Array.isArray(advisory.ip_sweep.impacted_clients) && advisory.ip_sweep.impacted_clients.length > 0) {
-      const impacted = advisory.ip_sweep.impacted_clients.find((ic: any) =>
-        ic.client_id === scheduledEmail.clientId || ic.client_name === scheduledEmail.clientName
-      );
-      if (impacted && impacted.matches && impacted.matches.length > 0) {
-        iocDetectionData = {
-          client_name: impacted.client_name || impacted.client_id || scheduledEmail.clientName,
-          checked_at: advisory.ip_sweep.checked_at,
-          match_count: impacted.matches.length,
-          matches: impacted.matches
-        };
-      } else {
-        const fallback = advisory.ip_sweep.impacted_clients.find((ic: any) => ic.matches && ic.matches.length > 0);
-        if (fallback) {
+    // Build email HTML.
+    // Read body and emailType via the raw MongoDB driver (bypasses Mongoose schema cache)
+    // so the pre-generated IOC-aware body is guaranteed to be used even when the cached
+    // model doesn't yet know about these fields.
+    const rawDoc = await ScheduledEmail.collection.findOne(
+      { _id: scheduledEmail._id },
+      { projection: { body: 1, emailType: 1 } }
+    );
+    const storedBody: string | null = rawDoc && rawDoc.body ? rawDoc.body : null;
+    const storedEmailType: string = rawDoc && rawDoc.emailType ? rawDoc.emailType : 'general';
+    console.log(`[SEND-NOW] Raw MongoDB read — emailType: '${storedEmailType}', hasBody: ${!!storedBody}, bodyLen: ${storedBody ? storedBody.length : 0}`);
+
+    let emailBody: string;
+
+    if (storedBody) {
+      emailBody = storedBody;
+      console.log(`[SEND-NOW] ✅ Using stored pre-generated email body (${emailBody.length} chars)`);
+      console.log(`[SEND-NOW] Stored body contains IOC section: ${emailBody.includes('IOC DETECTION ALERT')}`);
+    } else {
+      console.log(`[SEND-NOW] ⚠️ No stored body — regenerating from OpenSearch data (emailType='${storedEmailType}')`);
+      let iocDetectionData: any = null;
+      if (
+        storedEmailType === 'dedicated' &&
+        advisory.ip_sweep &&
+        Array.isArray(advisory.ip_sweep.impacted_clients) &&
+        advisory.ip_sweep.impacted_clients.length > 0
+      ) {
+        const impacted = advisory.ip_sweep.impacted_clients.find((ic: any) =>
+          ic.client_id === scheduledEmail.clientId || ic.client_name === scheduledEmail.clientName
+        );
+        if (impacted && impacted.matches && impacted.matches.length > 0) {
           iocDetectionData = {
-            client_name: scheduledEmail.clientName || scheduledEmail.clientId || fallback.client_name,
+            client_name: impacted.client_name || impacted.client_id || scheduledEmail.clientName,
             checked_at: advisory.ip_sweep.checked_at,
-            match_count: fallback.matches.length,
-            matches: fallback.matches
+            match_count: impacted.matches.length,
+            matches: impacted.matches
           };
+          console.log(`[SEND-NOW] Found IOC match for client — including detection alert`);
+        } else {
+          console.log(`[SEND-NOW] Client not in impacted_clients — sending without IOC alert`);
         }
       }
+      emailBody = generateAdvisory4EmailTemplate(advisory, scheduledEmail.customMessage || '', iocDetectionData);
     }
-
-    // Generate email HTML using the same template as the scheduler
-    const emailBody: string = generateAdvisory4EmailTemplate(advisory, scheduledEmail.customMessage || '', iocDetectionData);
 
     // Generate / reuse tracking ID
     if (!scheduledEmail.trackingId) {
@@ -107,20 +123,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ? emailBody.replace('</body>', `${trackingPixel}</body>`)
       : emailBody + trackingPixel;
 
-    // Create SMTP transporter — fallback if Graph API is not configured
+    // Send via SMTP + app password
     const nodemailer = require('nodemailer');
-    const { sendMailViaGraph, isGraphMailerAvailable } = require('@/lib/graphMailer');
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.office365.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      },
-      tls: { rejectUnauthorized: false }
-    } as any);
 
     const recipients = Array.isArray(scheduledEmail.to) ? scheduledEmail.to : [scheduledEmail.to];
     const mailOptions: any = {
@@ -136,24 +140,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       mailOptions.bcc = Array.isArray(scheduledEmail.bcc) ? scheduledEmail.bcc.join(', ') : scheduledEmail.bcc;
     }
 
-    console.log(`[SEND-NOW] Sending email to: ${mailOptions.to}`);
+    console.log(`[SEND-NOW] Sending to: ${mailOptions.to}`);
 
-    if (isGraphMailerAvailable()) {
-      console.log('[SEND-NOW] Using Microsoft Graph API (SMTP AUTH bypass)...');
-      await sendMailViaGraph({
-        from: process.env.SMTP_USER,
-        to: recipients,
-        cc: scheduledEmail.cc,
-        bcc: scheduledEmail.bcc,
-        subject: scheduledEmail.subject,
-        html: trackedEmailBody
-      });
-      console.log('[SEND-NOW] Email sent via Microsoft Graph API!');
-    } else {
-      console.log('[SEND-NOW] Using SMTP...');
-      const info = await transporter.sendMail(mailOptions);
-      console.log(`[SEND-NOW] Email sent via SMTP! Message ID: ${info.messageId}`);
-    }
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.office365.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      },
+      tls: { rejectUnauthorized: false }
+    } as any);
+
+    const info = await transporter.sendMail(mailOptions);
+    transporter.close();
+    console.log(`[SEND-NOW] ✅ Sent via SMTP — Message-ID: ${info.messageId}`);
 
     // Mark as sent in MongoDB
     scheduledEmail.status = 'sent';

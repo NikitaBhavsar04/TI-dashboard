@@ -297,7 +297,7 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                           : 'text-gray-400 bg-gray-400/10'
                       }`} title={
                         email.isOpened 
-                          ? `Opened ${email.opens?.length || 1} time${(email.opens?.length || 1) > 1 ? 's' : ''} • First: ${email.openedAt ? new Date(email.openedAt).toLocaleString() : 'N/A'}`
+                          ? `Opened ${email.opens?.length || 1} time${(email.opens?.length || 1) > 1 ? 's' : ''} • First: ${email.openedAt ? new Date(email.openedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true }) : 'N/A'}`
                           : 'Not opened yet'
                       }>
                         {email.isOpened ? (

@@ -9,10 +9,12 @@ export interface IScheduledEmail extends Document {
   sentByName?: string;  // Admin username who sent this email
   clientId?: string;
   clientName?: string;
+  emailType?: 'general' | 'dedicated';  // Whether this was a general or dedicated advisory
+  body?: string;  // Pre-generated HTML body — avoids re-generation at send time
   subject: string;
   customMessage?: string;
   scheduledDate: Date;
-  status: 'pending' | 'sent' | 'failed' | 'cancelled';
+  status: 'pending' | 'processing' | 'sent' | 'failed' | 'cancelled';
   createdBy: string;
   createdAt: Date;
   sentAt?: Date;
@@ -26,6 +28,7 @@ export interface IScheduledEmail extends Document {
   }>;
   openedAt?: Date;
   isOpened: boolean;
+  lockedAt?: Date;
 }
 
 const ScheduledEmailSchema = new Schema({
@@ -68,6 +71,14 @@ const ScheduledEmailSchema = new Schema({
     type: String,
     trim: true
   },
+  emailType: {
+    type: String,
+    enum: ['general', 'dedicated'],
+    default: 'general'
+  },
+  body: {
+    type: String  // Pre-generated HTML body stored at queue time
+  },
   customMessage: {
     type: String,
     trim: true
@@ -78,7 +89,7 @@ const ScheduledEmailSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'sent', 'failed', 'cancelled'],
+    enum: ['pending', 'processing', 'sent', 'failed', 'cancelled'],
     default: 'pending'
   },
   createdBy: {
@@ -119,6 +130,9 @@ const ScheduledEmailSchema = new Schema({
   isOpened: {
     type: Boolean,
     default: false
+  },
+  lockedAt: {
+    type: Date
   }
 }, {
   timestamps: true
@@ -127,5 +141,12 @@ const ScheduledEmailSchema = new Schema({
 // Index for efficient querying of pending scheduled emails
 ScheduledEmailSchema.index({ scheduledDate: 1, status: 1 });
 ScheduledEmailSchema.index({ createdBy: 1 });
+
+// In development, delete the cached Mongoose model whenever this module is
+// re-evaluated (hot-module replacement) so schema changes are picked up
+// immediately without a full server restart.
+if (process.env.NODE_ENV !== 'production') {
+  delete (mongoose.models as any).ScheduledEmail;
+}
 
 export default mongoose.models.ScheduledEmail || mongoose.model<IScheduledEmail>('ScheduledEmail', ScheduledEmailSchema);

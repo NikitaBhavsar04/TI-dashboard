@@ -132,7 +132,7 @@ const EditScheduledEmailModal: React.FC<EditScheduledEmailModalProps> = ({
         return;
       }
 
-      // Force UTC interpretation by adding Z, then subtract 5.5h to get UTC equivalent of IST input
+      // Validate: treat user input as IST, convert to UTC only for the future-check
       const userInputAsUTC = new Date(`${emailData.scheduledDate}T${emailData.scheduledTime}:00Z`);
       const istOffsetMs = 5.5 * 60 * 60 * 1000;
       const userIntendedUTC = new Date(userInputAsUTC.getTime() - istOffsetMs);
@@ -143,9 +143,12 @@ const EditScheduledEmailModal: React.FC<EditScheduledEmailModalProps> = ({
         return;
       }
 
+      // Send the raw IST date and time strings — the API will do the IST→UTC conversion
+      // (same pattern as initial scheduling in send-advisory.js)
       const updateData = {
         ...cleanedData,
-        scheduledDate: scheduledDateTime.toISOString()
+        scheduledDate: emailData.scheduledDate,
+        scheduledTime: emailData.scheduledTime
       };
 
       const token = localStorage.getItem('token');

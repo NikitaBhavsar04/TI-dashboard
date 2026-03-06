@@ -40,8 +40,24 @@ ADVISORY_INDEX = "ti-generated-advisories"
 LOOKBACK_DAYS = 14
 
 TIME_FIELD = "timestamp"
-SRC_IP_FIELD = "data.srcip"
-DST_IP_FIELD = "data.dstip"
+
+# All known source-IP field names across different log schemas
+SRC_IP_FIELDS = [
+    "data.srcip",      # Sophos / Wazuh firewall logs
+    "src_ip",          # EDR / demo-logs / generic
+    "source.ip",       # ECS-style logs
+    "srcip",           # flat variant
+    "SourceIP",        # Windows-style
+]
+
+# All known destination-IP field names across different log schemas
+DST_IP_FIELDS = [
+    "data.dstip",      # Sophos / Wazuh firewall logs
+    "dst_ip",          # EDR / demo-logs / generic
+    "destination.ip",  # ECS-style logs
+    "dstip",           # flat variant
+    "DestinationIP",   # Windows-style
+]
 
 # --------------------------------------------------
 # OPENSEARCH CLIENT
@@ -128,21 +144,54 @@ def fetch_ip_iocs(advisory_id: str):
     advisory_doc = hits[0]["_source"]
     iocs = advisory_doc.get("iocs", [])
 
+    # Accepted IP types: 'ip', 'ipv4', 'ipv6', 'ip_address'
+    IP_TYPES = {"ip", "ipv4", "ipv6", "ip_address"}
+
     ips = []
     for ioc in iocs:
-        if ioc.get("type") in ("ipv4", "ipv6"):
-            ip = ioc.get("value")
+        ioc_type = (ioc.get("type") or "").strip().lower()
+        if ioc_type in IP_TYPES:
+            ip = (ioc.get("value") or "").strip()
             if ip and is_public_ip(ip):
                 ips.append(ip)
+                logger.info("[IOC] Found public IP IOC: %s (type=%s)", ip, ioc_type)
 
+    logger.info("[IOC] Total public IP IOCs extracted: %d", len(ips))
     return ips
 
 
 # --------------------------------------------------
 # SEARCH CLIENT FIREWALL INDEX
 # --------------------------------------------------
+def _get_nested(doc: dict, dotted_key: str):
+    """Safely retrieve a value from a nested dict using a dotted key path."""
+    keys = dotted_key.split(".")
+    val = doc
+    for k in keys:
+        if not isinstance(val, dict):
+            return None
+        val = val.get(k)
+    return val
+
+
+def detect_matched_field(source: dict, ip: str) -> str:
+    """Return a human-readable label for which field matched the IP."""
+    for field in SRC_IP_FIELDS:
+        if _get_nested(source, field) == ip:
+            return f"src ({field})"
+    for field in DST_IP_FIELDS:
+        if _get_nested(source, field) == ip:
+            return f"dst ({field})"
+    return "unknown"
+
+
 def search_client_index(client_index: str, ip: str):
     time_from = (datetime.utcnow() - timedelta(days=LOOKBACK_DAYS)).isoformat()
+
+    # Build a should clause covering every known src/dst field variant
+    ip_should_clauses = []
+    for field in SRC_IP_FIELDS + DST_IP_FIELDS:
+        ip_should_clauses.append({"term": {field: ip}})
 
     query = {
         "size": 5,
@@ -158,21 +207,13 @@ def search_client_index(client_index: str, ip: str):
                     },
                     {
                         "bool": {
-                            "should": [
-                                {"term": {SRC_IP_FIELD: ip}},
-                                {"term": {DST_IP_FIELD: ip}}
-                            ],
+                            "should": ip_should_clauses,
                             "minimum_should_match": 1
                         }
                     }
                 ]
             }
-        },
-        "_source": [
-            TIME_FIELD,
-            SRC_IP_FIELD,
-            DST_IP_FIELD
-        ]
+        }
     }
 
     return os_client.search(
@@ -279,12 +320,7 @@ def sweep_advisory(advisory_id: str):
 
             for hit in hits:
                 src = hit["_source"]
-
-                matched_field = (
-                    "srcip"
-                    if src.get("data", {}).get("srcip") == ip
-                    else "dstip"
-                )
+                matched_field = detect_matched_field(src, ip)
 
                 client_matches.append({
                     "ioc": ip,
