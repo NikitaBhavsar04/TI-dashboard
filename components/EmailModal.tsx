@@ -322,13 +322,13 @@ export default function EmailModal({ isOpen, onClose, advisory, emailType = 'gen
           id: clientId
         }));
       } else if (sendMethod === 'individual') {
-        // Individual emails
+        // Individual emails - send separately so each recipient gets their own email
         const validEmails = individualEmails.filter(e => e.trim());
         if (validEmails.length > 0) {
-          recipients = [{
+          recipients = validEmails.map(email => ({
             type: 'individual',
-            emails: validEmails
-          }];
+            emails: [email]
+          }));
         }
       } else if (sendMethod === 'csv_bulk') {
         // CSV bulk emails with privacy protection (BCC mode)

@@ -291,7 +291,7 @@ export default function EagleNestDetail() {
                       </button>
 
                       {showEmailDropdown && (
-                        <div className="absolute right-0 mt-2 w-72 glass-panel border border-emerald-400/30 rounded-lg shadow-xl shadow-emerald-500/20 overflow-hidden z-50">
+                        <div className="absolute right-0 mt-2 w-72 bg-slate-900 border border-emerald-400/30 rounded-lg shadow-xl shadow-emerald-500/20 overflow-hidden z-50">
                           <button
                             onClick={() => handleEmailClick('general')}
                             className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-emerald-500/10 transition-colors text-left group"

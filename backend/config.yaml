@@ -56,7 +56,7 @@ sources:
     - url: https://thehackernews.com/feeds/posts/default
       enabled: true
     - url: https://www.tenable.com/sitemap.xml?page=1
-      enabled: true
+      enabled: false
     - url: https://www.tenable.com/sitemap.xml?page=2
       enabled: true
     - url: https://www.techrepublic.com/rssfeeds/articles/
