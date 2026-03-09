@@ -261,9 +261,9 @@ telegram:
   session_name: telegram_scraper_session
   channels:
     - channel: IsacaRuSec
-      enabled: false
+      enabled: true
     - channel: ICTlive
-      enabled: false
+      enabled: true
     - channel: ctinow
       enabled: true
     - channel: defcon_news
