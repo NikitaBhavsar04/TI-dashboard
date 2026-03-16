@@ -1,0 +1,78 @@
+========================================================================
+  MongoDB Database Tree  —  generated 2026-03-09 12:05:58
+  URI: mongodb+srv://threatadvisory:dwoCFLCGxMqXzAKq@threatadvisory...
+========================================================================
+
+  ✅  Connected successfully
+
+  ├── 📁  soc
+  │        0 documents · data 0 B · storage 16.00 KB · indexes 32.00 KB
+  │   ├── 📭  advisories
+  │   │         0 documents · data 0 B · storage 4.00 KB · avg 0 B/doc · 1 index (4.00 KB)
+  │   ├── 📭  agendaJobs
+  │   │         0 documents · data 0 B · storage 4.00 KB · avg 0 B/doc · 2 indexes (8.00 KB)
+  │   ├── 📭  scheduledemails
+  │   │         0 documents · data 0 B · storage 4.00 KB · avg 0 B/doc · 2 indexes (8.00 KB)
+  │   └── 📭  users
+  │             0 documents · data 0 B · storage 4.00 KB · avg 0 B/doc · 3 indexes (12.00 KB)
+
+  ├── 📁  test
+  │        7,955 documents · data 5.10 MB · storage 1.38 MB · indexes 2.26 MB
+  │   ├── 📄  advisories
+  │   │         45 documents · data 1.46 MB · storage 388.00 KB · avg 33.24 KB/doc · 2 indexes (580.00 KB)
+  │   ├── 📄  agendaJobs
+  │   │         394 documents · data 103.61 KB · storage 76.00 KB · avg 269 B/doc · 2 indexes (80.00 KB)
+  │   ├── 📭  agendajobs
+  │   │         0 documents · data 0 B · storage 4.00 KB · avg 0 B/doc · 1 index (4.00 KB)
+  │   ├── 📄  auditlogs
+  │   │         7,191 documents · data 2.76 MB · storage 488.00 KB · avg 402 B/doc · 4 indexes (580.00 KB)
+  │   ├── 📄  clients
+  │   │         4 documents · data 1.25 KB · storage 36.00 KB · avg 319 B/doc · 7 indexes (252.00 KB)
+  │   ├── 📄  emailTracking
+  │   │         163 documents · data 53.35 KB · storage 56.00 KB · avg 335 B/doc · 1 index (36.00 KB)
+  │   ├── 📭  emails
+  │   │         0 documents · data 0 B · storage 4.00 KB · avg 0 B/doc · 1 index (4.00 KB)
+  │   ├── 📭  emailtrackings
+  │   │         0 documents · data 0 B · storage 4.00 KB · avg 0 B/doc · 9 indexes (36.00 KB)
+  │   ├── 📄  loginattempts
+  │   │         3 documents · data 528 B · storage 36.00 KB · avg 176 B/doc · 10 indexes (360.00 KB)
+  │   ├── 📄  scheduledemails
+  │   │         146 documents · data 744.47 KB · storage 284.00 KB · avg 5.10 KB/doc · 4 indexes (244.00 KB)
+  │   ├── 📭  trackingevents
+  │   │         0 documents · data 0 B · storage 4.00 KB · avg 0 B/doc · 7 indexes (28.00 KB)
+  │   └── 📄  users
+  │             9 documents · data 2.40 KB · storage 36.00 KB · avg 273 B/doc · 3 indexes (108.00 KB)
+
+  └── 📁  threat-advisory
+           147 documents · data 93.94 KB · storage 368.00 KB · indexes 896.00 KB
+      ├── 📄  advisories
+      │         15 documents · data 46.97 KB · storage 68.00 KB · avg 3.13 KB/doc · 2 indexes (80.00 KB)
+      ├── 📄  agendaJobs
+      │         62 documents · data 15.64 KB · storage 44.00 KB · avg 258 B/doc · 2 indexes (56.00 KB)
+      ├── 📄  clients
+      │         2 documents · data 367 B · storage 36.00 KB · avg 183 B/doc · 5 indexes (116.00 KB)
+      ├── 📭  connection-test
+      │         0 documents · data 0 B · storage 4.00 KB · avg 0 B/doc · 1 index (4.00 KB)
+      ├── 📄  emailTracking
+      │         8 documents · data 3.76 KB · storage 36.00 KB · avg 481 B/doc · 1 index (36.00 KB)
+      ├── 📄  emails
+      │         1 document · data 5.03 KB · storage 36.00 KB · avg 5.03 KB/doc · 1 index (36.00 KB)
+      ├── 📭  emailtrackings
+      │         0 documents · data 0 B · storage 32.00 KB · avg 0 B/doc · 9 indexes (232.00 KB)
+      ├── 📄  scheduledemails
+      │         57 documents · data 21.68 KB · storage 44.00 KB · avg 389 B/doc · 3 indexes (76.00 KB)
+      ├── 📭  trackingevents
+      │         0 documents · data 0 B · storage 32.00 KB · avg 0 B/doc · 7 indexes (184.00 KB)
+      └── 📄  users
+                2 documents · data 520 B · storage 36.00 KB · avg 260 B/doc · 3 indexes (76.00 KB)
+
+  ── System databases (skipped) ──────────────────────────────────────
+       ⚙   admin
+       ⚙   local
+
+========================================================================
+  TOTALS  (3 user databases)
+    Documents : 8,102
+    Storage   : 4.92 MB  (data + indexes)
+    Indexes   : 3.16 MB
+========================================================================

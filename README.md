@@ -77,6 +77,19 @@ Go to `http://localhost:3000`
 2. Add your connection string to `.env.local`
 3. The application will automatically create the required collections
 
+**Active database:** `test` (default when no database name is specified in the URI)
+
+| Collection | What's stored |
+|---|---|
+| `advisories` | Advisories saved in MongoDB |
+| `agendaJobs` | Agenda.js email scheduler jobs |
+| `auditlogs` | Every user action (login, view, send, etc.) |
+| `clients` | Client records with email lists |
+| `emailTracking` | Email open/read tracking (pixel tracking) |
+| `scheduledemails` | Scheduled emails (pending, sent, failed) |
+| `loginattempts` | Failed login attempt records |
+| `users` | All user accounts (admin, super_admin, user roles) |
+
 ### Python Automation Scripts
 - All automation and advisory generation scripts are in `backend/`
 - Main entry: `backend/generate_advisories.py`

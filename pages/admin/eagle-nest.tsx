@@ -10,7 +10,6 @@ import LoadingLogo from '@/components/LoadingLogo';
 import { 
   Search,
   Filter,
-  Eye,
   Trash2,
   Download,
   RefreshCw,
@@ -604,24 +603,6 @@ export default function EagleNest() {
                       <span className={`px-2 py-0.5 rounded-lg text-xs font-bold font-orbitron border ${getCriticalityColor(advisory.criticality)} whitespace-nowrap flex-shrink-0 shadow-lg`}>
                         {advisory.criticality || 'MEDIUM'}
                       </span>
-                      
-                      <Link href={`/admin/eagle-nest/${advisory.advisory_id}`}>
-                        <button 
-                          onClick={(e) => e.stopPropagation()}
-                          className="
-                            p-1.5 rounded-lg
-                            bg-gradient-to-r from-amber-600/80 to-yellow-600/80
-                            border border-amber-400/50 backdrop-blur-md
-                            text-white hover:text-amber-100
-                            shadow-lg shadow-amber-500/20 hover:shadow-amber-400/30
-                            transition-all duration-300 hover:scale-110
-                            group/view
-                          "
-                          title="View Details"
-                        >
-                          <Eye className="w-3.5 h-3.5 group-hover/view:scale-110 transition-transform" />
-                        </button>
-                      </Link>
                       
                       {/* Delete button - Admin only */}
                       {hasRole('admin') && (

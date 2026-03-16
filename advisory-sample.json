@@ -46,7 +46,7 @@
         "technique" : "Exploitation for Privilege Escalation",
         "confidence" : 2,
         "classification" : "primary",
-        "url" : "https://attack.mitre.org/techniques/T1068"
+        "url" : "https://attack..org/techniques/T1068"
       },
       {
         "techniqueId" : "T1190",

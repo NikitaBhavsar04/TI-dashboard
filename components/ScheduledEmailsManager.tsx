@@ -368,16 +368,14 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                       </button>
                     </>
                   )}
-                  {/* super_admin can delete any email; admin can only delete pending */}
-                  {(email.status === 'pending' || user?.role === 'super_admin') && (
-                    <button
-                      onClick={() => handleDelete(email._id)}
-                      className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
+                  {/* Delete button — visible for all statuses */}
+                  <button
+                    onClick={() => handleDelete(email._id)}
+                    className="p-2 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg transition-colors border border-transparent hover:border-red-500/30"
+                    title={`Delete this ${email.status} email`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             </div>

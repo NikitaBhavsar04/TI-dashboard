@@ -27,10 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ message: 'Scheduled email not found' });
       }
 
-      // super_admin can delete any email; admin can only delete pending emails
-      if (tokenPayload.role !== 'super_admin' && scheduledEmail.status !== 'pending') {
-        return res.status(400).json({ message: 'Admins can only delete pending emails. Contact a super admin to delete sent/failed emails.' });
-      }
+      // Any admin or super_admin can delete any email regardless of status
 
       await ScheduledEmail.findByIdAndDelete(id);
 
