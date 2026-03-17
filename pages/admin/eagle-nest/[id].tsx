@@ -435,15 +435,28 @@ export default function EagleNestDetail() {
                         </div>
                       )}
 
-                      {advisory.tlp && (
-                        <div className="flex items-start space-x-3">
-                          <Shield className="h-5 w-5 text-green-400 mt-0.5" />
-                          <div>
-                            <div className="text-slate-400 text-sm font-rajdhani">TLP Classification</div>
-                            <div className="text-white font-rajdhani font-medium">{advisory.tlp.toUpperCase()}</div>
+                      {/* Always show TLP, defaulting to WHITE if not set */}
+                      {(() => {
+                        const rawTlp = advisory.tlp || 'WHITE';
+                        const tlpVal = rawTlp.toUpperCase().replace(/^TLP:/i, '').trim() || 'WHITE';
+                        const tlpColorMap: Record<string, string> = {
+                          'RED': 'text-red-400',
+                          'AMBER': 'text-amber-400',
+                          'GREEN': 'text-green-400',
+                          'WHITE': 'text-slate-300',
+                          'CLEAR': 'text-slate-300',
+                        };
+                        const colorClass = tlpColorMap[tlpVal] || 'text-white';
+                        return (
+                          <div className="flex items-start space-x-3">
+                            <Shield className="h-5 w-5 text-green-400 mt-0.5" />
+                            <div>
+                              <div className="text-slate-400 text-sm font-rajdhani">TLP Classification</div>
+                              <div className={`font-rajdhani font-medium ${colorClass}`}>TLP:{tlpVal}</div>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
 
                     {/* CVEs */}

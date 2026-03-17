@@ -75,7 +75,9 @@ function generateEmailBody(advisory, customMessage = '') {
     'red': { bg: '#ef4444', text: '#ffffff', border: '#dc2626' }
   };
   
-  const tlpColor = tlpColors[advisory.tlp?.toLowerCase()] || tlpColors.clear;
+  // Normalize TLP: strip 'TLP:' prefix so 'TLP:AMBER' becomes 'amber' for color lookup
+  const normalizedTlp = (advisory.tlp || '').replace(/^TLP:/i, '').toLowerCase().trim();
+  const tlpColor = tlpColors[normalizedTlp] || tlpColors.white;
   
   return `
 <!DOCTYPE html>

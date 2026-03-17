@@ -495,17 +495,30 @@ export default function UploadPage() {
                       <label className="block text-sm font-mono text-cyber-green mb-2">
                         TLP CLASSIFICATION
                       </label>
-                      <select
-                        value={formData.tlp}
-                        onChange={(e) => setFormData(prev => ({ ...prev, tlp: e.target.value as typeof TLP_LEVELS[number] }))}
-                        className="w-full px-4 py-3 bg-cyber-dark/50 border border-cyber-blue/30 rounded-lg 
-                                 text-cyber-green font-mono focus:outline-none focus:border-cyber-blue 
-                                 focus:ring-2 focus:ring-cyber-blue/20"
-                      >
-                        {TLP_LEVELS.map(level => (
-                          <option key={level} value={level}>{level}</option>
-                        ))}
-                      </select>
+                      <div className="grid grid-cols-2 gap-2">
+                        {TLP_LEVELS.map(level => {
+                          const tlpColors: Record<string, string> = {
+                            'TLP:RED':   'border-red-500 bg-red-500/20 text-red-400 hover:bg-red-500/40',
+                            'TLP:AMBER': 'border-amber-500 bg-amber-500/20 text-amber-400 hover:bg-amber-500/40',
+                            'TLP:GREEN': 'border-green-500 bg-green-500/20 text-green-400 hover:bg-green-500/40',
+                            'TLP:WHITE': 'border-slate-300 bg-slate-300/10 text-slate-200 hover:bg-slate-300/20',
+                          };
+                          const isSelected = formData.tlp === level;
+                          const colorClass = tlpColors[level] || 'border-cyber-blue/30 text-cyber-green';
+                          return (
+                            <button
+                              key={level}
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, tlp: level as typeof TLP_LEVELS[number] }))}
+                              className={`px-3 py-2 rounded-lg border-2 font-mono text-sm font-bold transition-all duration-200
+                                ${colorClass}
+                                ${isSelected ? 'ring-2 ring-offset-1 ring-offset-cyber-dark opacity-100 scale-105' : 'opacity-60'}`}
+                            >
+                              {level}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <div>

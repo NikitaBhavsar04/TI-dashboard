@@ -294,6 +294,8 @@ export default function AdvisoryEditor() {
         ...advisory,
         created_at: advisory.created_at || new Date().toISOString(),
         timestamp: advisory.timestamp || new Date().toISOString(),
+        // Normalize TLP: strip 'TLP:' prefix if present, default to 'AMBER'
+        tlp: (advisory.tlp || 'AMBER').replace(/^TLP:/i, '').trim().toUpperCase() || 'AMBER',
         // Filter out empty strings from recommendations, patch_details, and references
         recommendations: (advisory.recommendations || []).filter((r: string) => r.trim()),
         patch_details: (advisory.patch_details || []).filter((p: string) => p.trim()),
