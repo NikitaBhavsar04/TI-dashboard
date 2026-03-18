@@ -22,7 +22,38 @@ if (!CRON_SECRET) {
 
 // Correct endpoint — the one with the real email-sending logic
 const PROCESS_URL = `${BASE_URL}/api/cron/process-emails`;
+const FETCH_ARTICLES_URL = `${BASE_URL}/api/cron/fetch-articles`;
 
+// ─── Daily article fetcher — 09:00 AM IST = 03:30 AM UTC ──────────────────────
+cron.schedule('30 3 * * *', async () => {
+  const ts = new Date().toISOString();
+  try {
+    console.log(`[CRON-SCHEDULER] [${ts}] Triggering daily raw-article fetcher (09:00 IST)...`);
+    const res = await doFetch(FETCH_ARTICLES_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CRON_SECRET}`,
+        'Content-Type': 'application/json'
+      },
+      signal: AbortSignal.timeout ? AbortSignal.timeout(300000) : undefined // 5 min
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(`[CRON-SCHEDULER] ❌ fetch-articles HTTP ${res.status}: ${text}`);
+      return;
+    }
+
+    const result = await res.json();
+    console.log(`[CRON-SCHEDULER] ✅ fetch-articles triggered: ${result.message || 'started'}`);
+  } catch (err) {
+    console.error(`[CRON-SCHEDULER] ❌ Error calling fetch-articles:`, err.message);
+  }
+}, {
+  timezone: 'UTC'  // schedule is expressed in UTC; 03:30 UTC = 09:00 IST
+});
+
+// ─── Email processor — every minute ───────────────────────────────────────────
 cron.schedule('* * * * *', async () => {
   const ts = new Date().toISOString();
   try {
@@ -54,4 +85,6 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
-console.log(`[CRON-SCHEDULER] ✅ Started — polling ${PROCESS_URL} every minute`);
+console.log(`[CRON-SCHEDULER] ✅ Started`);
+console.log(`[CRON-SCHEDULER]   • Email processor : ${PROCESS_URL} — every minute`);
+console.log(`[CRON-SCHEDULER]   • Article fetcher : ${FETCH_ARTICLES_URL} — daily 09:00 IST (03:30 UTC)`);

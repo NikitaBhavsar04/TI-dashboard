@@ -13,6 +13,7 @@ services:
     env_file:
       - .env.local
     restart: unless-stopped
-    # Uncomment if you want to mount code for live reload in dev (not for prod)
-    # volumes:
-    #   - .:/app
+    volumes:
+      # Mount Telegram session file so it persists outside the image
+      # Create this file on the host first by running telegram_fetcher.py once interactively
+      - ./backend/telegram_scraper_session.session:/app/backend/telegram_scraper_session.session

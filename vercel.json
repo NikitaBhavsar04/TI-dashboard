@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/process-emails",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/fetch-articles",
+      "schedule": "30 3 * * *"
     }
   ],
   "functions": {
@@ -17,6 +21,9 @@
       "maxDuration": 60
     },
     "pages/api/cron/process-emails.ts": {
+      "maxDuration": 300
+    },
+    "pages/api/cron/fetch-articles.ts": {
       "maxDuration": 300
     }
   },
