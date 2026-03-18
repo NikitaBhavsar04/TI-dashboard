@@ -79,6 +79,9 @@ COPY --from=node_builder /app/models ./models
 COPY --from=node_builder /app/pages ./pages
 COPY --from=node_builder /app/styles ./styles
 
+# Make wrapper scripts executable
+RUN chmod +x /app/scripts/article-fetcher.sh
+
 # Supervisor config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
