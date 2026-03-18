@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Edit3, Trash2, Send, Calendar, Mail, AlertCircle, CheckCircle, XCircle, Check, CheckCheck, RefreshCw } from 'lucide-react';
+import { Clock, Edit3, Trash2, Send, Calendar, Mail, AlertCircle, CheckCircle, XCircle, Check, CheckCheck, RefreshCw, Ban } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ScheduledEmail {
@@ -149,6 +149,34 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
       alert('Failed to process emails');
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const [cancelling, setCancelling] = useState<string | null>(null);
+
+  const handleCancel = async (emailId: string) => {
+    if (!confirm('Cancel this scheduled email? It will not be sent, but the record will be kept.')) return;
+    setCancelling(emailId);
+    try {
+      const response = await fetch(`/api/scheduled-emails/${emailId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      if (response.ok) {
+        setScheduledEmails(prev =>
+          prev.map(email =>
+            email._id === emailId ? { ...email, status: 'cancelled' } : email
+          )
+        );
+      } else {
+        const result = await response.json();
+        alert(`Failed to cancel: ${result.message}`);
+      }
+    } catch {
+      alert('Failed to cancel scheduled email');
+    } finally {
+      setCancelling(null);
     }
   };
 
@@ -365,6 +393,18 @@ const ScheduledEmailsManager: React.FC<ScheduledEmailsManagerProps> = ({ onEditE
                         title="Send Now"
                       >
                         <Send className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleCancel(email._id)}
+                        disabled={cancelling === email._id}
+                        className="p-1.5 text-orange-400 hover:bg-orange-900/20 rounded transition-colors disabled:opacity-50"
+                        title="Cancel scheduled send"
+                      >
+                        {cancelling === email._id ? (
+                          <div className="w-3.5 h-3.5 border-2 border-orange-400/30 border-t-orange-400 rounded-full animate-spin" />
+                        ) : (
+                          <Ban className="h-3.5 w-3.5" />
+                        )}
                       </button>
                     </>
                   )}

@@ -496,7 +496,7 @@ export default async function handler(req, res) {
             // Send immediately
             console.log(`⚡ Sending email immediately for ${emailDoc._id}`);
             await agenda.now('send-scheduled-advisory-email', { 
-              emailId: emailDoc._id 
+              emailId: emailDoc._id.toString()  // must be string for Agenda serialization
             });
           }
 

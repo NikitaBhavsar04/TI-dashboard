@@ -19,6 +19,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await dbConnect();
 
+    if (req.method === 'PATCH') {
+      // Cancel a pending scheduled email (keeps the record, just prevents sending)
+      const scheduledEmail = await ScheduledEmail.findById(id);
+      if (!scheduledEmail) {
+        return res.status(404).json({ message: 'Scheduled email not found' });
+      }
+      if (scheduledEmail.status !== 'pending') {
+        return res.status(400).json({
+          message: `Cannot cancel an email with status '${scheduledEmail.status}'. Only pending emails can be cancelled.`
+        });
+      }
+      scheduledEmail.status = 'cancelled';
+      await scheduledEmail.save();
+      console.log(`[SCHEDULED-EMAIL] Cancelled email ${id}`);
+      return res.status(200).json({ message: 'Scheduled email cancelled successfully', scheduledEmail });
+    }
+
     if (req.method === 'DELETE') {
       // Delete scheduled email
       const scheduledEmail = await ScheduledEmail.findById(id);
@@ -86,7 +103,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    res.setHeader('Allow', ['DELETE', 'PUT']);
+    res.setHeader('Allow', ['DELETE', 'PUT', 'PATCH']);
     return res.status(405).json({ message: `Method ${req.method} Not Allowed` });
 
   } catch (error) {
